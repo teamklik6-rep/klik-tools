@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flux Studio — рідкі градієнти / wave warp</title>
+<style>
+  :root{
+    --background: 240 6% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 5% 7%;
+    --card-2: 240 4% 11%;
+    --border: 240 4% 15%;
+    --input: 240 4% 13%;
+    --muted: 240 4% 12%;
+    --muted-foreground: 240 5% 60%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 6% 7%;
+    --radius: 0.55rem;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:hsl(var(--background));color:hsl(var(--foreground));
+    -webkit-font-smoothing:antialiased;font-size:14px;line-height:1.4;
+  }
+  ::selection{background:hsl(var(--primary)/.35)}
+  .app{display:flex;flex-direction:column;min-height:100%}
+
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 22px;border-bottom:1px solid hsl(var(--border));
+    position:sticky;top:0;background:hsl(var(--background)/.8);backdrop-filter:blur(8px);z-index:10;
+  }
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:hsl(var(--card-2));border:1px solid hsl(var(--border));}
+  .logo svg{width:20px;height:20px;display:block}
+  .brand h1{font-size:15px;margin:0;font-weight:650;letter-spacing:-.01em}
+  .brand p{margin:0;font-size:11.5px;color:hsl(var(--muted-foreground))}
+  .head-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  main{display:grid;grid-template-columns:330px 1fr;gap:18px;padding:18px 22px;align-items:start;flex:1}
+  @media (max-width:920px){ main{grid-template-columns:1fr} }
+
+  .card{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:var(--radius);}
+  .panel{padding:14px;position:sticky;top:78px;max-height:calc(100vh - 96px);overflow-y:auto}
+  .panel::-webkit-scrollbar{width:10px}
+  .panel::-webkit-scrollbar-thumb{background:hsl(var(--border));border-radius:99px;border:3px solid hsl(var(--card))}
+  .group{margin-bottom:18px}
+  .group:last-child{margin-bottom:0}
+  .group h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:hsl(var(--muted-foreground));margin:0 0 11px;font-weight:600}
+  .note{font-size:11px;color:hsl(var(--muted-foreground));line-height:1.5;margin-top:10px}
+
+  .tabs{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px;background:hsl(var(--muted));padding:3px;border-radius:9px;margin-bottom:16px}
+  .tab{font-size:12px;font-weight:550;padding:7px 4px;border-radius:6px;cursor:pointer;text-align:center;
+    color:hsl(var(--muted-foreground));transition:.12s;user-select:none}
+  .tab:hover{color:hsl(var(--foreground))}
+  .tab.active{background:hsl(var(--card-2));color:hsl(var(--foreground));box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  [data-pane]{display:none}
+  [data-pane].active{display:block;animation:fade .15s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
+
+  .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+  .row.mt{margin-top:12px}
+  label.lbl{font-size:13px;font-weight:500}
+  .val{font-size:12px;color:hsl(var(--muted-foreground));font-variant-numeric:tabular-nums;
+       background:hsl(var(--muted));padding:1px 7px;border-radius:6px;min-width:34px;text-align:center}
+
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:999px;
+    background:hsl(var(--input));outline:none;margin:4px 0 2px;cursor:pointer;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:hsl(var(--foreground));border:2px solid hsl(var(--background));box-shadow:0 0 0 1px hsl(var(--border));transition:transform .08s;}
+  input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.12)}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:hsl(var(--foreground));border:2px solid hsl(var(--background));cursor:pointer}
+
+  select{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+
+  .colors{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .colors.c3{grid-template-columns:1fr 1fr 1fr}
+  .color-field{display:flex;flex-direction:column;gap:6px}
+  .color-field span{font-size:12px;color:hsl(var(--muted-foreground))}
+  .color-wrap{display:flex;align-items:center;gap:8px;background:hsl(var(--input));border:1px solid hsl(var(--border));border-radius:8px;padding:5px 8px}
+  input[type=color]{-webkit-appearance:none;border:none;width:24px;height:24px;border-radius:6px;background:none;cursor:pointer;padding:0}
+  input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+  input[type=color]::-webkit-color-swatch{border:1px solid hsl(var(--border));border-radius:6px}
+  .hex{font-size:12px;color:hsl(var(--muted-foreground));font-variant-numeric:tabular-nums;text-transform:uppercase}
+
+  .switch-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+  .switch-row .lbl{font-size:13px}
+  .switch{position:relative;display:inline-block;width:38px;height:21px;flex:none}
+  .switch input{opacity:0;width:0;height:0}
+  .switch .track{position:absolute;inset:0;background:hsl(var(--input));border:1px solid hsl(var(--border));border-radius:999px;transition:.16s;cursor:pointer}
+  .switch .track:before{content:"";position:absolute;height:15px;width:15px;left:2px;top:2px;background:hsl(var(--muted-foreground));border-radius:50%;transition:.16s}
+  .switch input:checked + .track{background:hsl(var(--primary));border-color:hsl(var(--primary))}
+  .switch input:checked + .track:before{transform:translateX(17px);background:hsl(240 6% 10%)}
+
+  .presets{display:grid;gap:8px}
+  .presets.c2{grid-template-columns:1fr 1fr}
+  .presets.c3{grid-template-columns:1fr 1fr 1fr}
+  .presets.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+  .preset{font-size:12px;font-weight:550;padding:8px 6px;border-radius:8px;cursor:pointer;text-align:center;
+    background:hsl(var(--card-2));border:1px solid hsl(var(--border));color:hsl(var(--muted-foreground));transition:.12s;}
+  .preset:hover{color:hsl(var(--foreground));border-color:hsl(240 4% 22%)}
+  .preset.active{background:hsl(0 0% 98%/.08);border-color:hsl(0 0% 98%/.55);color:hsl(var(--foreground))}
+  .pal{height:10px;border-radius:99px;margin-top:6px;border:1px solid hsl(var(--border))}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:550;
+    padding:8px 13px;border-radius:8px;cursor:pointer;border:1px solid hsl(var(--border));
+    background:hsl(var(--card-2));color:hsl(var(--foreground));transition:.12s;white-space:nowrap;}
+  .btn:hover{border-color:hsl(240 4% 24%);background:hsl(240 6% 12%)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+  .btn.primary:hover{background:hsl(0 0% 86%)}
+  .btn.rec{background:hsl(0 72% 45%);border-color:hsl(0 72% 45%);color:#fff}
+  .btn svg{width:15px;height:15px}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btns-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .btns-grid .full{grid-column:1/-1}
+  .btns-grid.c3{grid-template-columns:1fr 1fr 1fr}
+
+  .workspace{min-height:60vh}
+  .stage{position:relative;border-radius:var(--radius);overflow:hidden;min-height:62vh;display:grid;place-items:center;padding:24px;
+    background:
+      linear-gradient(45deg,hsl(240 5% 8%) 25%,transparent 25%),
+      linear-gradient(-45deg,hsl(240 5% 8%) 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,hsl(240 5% 8%) 75%),
+      linear-gradient(-45deg,transparent 75%,hsl(240 5% 8%) 75%);
+    background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;background-color:hsl(240 6% 6%);}
+  #out{max-width:100%;max-height:74vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+
+  .stage-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;
+    padding:9px 14px;background:hsl(var(--background)/.72);backdrop-filter:blur(8px);border-top:1px solid hsl(var(--border));
+    font-size:12px;color:hsl(var(--muted-foreground));}
+  .iconbtn{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;cursor:pointer;flex:none;
+    background:hsl(var(--card-2));border:1px solid hsl(var(--border));color:hsl(var(--foreground))}
+  .iconbtn:hover{border-color:hsl(240 4% 26%)}
+  .iconbtn svg{width:15px;height:15px}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;background:hsl(var(--muted));font-size:11.5px;font-variant-numeric:tabular-nums}
+  .dot{width:6px;height:6px;border-radius:50%;background:hsl(142 70% 45%)}
+  .dot.rec{background:hsl(0 80% 55%);animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .spacer{flex:1}
+
+  .hide{display:none!important}
+  footer{padding:12px 22px;border-top:1px solid hsl(var(--border));font-size:11.5px;color:hsl(var(--muted-foreground));text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M2 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M2 6c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>
+      </div>
+      <div><h1>Flux Studio</h1><p>рідкі градієнти · wave warp · colorama</p></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="btnShuffle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        Перемішати
+      </button>
+      <button class="btn" id="btnRand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+        Випадковий стиль
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="group">
+        <h2>Пресети стилю</h2>
+        <div class="presets c3" id="stylePresets"></div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="source">Джерело</div>
+        <div class="tab" data-tab="waves">Хвилі</div>
+        <div class="tab" data-tab="color">Колір</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ SOURCE ============ -->
+      <div data-pane="source" class="active">
+        <div class="group">
+          <h2>Тип джерела</h2>
+          <div class="presets c4" id="modes">
+            <div class="preset active" data-mode="blobs">Плями</div>
+            <div class="preset" data-mode="stripes">Смуги</div>
+            <div class="preset" data-mode="bar">Стрічка</div>
+            <div class="preset" data-mode="ring">Кільце</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Кольори джерела</h2>
+          <div class="colors c3">
+            <div class="color-field"><span>1</span><div class="color-wrap"><input type="color" id="c0" value="#ff6a00"></div></div>
+            <div class="color-field"><span>2</span><div class="color-wrap"><input type="color" id="c1" value="#2d4bff"></div></div>
+            <div class="color-field"><span>3</span><div class="color-wrap"><input type="color" id="c2" value="#a02bff"></div></div>
+            <div class="color-field"><span>4</span><div class="color-wrap"><input type="color" id="c3" value="#ff2d9a"></div></div>
+            <div class="color-field"><span>5</span><div class="color-wrap"><input type="color" id="c4" value="#ffd166"></div></div>
+            <div class="color-field"><span data-i18nk="bg">Фон</span><div class="color-wrap"><input type="color" id="bgColor" value="#0a0a12"></div></div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Геометрія</h2>
+          <div class="row"><label class="lbl">Кількість елементів</label><span class="val" id="vCount">4</span></div>
+          <input type="range" id="count" min="1" max="8" step="1" value="4">
+          <div class="row mt"><label class="lbl">Розмір (%)</label><span class="val" id="vSize">42</span></div>
+          <input type="range" id="size" min="8" max="90" step="1" value="42">
+          <div class="row mt"><label class="lbl">Розкид (%)</label><span class="val" id="vSpread">30</span></div>
+          <input type="range" id="spread" min="0" max="60" step="1" value="30">
+          <div class="row mt"><label class="lbl">М'якість (blur)</label><span class="val" id="vSoft">70</span></div>
+          <input type="range" id="soft" min="0" max="200" step="2" value="70">
+        </div>
+        <div class="group">
+          <h2>Рух джерела</h2>
+          <div class="row"><label class="lbl">Період циклу (с)</label><span class="val" id="vPeriod">8</span></div>
+          <input type="range" id="period" min="2" max="20" step="0.5" value="8">
+          <div class="row mt"><label class="lbl">Орбіта плям (%)</label><span class="val" id="vOrbR">12</span></div>
+          <input type="range" id="orbR" min="0" max="35" step="1" value="12">
+          <div class="row mt"><label class="lbl">Оберти орбіти/цикл</label><span class="val" id="vOrbK">1</span></div>
+          <input type="range" id="orbK" min="-3" max="3" step="1" value="1">
+          <div class="row mt"><label class="lbl">Обертання джерела/цикл</label><span class="val" id="vRotK">0</span></div>
+          <input type="range" id="rotK" min="-2" max="2" step="1" value="0">
+          <div class="row mt"><label class="lbl">Пульс розміру (%)</label><span class="val" id="vPulse">8</span></div>
+          <input type="range" id="pulse" min="0" max="50" step="1" value="8">
+          <div class="note">Всі рухи кратні періоду циклу — анімація і MP4 виходять безшовним лупом.</div>
+        </div>
+      </div>
+
+      <!-- ============ WAVES ============ -->
+      <div data-pane="waves">
+        <div class="group">
+          <h2>Хвиля X (зсув рядків)</h2>
+          <div class="row"><label class="lbl">Амплітуда</label><span class="val" id="vAmpX">50</span></div>
+          <input type="range" id="ampX" min="0" max="120" step="1" value="50">
+          <div class="row mt"><label class="lbl">Довжина хвилі (%)</label><span class="val" id="vLamX">60</span></div>
+          <input type="range" id="lamX" min="8" max="220" step="1" value="60">
+          <div class="row mt"><label class="lbl">Швидкість (циклів)</label><span class="val" id="vSpdX">1</span></div>
+          <input type="range" id="spdX" min="-3" max="3" step="1" value="1">
+        </div>
+        <div class="group">
+          <h2>Хвиля Y (зсув колонок)</h2>
+          <div class="row"><label class="lbl">Амплітуда</label><span class="val" id="vAmpY">30</span></div>
+          <input type="range" id="ampY" min="0" max="120" step="1" value="30">
+          <div class="row mt"><label class="lbl">Довжина хвилі (%)</label><span class="val" id="vLamY">45</span></div>
+          <input type="range" id="lamY" min="8" max="220" step="1" value="45">
+          <div class="row mt"><label class="lbl">Швидкість (циклів)</label><span class="val" id="vSpdY">-1</span></div>
+          <input type="range" id="spdY" min="-3" max="3" step="1" value="-1">
+        </div>
+        <div class="group">
+          <h2>Форма хвилі</h2>
+          <div class="row"><label class="lbl">Друга гармоніка</label><span class="val" id="vHarm">0.40</span></div>
+          <input type="range" id="harm" min="0" max="1" step="0.05" value="0.4">
+          <div class="row mt"><label class="lbl">Нахил хвилі</label><span class="val" id="vSkew">0.00</span></div>
+          <input type="range" id="skew" min="-1" max="1" step="0.05" value="0">
+          <div class="note">Друга гармоніка додає дрібні брижі поверх основної хвилі — як стек із двох Wave Warp в AE.</div>
+        </div>
+        <div class="group">
+          <h2>Дзеркало</h2>
+          <div class="presets c4" id="mirrors">
+            <div class="preset active" data-mirror="none">Ні</div>
+            <div class="preset" data-mirror="x">X</div>
+            <div class="preset" data-mirror="y">Y</div>
+            <div class="preset" data-mirror="xy">Квад</div>
+          </div>
+          <div class="note">Дзеркальна симетрія — «енергетичні квіти» з референсів: стрічка + дзеркало X + Colorama.</div>
+        </div>
+        <div class="group">
+          <h2>Скляні фігури</h2>
+          <div class="row"><label class="lbl">Кількість</label><span class="val" id="vGlCount">0</span></div>
+          <input type="range" id="glCount" min="0" max="4" step="1" value="0">
+          <div class="row mt"><label class="lbl">Форма</label></div>
+          <select id="glType">
+            <option value="circle">Коло</option>
+            <option value="tri">Трикутник</option>
+            <option value="star">Зірка</option>
+            <option value="ring">Кільце</option>
+            <option value="blob">Блоб</option>
+          </select>
+          <div class="row mt"><label class="lbl">Розмір (%)</label><span class="val" id="vGlSize">28</span></div>
+          <input type="range" id="glSize" min="8" max="60" step="1" value="28">
+          <div class="row mt"><label class="lbl">Рефракція</label><span class="val" id="vGlRefr">1.18</span></div>
+          <input type="range" id="glRefr" min="1.02" max="1.6" step="0.02" value="1.18">
+          <div class="row mt"><label class="lbl">Обід і блік</label><span class="val" id="vGlRim">0.70</span></div>
+          <input type="range" id="glRim" min="0" max="1" step="0.05" value="0.7">
+          <div class="row mt"><label class="lbl">Оберти орбіти/цикл</label><span class="val" id="vGlOrbK">1</span></div>
+          <input type="range" id="glOrbK" min="-2" max="2" step="1" value="1">
+          <div class="row mt"><label class="lbl">Оберти фігур/цикл</label><span class="val" id="vGlRotK">0</span></div>
+          <input type="range" id="glRotK" min="-2" max="2" step="1" value="0">
+          <div class="note">Скляні фігури заломлюють градієнт під собою — рефракція, обід і блік, як шейп у AE-референсі.</div>
+        </div>
+      </div>
+
+      <!-- ============ COLOR ============ -->
+      <div data-pane="color">
+        <div class="group">
+          <h2>Colorama (градієнт-мапа)</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Увімкнути Colorama</span>
+            <label class="switch"><input type="checkbox" id="colorama"><span class="track"></span></label></div>
+          <div id="coloramaBox">
+            <div class="presets c3" id="palettes" style="margin-top:12px"></div>
+            <div class="row mt"><label class="lbl">Фаза</label><span class="val" id="vPhase">0.00</span></div>
+            <input type="range" id="phase" min="0" max="1" step="0.01" value="0">
+            <div class="row mt"><label class="lbl">Повторів градієнта</label><span class="val" id="vReps">1</span></div>
+            <input type="range" id="reps" min="1" max="6" step="1" value="1">
+            <div class="row mt"><label class="lbl">Оберти кольору/цикл</label><span class="val" id="vCycleK">0</span></div>
+            <input type="range" id="cycleK" min="-2" max="2" step="1" value="0">
+            <div class="row mt"><label class="lbl">Контраст</label><span class="val" id="vContrast">1.10</span></div>
+            <input type="range" id="contrast" min="0.4" max="3" step="0.05" value="1.1">
+            <div class="row mt"><label class="lbl">Гама</label><span class="val" id="vGamma">1.00</span></div>
+            <input type="range" id="gamma" min="0.35" max="2.6" step="0.05" value="1">
+            <div class="row mt"><label class="lbl">Постеризація</label><span class="val" id="vPoster">0</span></div>
+            <input type="range" id="poster" min="0" max="14" step="1" value="0">
+            <div class="note">Палітра «Source» будує градієнт із кольорів джерела. Постеризація дає топографічні кільця.</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Корекція</h2>
+          <div class="row"><label class="lbl">Насиченість</label><span class="val" id="vSat">1.10</span></div>
+          <input type="range" id="sat" min="0" max="2" step="0.05" value="1.1">
+          <div class="row mt"><label class="lbl">Відтінок (°)</label><span class="val" id="vHue">0</span></div>
+          <input type="range" id="hue" min="0" max="360" step="5" value="0">
+          <div class="row mt"><label class="lbl">Яскравість</label><span class="val" id="vBright">1.00</span></div>
+          <input type="range" id="bright" min="0.5" max="1.6" step="0.02" value="1">
+        </div>
+        <div class="group">
+          <h2>Пост-ефекти</h2>
+          <div class="row"><label class="lbl">Зерно</label><span class="val" id="vGrain">0.12</span></div>
+          <input type="range" id="grain" min="0" max="1" step="0.05" value="0.12">
+          <div class="row mt"><label class="lbl">Віньєтка</label><span class="val" id="vVignette">0.15</span></div>
+          <input type="range" id="vignette" min="0" max="1" step="0.05" value="0.15">
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Полотно</h2>
+          <div class="presets c3" id="ratios">
+            <div class="preset active" data-ratio="1:1">1:1</div>
+            <div class="preset" data-ratio="4:5">4:5</div>
+            <div class="preset" data-ratio="3:4">3:4</div>
+            <div class="preset" data-ratio="9:16">9:16</div>
+            <div class="preset" data-ratio="16:9">16:9</div>
+            <div class="preset" data-ratio="2:3">2:3</div>
+          </div>
+          <div class="row mt"><label class="lbl">Роздільність (превʼю)</label><span class="val" id="vRes">900</span></div>
+          <input type="range" id="res" min="500" max="1400" step="50" value="900">
+          <div class="row mt"><label class="lbl">Масштаб експорту</label><span class="val" id="vExScale">2×</span></div>
+          <input type="range" id="exScale" min="1" max="3" step="1" value="2">
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid c3">
+            <button class="btn primary" id="exPng">PNG</button>
+            <button class="btn" id="exJpg">JPG</button>
+            <button class="btn" id="exWebp">WEBP</button>
+          </div>
+          <div class="btns-grid" style="margin-top:8px">
+            <button class="btn full" id="exSvg">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              SVG (растрове полотно)</button>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">FPS</label></div>
+          <select id="fps"><option>24</option><option selected>30</option><option>60</option></select>
+          <div class="row mt"><label class="lbl">Тривалість (с)</label><span class="val" id="vDur">8</span></div>
+          <input type="range" id="dur" min="2" max="30" step="1" value="8">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">14</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="14">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
+              <span id="mp4Label">MP4 (луп)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM (alpha)</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово локально (WebCodecs) — детермінований безшовний луп, нічого не вивантажується. WebM пише в реальному часі й підтримує прозорість.</div>
+        </div>
+        <div class="group">
+          <div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span>
+          <span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>один файл · нічого не встановлювати · обробка локальна у браузері · gradient → blur → wave warp → colorama (як в AE)</footer>
+</div>
+
+<script>/**
+ * Minified by jsDelivr using Terser v5.39.0.
+ * Original file: /npm/mp4-muxer@5.2.2/build/mp4-muxer.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+"use strict";var Mp4Muxer=(()=>{var e=Object.defineProperty,t=Object.getOwnPropertyDescriptor,i=Object.getOwnPropertyNames,s=Object.prototype.hasOwnProperty,a=(e,t,i)=>{if(!t.has(e))throw TypeError("Cannot "+i)},r=(e,t,i)=>(a(e,t,"read from private field"),i?i.call(e):t.get(e)),n=(e,t,i)=>{if(t.has(e))throw TypeError("Cannot add the same private member more than once");t instanceof WeakSet?t.add(e):t.set(e,i)},o=(e,t,i,s)=>(a(e,t,"write to private field"),s?s.call(e,i):t.set(e,i),i),h=(e,t,i)=>(a(e,t,"access private method"),i),l={};((t,i)=>{for(var s in i)e(t,s,{get:i[s],enumerable:!0})})(l,{ArrayBufferTarget:()=>Me,FileSystemWritableFileStreamTarget:()=>Oe,Muxer:()=>Rt,StreamTarget:()=>We});var d,f,u,m,p,c,w,g,b=new Uint8Array(8),y=new DataView(b.buffer),k=e=>[(e%256+256)%256],T=e=>(y.setUint16(0,e,!1),[b[0],b[1]]),C=e=>(y.setUint32(0,e,!1),[b[1],b[2],b[3]]),v=e=>(y.setUint32(0,e,!1),[b[0],b[1],b[2],b[3]]),S=e=>(y.setUint32(0,Math.floor(e/2**32),!1),y.setUint32(4,e,!1),[b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7]]),x=e=>(y.setInt16(0,256*e,!1),[b[0],b[1]]),z=e=>(y.setInt32(0,65536*e,!1),[b[0],b[1],b[2],b[3]]),E=e=>(y.setInt32(0,2**30*e,!1),[b[0],b[1],b[2],b[3]]),A=(e,t=!1)=>{let i=Array(e.length).fill(null).map(((t,i)=>e.charCodeAt(i)));return t&&i.push(0),i},M=e=>e&&e[e.length-1],W=e=>{let t;for(let i of e)(!t||i.presentationTimestamp>t.presentationTimestamp)&&(t=i);return t},O=(e,t,i=!0)=>{let s=e*t;return i?Math.round(s):s},B=e=>{let t=e*(Math.PI/180),i=Math.cos(t),s=Math.sin(t);return[i,s,0,-s,i,0,0,0,1]},U=B(0),D=e=>[z(e[0]),z(e[1]),E(e[2]),z(e[3]),z(e[4]),E(e[5]),z(e[6]),z(e[7]),E(e[8])],j=e=>e?"object"!=typeof e?e:Array.isArray(e)?e.map(j):Object.fromEntries(Object.entries(e).map((([e,t])=>[e,j(t)]))):e,R=e=>e>=0&&e<2**32,I=(e,t,i)=>({type:e,contents:t&&new Uint8Array(t.flat(10)),children:i}),N=(e,t,i,s,a)=>I(e,[k(t),C(i),s??[]],a),V=e=>({type:"mdat",largeSize:e}),F=(e,t,i=!1)=>I("moov",null,[L(t,e),...e.map((e=>$(e,t))),i?me(e):null]),L=(e,t)=>{let i=O(Math.max(0,...t.filter((e=>e.samples.length>0)).map((e=>{const t=W(e.samples);return t.presentationTimestamp+t.duration}))),Bt),s=Math.max(...t.map((e=>e.id)))+1,a=!R(e)||!R(i),r=a?S:v;return N("mvhd",+a,0,[r(e),r(e),v(Bt),r(i),z(1),x(1),Array(10).fill(0),D(U),Array(24).fill(0),v(s)])},$=(e,t)=>I("trak",null,[P(e,t),H(e,t)]),P=(e,t)=>{let i,s=W(e.samples),a=O(s?s.presentationTimestamp+s.duration:0,Bt),r=!R(t)||!R(a),n=r?S:v;return i="video"===e.info.type?"number"==typeof e.info.rotation?B(e.info.rotation):e.info.rotation:U,N("tkhd",+r,3,[n(t),n(t),v(e.id),v(0),n(a),Array(8).fill(0),T(0),T(0),x("audio"===e.info.type?1:0),T(0),D(i),z("video"===e.info.type?e.info.width:0),z("video"===e.info.type?e.info.height:0)])},H=(e,t)=>I("mdia",null,[_(e,t),q("video"===e.info.type?"vide":"soun"),G(e)]),_=(e,t)=>{let i=W(e.samples),s=O(i?i.presentationTimestamp+i.duration:0,e.timescale),a=!R(t)||!R(s),r=a?S:v;return N("mdhd",+a,0,[r(t),r(t),v(e.timescale),r(s),T(21956),T(0)])},q=e=>N("hdlr",0,0,[A("mhlr"),A(e),v(0),v(0),v(0),A("mp4-muxer-hdlr",!0)]),G=e=>I("minf",null,["video"===e.info.type?J():K(),Q(),Z(e)]),J=()=>N("vmhd",0,1,[T(0),T(0),T(0),T(0)]),K=()=>N("smhd",0,0,[T(0),T(0)]),Q=()=>I("dinf",null,[X()]),X=()=>N("dref",0,0,[v(1)],[Y()]),Y=()=>N("url ",0,1),Z=e=>{const t=e.compositionTimeOffsetTable.length>1||e.compositionTimeOffsetTable.some((e=>0!==e.sampleCompositionTimeOffset));return I("stbl",null,[ee(e),oe(e),he(e),le(e),de(e),fe(e),t?ue(e):null])},ee=e=>N("stsd",0,0,[v(1)],["video"===e.info.type?te(Se[e.info.codec],e):ne(ze[e.info.codec],e)]),te=(e,t)=>{return I(e,[Array(6).fill(0),T(1),T(0),T(0),Array(12).fill(0),T(t.info.width),T(t.info.height),v(4718592),v(4718592),v(0),T(1),Array(32).fill(0),T(24),(i=65535,y.setInt16(0,i,!1),[b[0],b[1]])],[xe[t.info.codec](t),t.info.decoderConfig.colorSpace?re(t):null]);var i},ie={bt709:1,bt470bg:5,smpte170m:6},se={bt709:1,smpte170m:6,"iec61966-2-1":13},ae={rgb:0,bt709:1,bt470bg:5,smpte170m:6},re=e=>I("colr",[A("nclx"),T(ie[e.info.decoderConfig.colorSpace.primaries]),T(se[e.info.decoderConfig.colorSpace.transfer]),T(ae[e.info.decoderConfig.colorSpace.matrix]),k((e.info.decoderConfig.colorSpace.fullRange?1:0)<<7)]),ne=(e,t)=>I(e,[Array(6).fill(0),T(1),T(0),T(0),v(0),T(t.info.numberOfChannels),T(16),T(0),T(0),z(t.info.sampleRate)],[Ee[t.info.codec](t)]),oe=e=>N("stts",0,0,[v(e.timeToSampleTable.length),e.timeToSampleTable.map((e=>[v(e.sampleCount),v(e.sampleDelta)]))]),he=e=>{if(e.samples.every((e=>"key"===e.type)))return null;let t=[...e.samples.entries()].filter((([,e])=>"key"===e.type));return N("stss",0,0,[v(t.length),t.map((([e])=>v(e+1)))])},le=e=>N("stsc",0,0,[v(e.compactlyCodedChunkTable.length),e.compactlyCodedChunkTable.map((e=>[v(e.firstChunk),v(e.samplesPerChunk),v(1)]))]),de=e=>N("stsz",0,0,[v(0),v(e.samples.length),e.samples.map((e=>v(e.size)))]),fe=e=>e.finalizedChunks.length>0&&M(e.finalizedChunks).offset>=2**32?N("co64",0,0,[v(e.finalizedChunks.length),e.finalizedChunks.map((e=>S(e.offset)))]):N("stco",0,0,[v(e.finalizedChunks.length),e.finalizedChunks.map((e=>v(e.offset)))]),ue=e=>N("ctts",0,0,[v(e.compositionTimeOffsetTable.length),e.compositionTimeOffsetTable.map((e=>[v(e.sampleCount),v(e.sampleCompositionTimeOffset)]))]),me=e=>I("mvex",null,e.map(pe)),pe=e=>N("trex",0,0,[v(e.id),v(1),v(0),v(0),v(0)]),ce=(e,t)=>I("moof",null,[we(e),...t.map(be)]),we=e=>N("mfhd",0,0,[v(e)]),ge=e=>{let t=0,i=0,s="delta"===e.type;return i|=+s,t|=s?1:2,t<<24|i<<16},be=e=>I("traf",null,[ye(e),ke(e),Te(e)]),ye=e=>{let t=0;t|=8,t|=16,t|=32,t|=131072;let i=e.currentChunk.samples[1]??e.currentChunk.samples[0],s={duration:i.timescaleUnitsToNextSample,size:i.size,flags:ge(i)};return N("tfhd",0,131128,[v(e.id),v(s.duration),v(s.size),v(s.flags)])},ke=e=>N("tfdt",1,0,[S(O(e.currentChunk.startTimestamp,e.timescale))]),Te=e=>{let t=e.currentChunk.samples.map((e=>e.timescaleUnitsToNextSample)),i=e.currentChunk.samples.map((e=>e.size)),s=e.currentChunk.samples.map(ge),a=e.currentChunk.samples.map((t=>O(t.presentationTimestamp-t.decodeTimestamp,e.timescale))),r=new Set(t),n=new Set(i),o=new Set(s),h=new Set(a),l=2===o.size&&s[0]!==s[1],d=r.size>1,f=n.size>1,u=!l&&o.size>1,m=h.size>1||[...h].some((e=>0!==e)),p=0;return p|=1,p|=4*+l,p|=256*+d,p|=512*+f,p|=1024*+u,p|=2048*+m,N("trun",1,p,[v(e.currentChunk.samples.length),v(e.currentChunk.offset-e.currentChunk.moofOffset||0),l?v(s[0]):[],e.currentChunk.samples.map(((e,r)=>{return[d?v(t[r]):[],f?v(i[r]):[],u?v(s[r]):[],m?(n=a[r],y.setInt32(0,n,!1),[b[0],b[1],b[2],b[3]]):[]];var n}))])},Ce=(e,t)=>N("tfra",1,0,[v(e.id),v(63),v(e.finalizedChunks.length),e.finalizedChunks.map((i=>[S(O(i.startTimestamp,e.timescale)),S(i.moofOffset),v(t+1),v(1),v(1)]))]),ve=()=>N("mfro",0,0,[v(0)]),Se={avc:"avc1",hevc:"hvc1",vp9:"vp09",av1:"av01"},xe={avc:e=>e.info.decoderConfig&&I("avcC",[...new Uint8Array(e.info.decoderConfig.description)]),hevc:e=>e.info.decoderConfig&&I("hvcC",[...new Uint8Array(e.info.decoderConfig.description)]),vp9:e=>{if(!e.info.decoderConfig)return null;let t=e.info.decoderConfig;if(!t.colorSpace)throw new Error("'colorSpace' is required in the decoder config for VP9.");let i=t.codec.split("."),s=Number(i[1]),a=Number(i[2]),r=0+(Number(i[3])<<4)+Number(t.colorSpace.fullRange);return N("vpcC",1,0,[k(s),k(a),k(r),k(2),k(2),k(2),T(0)])},av1:()=>I("av1C",[129,0,0,0])},ze={aac:"mp4a",opus:"Opus"},Ee={aac:e=>{let t=new Uint8Array(e.info.decoderConfig.description);return N("esds",0,0,[v(58753152),k(32+t.byteLength),T(1),k(0),v(75530368),k(18+t.byteLength),k(64),k(21),C(0),v(130071),v(130071),v(92307584),k(t.byteLength),...t,v(109084800),k(1),k(2)])},opus:e=>{let t=3840,i=0;const s=e.info.decoderConfig?.description;if(s){if(s.byteLength<18)throw new TypeError("Invalid decoder description provided for Opus; must be at least 18 bytes long.");const e=ArrayBuffer.isView(s)?new DataView(s.buffer,s.byteOffset,s.byteLength):new DataView(s);t=e.getUint16(10,!0),i=e.getInt16(14,!0)}return I("dOps",[k(0),k(e.info.numberOfChannels),T(t),v(e.info.sampleRate),x(i),k(0)])}},Ae=(Symbol("isTarget"),class{}),Me=class extends Ae{constructor(){super(...arguments),this.buffer=null}},We=class extends Ae{constructor(e){if(super(),this.options=e,"object"!=typeof e)throw new TypeError("StreamTarget requires an options object to be passed to its constructor.");if(e.onData){if("function"!=typeof e.onData)throw new TypeError("options.onData, when provided, must be a function.");if(e.onData.length<2)throw new TypeError("options.onData, when provided, must be a function that takes in at least two arguments (data and position). Ignoring the position argument, which specifies the byte offset at which the data is to be written, can lead to broken outputs.")}if(void 0!==e.chunked&&"boolean"!=typeof e.chunked)throw new TypeError("options.chunked, when provided, must be a boolean.");if(void 0!==e.chunkSize&&(!Number.isInteger(e.chunkSize)||e.chunkSize<1024))throw new TypeError("options.chunkSize, when provided, must be an integer and not smaller than 1024.")}},Oe=class extends Ae{constructor(e,t){if(super(),this.stream=e,this.options=t,!(e instanceof FileSystemWritableFileStream))throw new TypeError("FileSystemWritableFileStreamTarget requires a FileSystemWritableFileStream instance.");if(void 0!==t&&"object"!=typeof t)throw new TypeError("FileSystemWritableFileStreamTarget's options, when provided, must be an object.");if(t&&void 0!==t.chunkSize&&(!Number.isInteger(t.chunkSize)||t.chunkSize<=0))throw new TypeError("options.chunkSize, when provided, must be a positive integer")}},Be=class{constructor(){this.pos=0,n(this,d,new Uint8Array(8)),n(this,f,new DataView(r(this,d).buffer)),this.offsets=new WeakMap}seek(e){this.pos=e}writeU32(e){r(this,f).setUint32(0,e,!1),this.write(r(this,d).subarray(0,4))}writeU64(e){r(this,f).setUint32(0,Math.floor(e/2**32),!1),r(this,f).setUint32(4,e,!1),this.write(r(this,d).subarray(0,8))}writeAscii(e){for(let t=0;t<e.length;t++)r(this,f).setUint8(t%8,e.charCodeAt(t)),t%8==7&&this.write(r(this,d));e.length%8!=0&&this.write(r(this,d).subarray(0,e.length%8))}writeBox(e){if(this.offsets.set(e,this.pos),e.contents&&!e.children)this.writeBoxHeader(e,e.size??e.contents.byteLength+8),this.write(e.contents);else{let t=this.pos;if(this.writeBoxHeader(e,0),e.contents&&this.write(e.contents),e.children)for(let t of e.children)t&&this.writeBox(t);let i=this.pos,s=e.size??i-t;this.seek(t),this.writeBoxHeader(e,s),this.seek(i)}}writeBoxHeader(e,t){this.writeU32(e.largeSize?1:t),this.writeAscii(e.type),e.largeSize&&this.writeU64(t)}measureBoxHeader(e){return 8+(e.largeSize?8:0)}patchBox(e){let t=this.pos;this.seek(this.offsets.get(e)),this.writeBox(e),this.seek(t)}measureBox(e){if(e.contents&&!e.children){return this.measureBoxHeader(e)+e.contents.byteLength}{let t=this.measureBoxHeader(e);if(e.contents&&(t+=e.contents.byteLength),e.children)for(let i of e.children)i&&(t+=this.measureBox(i));return t}}};d=new WeakMap,f=new WeakMap;var Ue=class extends Be{constructor(e){super(),n(this,w),n(this,u,void 0),n(this,m,new ArrayBuffer(65536)),n(this,p,new Uint8Array(r(this,m))),n(this,c,0),o(this,u,e)}write(e){h(this,w,g).call(this,this.pos+e.byteLength),r(this,p).set(e,this.pos),this.pos+=e.byteLength,o(this,c,Math.max(r(this,c),this.pos))}finalize(){h(this,w,g).call(this,this.pos),r(this,u).buffer=r(this,m).slice(0,Math.max(r(this,c),this.pos))}};u=new WeakMap,m=new WeakMap,p=new WeakMap,c=new WeakMap,w=new WeakSet,g=function(e){let t=r(this,m).byteLength;for(;t<e;)t*=2;if(t===r(this,m).byteLength)return;let i=new ArrayBuffer(t),s=new Uint8Array(i);s.set(r(this,p),0),o(this,m,i),o(this,p,s)};var De,je,Re,Ie,Ne,Ve,Fe,Le,$e,Pe,He,_e,qe,Ge=class extends Be{constructor(e){super(),n(this,Ve),n(this,Le),n(this,Pe),n(this,_e),n(this,De,void 0),n(this,je,[]),n(this,Re,void 0),n(this,Ie,void 0),n(this,Ne,[]),o(this,De,e),o(this,Re,e.options?.chunked??!1),o(this,Ie,e.options?.chunkSize??16777216)}write(e){r(this,je).push({data:e.slice(),start:this.pos}),this.pos+=e.byteLength}flush(){if(0===r(this,je).length)return;let e=[],t=[...r(this,je)].sort(((e,t)=>e.start-t.start));e.push({start:t[0].start,size:t[0].data.byteLength});for(let i=1;i<t.length;i++){let s=e[e.length-1],a=t[i];a.start<=s.start+s.size?s.size=Math.max(s.size,a.start+a.data.byteLength-s.start):e.push({start:a.start,size:a.data.byteLength})}for(let t of e){t.data=new Uint8Array(t.size);for(let e of r(this,je))t.start<=e.start&&e.start<t.start+t.size&&t.data.set(e.data,e.start-t.start);r(this,Re)?(h(this,Ve,Fe).call(this,t.data,t.start),h(this,_e,qe).call(this)):r(this,De).options.onData?.(t.data,t.start)}r(this,je).length=0}finalize(){r(this,Re)&&h(this,_e,qe).call(this,!0)}};De=new WeakMap,je=new WeakMap,Re=new WeakMap,Ie=new WeakMap,Ne=new WeakMap,Ve=new WeakSet,Fe=function(e,t){let i=r(this,Ne).findIndex((e=>e.start<=t&&t<e.start+r(this,Ie)));-1===i&&(i=h(this,Pe,He).call(this,t));let s=r(this,Ne)[i],a=t-s.start,n=e.subarray(0,Math.min(r(this,Ie)-a,e.byteLength));s.data.set(n,a);let o={start:a,end:a+n.byteLength};if(h(this,Le,$e).call(this,s,o),0===s.written[0].start&&s.written[0].end===r(this,Ie)&&(s.shouldFlush=!0),r(this,Ne).length>2){for(let e=0;e<r(this,Ne).length-1;e++)r(this,Ne)[e].shouldFlush=!0;h(this,_e,qe).call(this)}n.byteLength<e.byteLength&&h(this,Ve,Fe).call(this,e.subarray(n.byteLength),t+n.byteLength)},Le=new WeakSet,$e=function(e,t){let i=0,s=e.written.length-1,a=-1;for(;i<=s;){let r=Math.floor(i+(s-i+1)/2);e.written[r].start<=t.start?(i=r+1,a=r):s=r-1}for(e.written.splice(a+1,0,t),(-1===a||e.written[a].end<t.start)&&a++;a<e.written.length-1&&e.written[a].end>=e.written[a+1].start;)e.written[a].end=Math.max(e.written[a].end,e.written[a+1].end),e.written.splice(a+1,1)},Pe=new WeakSet,He=function(e){let t={start:Math.floor(e/r(this,Ie))*r(this,Ie),data:new Uint8Array(r(this,Ie)),written:[],shouldFlush:!1};return r(this,Ne).push(t),r(this,Ne).sort(((e,t)=>e.start-t.start)),r(this,Ne).indexOf(t)},_e=new WeakSet,qe=function(e=!1){for(let t=0;t<r(this,Ne).length;t++){let i=r(this,Ne)[t];if(i.shouldFlush||e){for(let e of i.written)r(this,De).options.onData?.(i.data.subarray(e.start,e.end),i.start+e.start);r(this,Ne).splice(t--,1)}}};var Je,Ke,Qe,Xe,Ye,Ze,et,tt,it,st,at,rt,nt,ot,ht,lt,dt,ft,ut,mt,pt,ct,wt,gt,bt,yt,kt,Tt,Ct,vt,St,xt,zt,Et,At,Mt,Wt,Ot=class extends Ge{constructor(e){super(new We({onData:(t,i)=>e.stream.write({type:"write",data:t,position:i}),chunked:!0,chunkSize:e.options?.chunkSize}))}},Bt=1e3,Ut=["avc","hevc","vp9","av1"],Dt=["aac","opus"],jt=["strict","offset","cross-track-offset"],Rt=class{constructor(e){if(n(this,nt),n(this,ht),n(this,dt),n(this,ut),n(this,pt),n(this,wt),n(this,bt),n(this,kt),n(this,Ct),n(this,St),n(this,zt),n(this,At),n(this,Je,void 0),n(this,Ke,void 0),n(this,Qe,void 0),n(this,Xe,void 0),n(this,Ye,null),n(this,Ze,null),n(this,et,Math.floor(Date.now()/1e3)+2082844800),n(this,tt,[]),n(this,it,1),n(this,st,[]),n(this,at,[]),n(this,rt,!1),h(this,nt,ot).call(this,e),e.video=j(e.video),e.audio=j(e.audio),e.fastStart=j(e.fastStart),this.target=e.target,o(this,Je,{firstTimestampBehavior:"strict",...e}),e.target instanceof Me)o(this,Ke,new Ue(e.target));else if(e.target instanceof We)o(this,Ke,new Ge(e.target));else{if(!(e.target instanceof Oe))throw new Error(`Invalid target: ${e.target}`);o(this,Ke,new Ot(e.target))}h(this,ut,mt).call(this),h(this,ht,lt).call(this)}addVideoChunk(e,t,i,s){if(!(e instanceof EncodedVideoChunk))throw new TypeError("addVideoChunk's first argument (sample) must be of type EncodedVideoChunk.");if(t&&"object"!=typeof t)throw new TypeError("addVideoChunk's second argument (meta), when provided, must be an object.");if(void 0!==i&&(!Number.isFinite(i)||i<0))throw new TypeError("addVideoChunk's third argument (timestamp), when provided, must be a non-negative real number.");if(void 0!==s&&!Number.isFinite(s))throw new TypeError("addVideoChunk's fourth argument (compositionTimeOffset), when provided, must be a real number.");let a=new Uint8Array(e.byteLength);e.copyTo(a),this.addVideoChunkRaw(a,e.type,i??e.timestamp,e.duration,t,s)}addVideoChunkRaw(e,t,i,s,a,n){if(!(e instanceof Uint8Array))throw new TypeError("addVideoChunkRaw's first argument (data) must be an instance of Uint8Array.");if("key"!==t&&"delta"!==t)throw new TypeError("addVideoChunkRaw's second argument (type) must be either 'key' or 'delta'.");if(!Number.isFinite(i)||i<0)throw new TypeError("addVideoChunkRaw's third argument (timestamp) must be a non-negative real number.");if(!Number.isFinite(s)||s<0)throw new TypeError("addVideoChunkRaw's fourth argument (duration) must be a non-negative real number.");if(a&&"object"!=typeof a)throw new TypeError("addVideoChunkRaw's fifth argument (meta), when provided, must be an object.");if(void 0!==n&&!Number.isFinite(n))throw new TypeError("addVideoChunkRaw's sixth argument (compositionTimeOffset), when provided, must be a real number.");if(h(this,At,Mt).call(this),!r(this,Je).video)throw new Error("No video track declared.");if("object"==typeof r(this,Je).fastStart&&r(this,Ye).samples.length===r(this,Je).fastStart.expectedVideoChunks)throw new Error(`Cannot add more video chunks than specified in 'fastStart' (${r(this,Je).fastStart.expectedVideoChunks}).`);let o=h(this,wt,gt).call(this,r(this,Ye),e,t,i,s,a,n);if("fragmented"===r(this,Je).fastStart&&r(this,Ze)){for(;r(this,at).length>0&&r(this,at)[0].decodeTimestamp<=o.decodeTimestamp;){let e=r(this,at).shift();h(this,bt,yt).call(this,r(this,Ze),e)}o.decodeTimestamp<=r(this,Ze).lastDecodeTimestamp?h(this,bt,yt).call(this,r(this,Ye),o):r(this,st).push(o)}else h(this,bt,yt).call(this,r(this,Ye),o)}addAudioChunk(e,t,i){if(!(e instanceof EncodedAudioChunk))throw new TypeError("addAudioChunk's first argument (sample) must be of type EncodedAudioChunk.");if(t&&"object"!=typeof t)throw new TypeError("addAudioChunk's second argument (meta), when provided, must be an object.");if(void 0!==i&&(!Number.isFinite(i)||i<0))throw new TypeError("addAudioChunk's third argument (timestamp), when provided, must be a non-negative real number.");let s=new Uint8Array(e.byteLength);e.copyTo(s),this.addAudioChunkRaw(s,e.type,i??e.timestamp,e.duration,t)}addAudioChunkRaw(e,t,i,s,a){if(!(e instanceof Uint8Array))throw new TypeError("addAudioChunkRaw's first argument (data) must be an instance of Uint8Array.");if("key"!==t&&"delta"!==t)throw new TypeError("addAudioChunkRaw's second argument (type) must be either 'key' or 'delta'.");if(!Number.isFinite(i)||i<0)throw new TypeError("addAudioChunkRaw's third argument (timestamp) must be a non-negative real number.");if(!Number.isFinite(s)||s<0)throw new TypeError("addAudioChunkRaw's fourth argument (duration) must be a non-negative real number.");if(a&&"object"!=typeof a)throw new TypeError("addAudioChunkRaw's fifth argument (meta), when provided, must be an object.");if(h(this,At,Mt).call(this),!r(this,Je).audio)throw new Error("No audio track declared.");if("object"==typeof r(this,Je).fastStart&&r(this,Ze).samples.length===r(this,Je).fastStart.expectedAudioChunks)throw new Error(`Cannot add more audio chunks than specified in 'fastStart' (${r(this,Je).fastStart.expectedAudioChunks}).`);let n=h(this,wt,gt).call(this,r(this,Ze),e,t,i,s,a);if("fragmented"===r(this,Je).fastStart&&r(this,Ye)){for(;r(this,st).length>0&&r(this,st)[0].decodeTimestamp<=n.decodeTimestamp;){let e=r(this,st).shift();h(this,bt,yt).call(this,r(this,Ye),e)}n.decodeTimestamp<=r(this,Ye).lastDecodeTimestamp?h(this,bt,yt).call(this,r(this,Ze),n):r(this,at).push(n)}else h(this,bt,yt).call(this,r(this,Ze),n)}finalize(){if(r(this,rt))throw new Error("Cannot finalize a muxer more than once.");if("fragmented"===r(this,Je).fastStart){for(let e of r(this,st))h(this,bt,yt).call(this,r(this,Ye),e);for(let e of r(this,at))h(this,bt,yt).call(this,r(this,Ze),e);h(this,St,xt).call(this,!1)}else r(this,Ye)&&h(this,Ct,vt).call(this,r(this,Ye)),r(this,Ze)&&h(this,Ct,vt).call(this,r(this,Ze));let e=[r(this,Ye),r(this,Ze)].filter(Boolean);if("in-memory"===r(this,Je).fastStart){let t;for(let i=0;i<2;i++){let i=F(e,r(this,et)),s=r(this,Ke).measureBox(i);t=r(this,Ke).measureBox(r(this,Xe));let a=r(this,Ke).pos+s+t;for(let e of r(this,tt)){e.offset=a;for(let{data:i}of e.samples)a+=i.byteLength,t+=i.byteLength}if(a<2**32)break;t>=2**32&&(r(this,Xe).largeSize=!0)}let i=F(e,r(this,et));r(this,Ke).writeBox(i),r(this,Xe).size=t,r(this,Ke).writeBox(r(this,Xe));for(let e of r(this,tt))for(let t of e.samples)r(this,Ke).write(t.data),t.data=null}else if("fragmented"===r(this,Je).fastStart){let t=r(this,Ke).pos,i=(e=>I("mfra",null,[...e.map(Ce),ve()]))(e);r(this,Ke).writeBox(i);let s=r(this,Ke).pos-t;r(this,Ke).seek(r(this,Ke).pos-4),r(this,Ke).writeU32(s)}else{let t=r(this,Ke).offsets.get(r(this,Xe)),i=r(this,Ke).pos-t;r(this,Xe).size=i,r(this,Xe).largeSize=i>=2**32,r(this,Ke).patchBox(r(this,Xe));let s=F(e,r(this,et));if("object"==typeof r(this,Je).fastStart){r(this,Ke).seek(r(this,Qe)),r(this,Ke).writeBox(s);let e=t-r(this,Ke).pos;r(this,Ke).writeBox({type:"free",size:e})}else r(this,Ke).writeBox(s)}h(this,zt,Et).call(this),r(this,Ke).finalize(),o(this,rt,!0)}};return Je=new WeakMap,Ke=new WeakMap,Qe=new WeakMap,Xe=new WeakMap,Ye=new WeakMap,Ze=new WeakMap,et=new WeakMap,tt=new WeakMap,it=new WeakMap,st=new WeakMap,at=new WeakMap,rt=new WeakMap,nt=new WeakSet,ot=function(e){if("object"!=typeof e)throw new TypeError("The muxer requires an options object to be passed to its constructor.");if(!(e.target instanceof Ae))throw new TypeError("The target must be provided and an instance of Target.");if(e.video){if(!Ut.includes(e.video.codec))throw new TypeError(`Unsupported video codec: ${e.video.codec}`);if(!Number.isInteger(e.video.width)||e.video.width<=0)throw new TypeError(`Invalid video width: ${e.video.width}. Must be a positive integer.`);if(!Number.isInteger(e.video.height)||e.video.height<=0)throw new TypeError(`Invalid video height: ${e.video.height}. Must be a positive integer.`);const t=e.video.rotation;if("number"==typeof t&&![0,90,180,270].includes(t))throw new TypeError(`Invalid video rotation: ${t}. Has to be 0, 90, 180 or 270.`);if(Array.isArray(t)&&(9!==t.length||t.some((e=>"number"!=typeof e))))throw new TypeError(`Invalid video transformation matrix: ${t.join()}`);if(void 0!==e.video.frameRate&&(!Number.isInteger(e.video.frameRate)||e.video.frameRate<=0))throw new TypeError(`Invalid video frame rate: ${e.video.frameRate}. Must be a positive integer.`)}if(e.audio){if(!Dt.includes(e.audio.codec))throw new TypeError(`Unsupported audio codec: ${e.audio.codec}`);if(!Number.isInteger(e.audio.numberOfChannels)||e.audio.numberOfChannels<=0)throw new TypeError(`Invalid number of audio channels: ${e.audio.numberOfChannels}. Must be a positive integer.`);if(!Number.isInteger(e.audio.sampleRate)||e.audio.sampleRate<=0)throw new TypeError(`Invalid audio sample rate: ${e.audio.sampleRate}. Must be a positive integer.`)}if(e.firstTimestampBehavior&&!jt.includes(e.firstTimestampBehavior))throw new TypeError(`Invalid first timestamp behavior: ${e.firstTimestampBehavior}`);if("object"==typeof e.fastStart){if(e.video){if(void 0===e.fastStart.expectedVideoChunks)throw new TypeError("'fastStart' is an object but is missing property 'expectedVideoChunks'.");if(!Number.isInteger(e.fastStart.expectedVideoChunks)||e.fastStart.expectedVideoChunks<0)throw new TypeError("'expectedVideoChunks' must be a non-negative integer.")}if(e.audio){if(void 0===e.fastStart.expectedAudioChunks)throw new TypeError("'fastStart' is an object but is missing property 'expectedAudioChunks'.");if(!Number.isInteger(e.fastStart.expectedAudioChunks)||e.fastStart.expectedAudioChunks<0)throw new TypeError("'expectedAudioChunks' must be a non-negative integer.")}}else if(![!1,"in-memory","fragmented"].includes(e.fastStart))throw new TypeError("'fastStart' option must be false, 'in-memory', 'fragmented' or an object.");if(void 0!==e.minFragmentDuration&&(!Number.isFinite(e.minFragmentDuration)||e.minFragmentDuration<0))throw new TypeError("'minFragmentDuration' must be a non-negative number.")},ht=new WeakSet,lt=function(){var e;if(r(this,Ke).writeBox((e={holdsAvc:"avc"===r(this,Je).video?.codec,fragmented:"fragmented"===r(this,Je).fastStart}).fragmented?I("ftyp",[A("iso5"),v(512),A("iso5"),A("iso6"),A("mp41")]):I("ftyp",[A("isom"),v(512),A("isom"),e.holdsAvc?A("avc1"):[],A("mp41")])),o(this,Qe,r(this,Ke).pos),"in-memory"===r(this,Je).fastStart)o(this,Xe,V(!1));else if("fragmented"===r(this,Je).fastStart);else{if("object"==typeof r(this,Je).fastStart){let e=h(this,dt,ft).call(this);r(this,Ke).seek(r(this,Ke).pos+e)}o(this,Xe,V(!0)),r(this,Ke).writeBox(r(this,Xe))}h(this,zt,Et).call(this)},dt=new WeakSet,ft=function(){if("object"!=typeof r(this,Je).fastStart)return;let e=0,t=[r(this,Je).fastStart.expectedVideoChunks,r(this,Je).fastStart.expectedAudioChunks];for(let i of t)i&&(e+=8*Math.ceil(2/3*i),e+=4*i,e+=12*Math.ceil(2/3*i),e+=4*i,e+=8*i);return e+=4096,e},ut=new WeakSet,mt=function(){if(r(this,Je).video&&o(this,Ye,{id:1,info:{type:"video",codec:r(this,Je).video.codec,width:r(this,Je).video.width,height:r(this,Je).video.height,rotation:r(this,Je).video.rotation??0,decoderConfig:null},timescale:r(this,Je).video.frameRate??57600,samples:[],finalizedChunks:[],currentChunk:null,firstDecodeTimestamp:void 0,lastDecodeTimestamp:-1,timeToSampleTable:[],compositionTimeOffsetTable:[],lastTimescaleUnits:null,lastSample:null,compactlyCodedChunkTable:[]}),r(this,Je).audio&&(o(this,Ze,{id:r(this,Je).video?2:1,info:{type:"audio",codec:r(this,Je).audio.codec,numberOfChannels:r(this,Je).audio.numberOfChannels,sampleRate:r(this,Je).audio.sampleRate,decoderConfig:null},timescale:r(this,Je).audio.sampleRate,samples:[],finalizedChunks:[],currentChunk:null,firstDecodeTimestamp:void 0,lastDecodeTimestamp:-1,timeToSampleTable:[],compositionTimeOffsetTable:[],lastTimescaleUnits:null,lastSample:null,compactlyCodedChunkTable:[]}),"aac"===r(this,Je).audio.codec)){let e=h(this,pt,ct).call(this,2,r(this,Je).audio.sampleRate,r(this,Je).audio.numberOfChannels);r(this,Ze).info.decoderConfig={codec:r(this,Je).audio.codec,description:e,numberOfChannels:r(this,Je).audio.numberOfChannels,sampleRate:r(this,Je).audio.sampleRate}}},pt=new WeakSet,ct=function(e,t,i){let s=[96e3,88200,64e3,48e3,44100,32e3,24e3,22050,16e3,12e3,11025,8e3,7350].indexOf(t),a=i,r="";r+=e.toString(2).padStart(5,"0"),r+=s.toString(2).padStart(4,"0"),15===s&&(r+=t.toString(2).padStart(24,"0")),r+=a.toString(2).padStart(4,"0");let n=8*Math.ceil(r.length/8);r=r.padEnd(n,"0");let o=new Uint8Array(r.length/8);for(let e=0;e<r.length;e+=8)o[e/8]=parseInt(r.slice(e,e+8),2);return o},wt=new WeakSet,gt=function(e,t,i,s,a,r,n){let o=s/1e6,l=(s-(n??0))/1e6,d=a/1e6,f=h(this,kt,Tt).call(this,o,l,e);return o=f.presentationTimestamp,l=f.decodeTimestamp,r?.decoderConfig&&(null===e.info.decoderConfig?e.info.decoderConfig=r.decoderConfig:Object.assign(e.info.decoderConfig,r.decoderConfig)),{presentationTimestamp:o,decodeTimestamp:l,duration:d,data:t,size:t.byteLength,type:i,timescaleUnitsToNextSample:O(d,e.timescale)}},bt=new WeakSet,yt=function(e,t){"fragmented"!==r(this,Je).fastStart&&e.samples.push(t);const i=O(t.presentationTimestamp-t.decodeTimestamp,e.timescale);if(null!==e.lastTimescaleUnits){let s=O(t.decodeTimestamp,e.timescale,!1),a=Math.round(s-e.lastTimescaleUnits);if(e.lastTimescaleUnits+=a,e.lastSample.timescaleUnitsToNextSample=a,"fragmented"!==r(this,Je).fastStart){let t=M(e.timeToSampleTable);1===t.sampleCount?(t.sampleDelta=a,t.sampleCount++):t.sampleDelta===a?t.sampleCount++:(t.sampleCount--,e.timeToSampleTable.push({sampleCount:2,sampleDelta:a}));const s=M(e.compositionTimeOffsetTable);s.sampleCompositionTimeOffset===i?s.sampleCount++:e.compositionTimeOffsetTable.push({sampleCount:1,sampleCompositionTimeOffset:i})}}else e.lastTimescaleUnits=0,"fragmented"!==r(this,Je).fastStart&&(e.timeToSampleTable.push({sampleCount:1,sampleDelta:O(t.duration,e.timescale)}),e.compositionTimeOffsetTable.push({sampleCount:1,sampleCompositionTimeOffset:i}));e.lastSample=t;let s=!1;if(e.currentChunk){let i=t.presentationTimestamp-e.currentChunk.startTimestamp;if("fragmented"===r(this,Je).fastStart){let a=r(this,Ye)??r(this,Ze);const n=r(this,Je).minFragmentDuration??1;e===a&&"key"===t.type&&i>=n&&(s=!0,h(this,St,xt).call(this))}else s=i>=.5}else s=!0;s&&(e.currentChunk&&h(this,Ct,vt).call(this,e),e.currentChunk={startTimestamp:t.presentationTimestamp,samples:[]}),e.currentChunk.samples.push(t)},kt=new WeakSet,Tt=function(e,t,i){const s="strict"===r(this,Je).firstTimestampBehavior,a=-1===i.lastDecodeTimestamp;if(s&&a&&0!==t)throw new Error(`The first chunk for your media track must have a timestamp of 0 (received DTS=${t}).Non-zero first timestamps are often caused by directly piping frames or audio data from a MediaStreamTrack into the encoder. Their timestamps are typically relative to the age of thedocument, which is probably what you want.\n\nIf you want to offset all timestamps of a track such that the first one is zero, set firstTimestampBehavior: 'offset' in the options.\n`);if("offset"===r(this,Je).firstTimestampBehavior||"cross-track-offset"===r(this,Je).firstTimestampBehavior){let s;void 0===i.firstDecodeTimestamp&&(i.firstDecodeTimestamp=t),s="offset"===r(this,Je).firstTimestampBehavior?i.firstDecodeTimestamp:Math.min(r(this,Ye)?.firstDecodeTimestamp??1/0,r(this,Ze)?.firstDecodeTimestamp??1/0),t-=s,e-=s}if(t<i.lastDecodeTimestamp)throw new Error(`Timestamps must be monotonically increasing (DTS went from ${1e6*i.lastDecodeTimestamp} to ${1e6*t}).`);return i.lastDecodeTimestamp=t,{presentationTimestamp:e,decodeTimestamp:t}},Ct=new WeakSet,vt=function(e){if("fragmented"===r(this,Je).fastStart)throw new Error("Can't finalize individual chunks if 'fastStart' is set to 'fragmented'.");if(e.currentChunk)if(e.finalizedChunks.push(e.currentChunk),r(this,tt).push(e.currentChunk),0!==e.compactlyCodedChunkTable.length&&M(e.compactlyCodedChunkTable).samplesPerChunk===e.currentChunk.samples.length||e.compactlyCodedChunkTable.push({firstChunk:e.finalizedChunks.length,samplesPerChunk:e.currentChunk.samples.length}),"in-memory"!==r(this,Je).fastStart){e.currentChunk.offset=r(this,Ke).pos;for(let t of e.currentChunk.samples)r(this,Ke).write(t.data),t.data=null;h(this,zt,Et).call(this)}else e.currentChunk.offset=0},St=new WeakSet,xt=function(e=!0){if("fragmented"!==r(this,Je).fastStart)throw new Error("Can't finalize a fragment unless 'fastStart' is set to 'fragmented'.");let t=[r(this,Ye),r(this,Ze)].filter((e=>e&&e.currentChunk));if(0===t.length)return;let i=(s=this,a=it,{set _(e){o(s,a,e,n)},get _(){return r(s,a,l)}})._++;var s,a,n,l;if(1===i){let e=F(t,r(this,et),!0);r(this,Ke).writeBox(e)}let d=r(this,Ke).pos,f=ce(i,t);r(this,Ke).writeBox(f);{let e=V(!1),i=0;for(let e of t)for(let t of e.currentChunk.samples)i+=t.size;let s=r(this,Ke).measureBox(e)+i;s>=2**32&&(e.largeSize=!0,s=r(this,Ke).measureBox(e)+i),e.size=s,r(this,Ke).writeBox(e)}for(let e of t){e.currentChunk.offset=r(this,Ke).pos,e.currentChunk.moofOffset=d;for(let t of e.currentChunk.samples)r(this,Ke).write(t.data),t.data=null}let u=r(this,Ke).pos;r(this,Ke).seek(r(this,Ke).offsets.get(f));let m=ce(i,t);r(this,Ke).writeBox(m),r(this,Ke).seek(u);for(let e of t)e.finalizedChunks.push(e.currentChunk),r(this,tt).push(e.currentChunk),e.currentChunk=null;e&&h(this,zt,Et).call(this)},zt=new WeakSet,Et=function(){r(this,Ke)instanceof Ge&&r(this,Ke).flush()},At=new WeakSet,Mt=function(){if(r(this,rt))throw new Error("Cannot add new video or audio chunks after the file has been finalized.")},Wt=l,((a,r,n,o)=>{if(r&&"object"==typeof r||"function"==typeof r)for(let h of i(r))s.call(a,h)||h===n||e(a,h,{get:()=>r[h],enumerable:!(o=t(r,h))||o.enumerable});return a})(e({},"__esModule",{value:!0}),Wt)})();"object"==typeof module&&"object"==typeof module.exports&&Object.assign(module.exports,Mp4Muxer);
+//# sourceMappingURL=/sm/d72d5cf9845053fd379eb03c8aa0076e0f937f51c85e59b9c023ad3f33721c0b.map</script>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const P = {
+    mode:"blobs",
+    colors:["#ff6a00","#2d4bff","#a02bff","#ff2d9a","#ffd166"],
+    bgColor:"#0a0a12",
+    count:4, size:42, spread:30, soft:70,
+    period:8, orbR:12, orbK:1, rotK:0, pulse:8,
+    ampX:50, lamX:60, spdX:1,
+    ampY:30, lamY:45, spdY:-1,
+    harm:0.4, skew:0, mirror:"none",
+    colorama:false, palette:"src",
+    phase:0, reps:1, cycleK:0, contrast:1.1, gamma:1, poster:0,
+    sat:1.1, hue:0, bright:1,
+    grain:0.12, vignette:0.15,
+    glCount:0, glType:"circle", glSize:28, glRefr:1.18, glRim:0.7, glOrbK:1, glRotK:0,
+    ratio:"1:1", res:900, exScale:2,
+    fps:30, dur:8, bitrate:14,
+    seed:7,
+  };
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  const PALETTES = {
+    src:      null,
+    thermal:  ["#000006","#12129e","#3a2ffb","#d31a1a","#ff7a18","#ffffff"],
+    inferno:  ["#000004","#320a5a","#781c6d","#bb3654","#ec6824","#fbb41a","#fcffa4"],
+    aurora:   ["#000000","#3a0004","#c40b0b","#ff2e14","#ff9d80","#cfe0ff","#ffffff"],
+    ice:      ["#000010","#04275e","#0a5ac0","#57b6ff","#cfeaff","#ffffff"],
+    plasma:   ["#0d0887","#6a00a8","#b12a90","#e16462","#fca636","#f0f921"],
+    toxic:    ["#020a02","#0c3b0c","#23d18b","#bbff32","#eaffb0","#ffffff"],
+    chrome:   ["#000000","#3f3f46","#a1a1aa","#e4e4e7","#ffffff"],
+    lime:     ["#060612","#1c3a00","#5c9e00","#bbff32","#eaffb0","#ffffff"],
+    violet:   ["#05000d","#2e026d","#7a2bff","#ff79e0","#ffd9f0","#ffffff"],
+    red:      ["#000000","#4a0000","#c40b0b","#ff4d2e","#ffd9c2","#ffffff"],
+    rainbow:  ["#ff0040","#ff8000","#ffe600","#2bd12b","#00c8ff","#4b2bff","#c400ff","#ff0040"],
+  };
+  const PALETTE_ORDER = ["src","rainbow","thermal","inferno","aurora","ice","plasma","toxic","chrome","lime","violet","red"];
+
+  const STYLE_PRESETS = {
+    "Psycho":  { mode:"stripes", colors:["#ff0040","#ffe600","#2bd12b","#00c8ff","#c400ff"], bgColor:"#000000",
+                 count:5, size:60, soft:40, period:8, rotK:1, orbR:0, pulse:0,
+                 ampX:70, lamX:34, spdX:1, ampY:55, lamY:26, spdY:-1, harm:0.6, mirror:"none",
+                 colorama:true, palette:"rainbow", reps:2, cycleK:1, contrast:1.3, gamma:1, poster:0,
+                 sat:1.3, grain:0.1, vignette:0.1 },
+    "Aura":    { mode:"blobs", colors:["#ff6a00","#2d4bff","#a02bff","#ff9d80","#ffd166"], bgColor:"#f4f1ea",
+                 count:3, size:38, spread:24, soft:110, period:10, orbR:10, orbK:1, pulse:12,
+                 ampX:18, lamX:120, spdX:1, ampY:14, lamY:100, spdY:-1, harm:0.2, mirror:"none",
+                 colorama:false, sat:1.05, grain:0.08, vignette:0,
+                 glCount:2, glType:"circle", glSize:26, glRefr:1.15, glRim:0.6, glOrbK:1 },
+    "Silk":    { mode:"blobs", colors:["#ff6a00","#ff2d9a","#a02bff","#2d4bff","#12041f"], bgColor:"#12041f",
+                 count:4, size:46, spread:26, soft:80, period:10, orbR:14, orbK:1, rotK:1, pulse:8,
+                 ampX:60, lamX:90, spdX:1, ampY:70, lamY:70, spdY:1, harm:0.5, skew:0.4, mirror:"none",
+                 colorama:false, sat:1.15, grain:0.12, vignette:0.25,
+                 glCount:1, glType:"star", glSize:38, glRefr:1.28, glRim:0.8, glOrbK:1, glRotK:1 },
+    "Pulse":   { mode:"bar", colors:["#ffffff","#9db8ff","#2d4bff","#0a1030","#ffffff"], bgColor:"#000006",
+                 count:1, size:34, soft:60, period:8, orbR:0, rotK:0, pulse:16,
+                 ampX:55, lamX:40, spdX:1, ampY:35, lamY:60, spdY:-1, harm:0.5, mirror:"x",
+                 colorama:true, palette:"ice", reps:2, cycleK:0, contrast:1.35, gamma:0.9, poster:0,
+                 sat:1.2, grain:0.12, vignette:0.3 },
+    "Ripple":  { mode:"bar", colors:["#ffffff","#8ab4ff","#1b2dbf","#050a2a","#ffffff"], bgColor:"#000000",
+                 count:1, size:26, soft:50, period:8, orbR:0, pulse:10,
+                 ampX:30, lamX:26, spdX:1, ampY:60, lamY:34, spdY:-1, harm:0.6, mirror:"y",
+                 colorama:true, palette:"ice", reps:3, cycleK:0, contrast:1.3, gamma:0.85, poster:0,
+                 sat:1.15, grain:0.15, vignette:0.35 },
+    "Lava":    { mode:"blobs", colors:["#fff2b0","#ff8a00","#ff3d2e","#7a0c0c","#1a0000"], bgColor:"#0b0500",
+                 count:5, size:44, spread:30, soft:70, period:9, orbR:12, orbK:1, pulse:14,
+                 ampX:45, lamX:50, spdX:1, ampY:60, lamY:40, spdY:1, harm:0.5, mirror:"none",
+                 colorama:true, palette:"inferno", reps:1, contrast:1.25, gamma:0.9, poster:0,
+                 sat:1.2, grain:0.2, vignette:0.3 },
+    "Ocean":   { mode:"stripes", colors:["#04275e","#0a5ac0","#57b6ff","#0a2c66","#cfeaff"], bgColor:"#000814",
+                 count:4, size:70, soft:80, period:12, rotK:0, orbR:8, orbK:1,
+                 ampX:50, lamX:110, spdX:1, ampY:25, lamY:140, spdY:-1, harm:0.35, skew:0.3, mirror:"none",
+                 colorama:false, sat:1.1, grain:0.1, vignette:0.2 },
+    "Hologram":{ mode:"ring", colors:["#7a2bff","#33e0ff","#ff79e0","#2e026d","#ffffff"], bgColor:"#05000d",
+                 count:1, size:52, soft:60, period:8, orbR:4, orbK:1, rotK:1, pulse:10,
+                 ampX:40, lamX:36, spdX:2, ampY:40, lamY:30, spdY:-2, harm:0.55, mirror:"none",
+                 colorama:true, palette:"violet", reps:3, cycleK:1, contrast:1.2, gamma:0.9,
+                 sat:1.25, grain:0.12, vignette:0.3 },
+    "Klik Flow":{ mode:"blobs", colors:["#bbff32","#5c9e00","#eaffb0","#1c3a00","#23d18b"], bgColor:"#060612",
+                 count:4, size:44, spread:28, soft:80, period:9, orbR:12, orbK:1, pulse:10,
+                 ampX:55, lamX:70, spdX:1, ampY:40, lamY:55, spdY:-1, harm:0.45, mirror:"none",
+                 colorama:false, sat:1.15, grain:0.12, vignette:0.2 },
+    "Sunset":  { mode:"stripes", colors:["#ffd166","#ff8a5c","#ff4d6d","#7a2bff","#2d1b69"], bgColor:"#1a0b2e",
+                 count:5, size:80, soft:90, period:11, rotK:0, orbR:6, orbK:1,
+                 ampX:35, lamX:130, spdX:1, ampY:20, lamY:160, spdY:-1, harm:0.3, skew:-0.3, mirror:"none",
+                 colorama:false, sat:1.15, grain:0.15, vignette:0.15 },
+    "Ink":     { mode:"blobs", colors:["#ffffff","#9aa0a6","#26262e","#000000","#e4e4e7"], bgColor:"#f5f5f2",
+                 count:4, size:40, spread:30, soft:60, period:9, orbR:14, orbK:1, pulse:8,
+                 ampX:65, lamX:44, spdX:1, ampY:55, lamY:36, spdY:-1, harm:0.6, mirror:"none",
+                 colorama:true, palette:"chrome", reps:2, contrast:1.5, gamma:1.05, poster:0,
+                 sat:0.9, grain:0.15, vignette:0.1 },
+    "Topo":    { mode:"blobs", colors:["#23d18b","#bbff32","#0c3b0c","#eaffb0","#020a02"], bgColor:"#020a02",
+                 count:4, size:46, spread:28, soft:90, period:10, orbR:10, orbK:1, pulse:10,
+                 ampX:45, lamX:60, spdX:1, ampY:45, lamY:50, spdY:-1, harm:0.4, mirror:"none",
+                 colorama:true, palette:"toxic", reps:2, contrast:1.2, gamma:1, poster:9,
+                 sat:1.1, grain:0.1, vignette:0.25 },
+  };
+
+  /* ================= elements / canvases ================= */
+  const $ = id => document.getElementById(id);
+  const out = $("out"), octx = out.getContext("2d", { willReadFrequently:true });
+  const srcC  = document.createElement("canvas"), scx = srcC.getContext("2d");
+  const waveA = document.createElement("canvas"), actx = waveA.getContext("2d");
+  const waveB = document.createElement("canvas"), bctx = waveB.getContext("2d");
+  const waveC = document.createElement("canvas"), cctx = waveC.getContext("2d", { willReadFrequently:true });
+  const glSnap = document.createElement("canvas"), gsx = glSnap.getContext("2d");
+  const noise = document.createElement("canvas");
+
+  let W=0, H=0, PAD=0, RW=0, RH=0, Q=1;
+  function fxHash(i){ const v=Math.sin(i*127.1+311.7)*43758.5453; return v-Math.floor(v); }
+  let LUT = new Uint8Array(1024*3);
+  let TONE = new Float32Array(256);
+  let playing = true, t0 = performance.now()/1000, tPause = 0;
+  let busyExport = false;
+  let blobSeeds = [];
+
+  const clamp = (v,a,b)=>v<a?a:v>b?b:v;
+  const TAU = Math.PI*2;
+  function hexToRgb(h){ const n=parseInt(h.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+
+  /* seeded rng */
+  function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function reseed(){
+    const rnd = mulberry(P.seed*1013 + 17);
+    blobSeeds = [];
+    for(let i=0;i<8;i++){
+      blobSeeds.push({ ax:(rnd()-0.5)*2, ay:(rnd()-0.5)*2, ph:rnd()*TAU, rr:0.55+rnd()*0.45, sz:0.7+rnd()*0.6 });
+    }
+  }
+
+  /* ================= sizing ================= */
+  function ratioWH(){ const [a,b]=P.ratio.split(":").map(Number); return a/b; }
+  function computeSize(base){
+    const r = ratioWH();
+    let w,h;
+    if(r>=1){ w=base; h=Math.round(base/r); } else { h=base; w=Math.round(base*r); }
+    return [w-w%2, h-h%2];
+  }
+  function resize(exportBase){
+    [W,H] = computeSize(exportBase||P.res);
+    Q = exportBase ? 1 : 0.55;                 // превʼю рахується у зменшеному буфері — без лагів
+    RW = Math.max(2,Math.round(W*Q)); RH = Math.max(2,Math.round(H*Q));
+    PAD = Math.round(130*(RW/900));
+    out.width=W; out.height=H;
+    glSnap.width=W; glSnap.height=H;
+    // src at low res with overscan for rotation
+    const s = 0.4;
+    srcC.width = Math.round((RW+2*PAD)*s*1.25);
+    srcC.height = Math.round((RH+2*PAD)*s*1.25);
+    waveA.width = RW+2*PAD; waveA.height = RH+2*PAD;
+    waveB.width = RW+2*PAD; waveB.height = RH+2*PAD;
+    waveC.width = RW; waveC.height = RH;
+    $("dims").textContent = `${W} × ${H}px · ×${P.exScale} = ${W*P.exScale} × ${H*P.exScale}`;
+  }
+
+  /* ================= LUT / tone ================= */
+  function lutStops(){
+    if(P.palette==="src") return [P.bgColor, ...P.colors];
+    return PALETTES[P.palette];
+  }
+  function buildLUT(){
+    const st = lutStops().map(hexToRgb);
+    for(let i=0;i<1024;i++){
+      const u = i/1023*(st.length-1);
+      const k = Math.min(st.length-2, Math.floor(u));
+      const f = u-k;
+      LUT[i*3]=st[k][0]+(st[k+1][0]-st[k][0])*f;
+      LUT[i*3+1]=st[k][1]+(st[k+1][1]-st[k][1])*f;
+      LUT[i*3+2]=st[k][2]+(st[k+1][2]-st[k][2])*f;
+    }
+  }
+  function buildTone(){
+    for(let i=0;i<256;i++){
+      let v = Math.pow(i/255, P.gamma);
+      v = (v-0.5)*P.contrast+0.5;
+      v = clamp(v,0,0.9995);
+      if(P.poster>=2) v = Math.round(v*(P.poster-1))/(P.poster-1)*0.9995;
+      TONE[i]=v;
+    }
+  }
+  function buildNoise(){
+    noise.width=256; noise.height=256;
+    const nx=noise.getContext("2d");
+    const img=nx.createImageData(256,256);
+    for(let i=0;i<img.data.length;i+=4){ const v=110+Math.random()*90|0; img.data[i]=img.data[i+1]=img.data[i+2]=v; img.data[i+3]=255; }
+    nx.putImageData(img,0,0);
+  }
+
+  /* ================= source drawing ================= */
+  function drawSource(u){
+    const sw=srcC.width, sh=srcC.height;
+    scx.setTransform(1,0,0,1,0,0);
+    scx.globalCompositeOperation="source-over";
+    scx.filter="none";
+    scx.fillStyle=P.bgColor;
+    scx.fillRect(0,0,sw,sh);
+    const cx=sw/2, cy=sh/2;
+    const base=Math.min(sw,sh);
+    const pulse = 1 + P.pulse/100*Math.sin(TAU*u);
+
+    if(P.mode==="blobs"){
+      for(let i=0;i<P.count;i++){
+        const sd=blobSeeds[i];
+        const px = cx + sd.ax*P.spread/100*sw + P.orbR/100*sw*Math.cos(TAU*P.orbK*u + sd.ph);
+        const py = cy + sd.ay*P.spread/100*sh + P.orbR/100*sw*Math.sin(TAU*P.orbK*u + sd.ph);
+        const r = Math.max(4, P.size/100*base*sd.sz*pulse*0.5);
+        const g = scx.createRadialGradient(px,py,0,px,py,r);
+        const col=P.colors[i%P.colors.length];
+        g.addColorStop(0,col);
+        g.addColorStop(0.75,col+"90");
+        g.addColorStop(1,col+"00");
+        scx.fillStyle=g;
+        scx.fillRect(px-r,py-r,r*2,r*2);
+      }
+    } else if(P.mode==="stripes"){
+      const g = scx.createLinearGradient(0,0,sw,0);
+      const n = Math.max(2,P.count);
+      for(let k=0;k<=n;k++){
+        g.addColorStop(k/n, P.colors[k%P.colors.length]);
+      }
+      scx.fillStyle=g;
+      scx.fillRect(0,0,sw,sh);
+    } else if(P.mode==="bar"){
+      const bw = P.size/100*sw*pulse;
+      const g = scx.createLinearGradient(cx-bw/2,0,cx+bw/2,0);
+      g.addColorStop(0,P.colors[3]);
+      g.addColorStop(0.25,P.colors[1]);
+      g.addColorStop(0.5,P.colors[0]);
+      g.addColorStop(0.75,P.colors[1]);
+      g.addColorStop(1,P.colors[3]);
+      scx.fillStyle=g;
+      scx.fillRect(cx-bw/2,0,bw,sh);
+    } else { // ring
+      const r = P.size/100*base*0.5*pulse;
+      const th = r*0.55;
+      const g = scx.createRadialGradient(cx,cy,Math.max(0,r-th),cx,cy,r+th);
+      g.addColorStop(0,P.colors[3]+"00");
+      g.addColorStop(0.35,P.colors[1]);
+      g.addColorStop(0.5,P.colors[0]);
+      g.addColorStop(0.65,P.colors[2]);
+      g.addColorStop(1,P.colors[3]+"00");
+      scx.fillStyle=g;
+      scx.fillRect(cx-r-th,cy-r-th,(r+th)*2,(r+th)*2);
+    }
+  }
+
+  /* ================= render ================= */
+  function renderFrame(u){
+    const AW=waveA.width, AH=waveA.height;
+    drawSource(u);
+    // 1. blur + rotation upscale into waveA (padded)
+    actx.setTransform(1,0,0,1,0,0);
+    actx.filter="none";
+    actx.fillStyle=P.bgColor;
+    actx.fillRect(0,0,AW,AH);
+    const rot = TAU*P.rotK*u;
+    const blurPx = P.soft*(RW/900);
+    if(blurPx>0.3) actx.filter=`blur(${blurPx}px)`;
+    actx.translate(AW/2,AH/2);
+    actx.rotate(rot);
+    const cover = 1.28; // overscan so rotation never shows edges
+    actx.drawImage(srcC, -AW/2*cover, -AH/2*cover, AW*cover, AH*cover);
+    actx.setTransform(1,0,0,1,0,0);
+    actx.filter="none";
+
+    // 2. wave X: shift rows horizontally, waveA -> waveB
+    bctx.setTransform(1,0,0,1,0,0);
+    bctx.fillStyle=P.bgColor;
+    bctx.fillRect(0,0,AW,AH);
+    const sl = Math.max(1, Math.round(AH/500));
+    const ampX=P.ampX*(RW/900), lamX=P.lamX/100*RH, phX=TAU*P.spdX*u;
+    if(ampX>0.3){
+      for(let y=0;y<AH;y+=sl){
+        const yy=y-PAD;
+        let dx = ampX*Math.sin(TAU*yy/lamX + phX + P.skew*TAU*yy/AH);
+        if(P.harm>0) dx += ampX*P.harm*0.5*Math.sin(TAU*yy*2.7/lamX - phX*1.5);
+        bctx.drawImage(waveA, 0,y,AW,sl, dx,y,AW,sl);
+      }
+    } else {
+      bctx.drawImage(waveA,0,0);
+    }
+
+    // 3. wave Y: shift columns vertically, waveB -> waveC (crop to WxH)
+    cctx.setTransform(1,0,0,1,0,0);
+    cctx.fillStyle=P.bgColor;
+    cctx.fillRect(0,0,RW,RH);
+    const ampY=P.ampY*(RW/900), lamY=P.lamY/100*RW, phY=TAU*P.spdY*u;
+    const slx = Math.max(1, Math.round(RW/500));
+    if(ampY>0.3){
+      for(let x=0;x<RW;x+=slx){
+        let dy = ampY*Math.sin(TAU*x/lamY + phY + P.skew*TAU*x/RW);
+        if(P.harm>0) dy += ampY*P.harm*0.5*Math.sin(TAU*x*2.7/lamY - phY*1.5);
+        cctx.drawImage(waveB, x+PAD, PAD+dy, slx,RH, x,0,slx,RH);
+      }
+    } else {
+      cctx.drawImage(waveB, PAD,PAD,RW,RH, 0,0,RW,RH);
+    }
+
+    // 4. colorama on the SMALL buffer (fast), then upscale+mirror
+    if(P.colorama){
+      const img = cctx.getImageData(0,0,RW,RH);
+      const d = img.data;
+      const ph = ((P.phase + P.cycleK*u)%1+1)%1;
+      const reps=P.reps;
+      const n=RW*RH;
+      for(let i=0;i<n;i++){
+        const j=i*4;
+        const lum = (d[j]*77 + d[j+1]*150 + d[j+2]*29)>>8;
+        const v = TONE[lum];
+        const idx = (((v*reps+ph)%1)*1023)|0;
+        d[j]=LUT[idx*3]; d[j+1]=LUT[idx*3+1]; d[j+2]=LUT[idx*3+2];
+      }
+      cctx.putImageData(img,0,0);
+    }
+    // 5. upscale + mirror into out (with color correction filter)
+    const hw=Math.floor(RW/2), hh=Math.floor(RH/2);
+    octx.setTransform(1,0,0,1,0,0);
+    octx.filter = `saturate(${P.sat}) hue-rotate(${P.hue}deg) brightness(${P.bright})`;
+    octx.globalCompositeOperation="source-over";
+    if(P.mirror==="none"){
+      octx.drawImage(waveC, 0,0,RW,RH, 0,0,W,H);
+    } else if(P.mirror==="x"){
+      octx.drawImage(waveC, 0,0,hw,RH, 0,0,W/2,H);
+      octx.save(); octx.scale(-1,1);
+      octx.drawImage(waveC, 0,0,hw,RH, -W,0,W/2,H);
+      octx.restore();
+    } else if(P.mirror==="y"){
+      octx.drawImage(waveC, 0,0,RW,hh, 0,0,W,H/2);
+      octx.save(); octx.scale(1,-1);
+      octx.drawImage(waveC, 0,0,RW,hh, 0,-H,W,H/2);
+      octx.restore();
+    } else {
+      octx.drawImage(waveC, 0,0,hw,hh, 0,0,W/2,H/2);
+      octx.save(); octx.scale(-1,1); octx.drawImage(waveC, 0,0,hw,hh, -W,0,W/2,H/2); octx.restore();
+      octx.save(); octx.scale(1,-1); octx.drawImage(waveC, 0,0,hw,hh, 0,-H,W/2,H/2); octx.restore();
+      octx.save(); octx.scale(-1,-1); octx.drawImage(waveC, 0,0,hw,hh, -W,-H,W/2,H/2); octx.restore();
+    }
+    octx.filter="none";
+    // 5b. glass shapes (refraction over the finished gradient)
+    drawGlass(u);
+
+    // 6. grain
+    if(P.grain>0){
+      const gx=((u*7919)|0)%128, gy=((u*104729)|0)%128;
+      octx.save();
+      octx.globalAlpha=P.grain*0.5;
+      octx.globalCompositeOperation="overlay";
+      for(let y=-gy;y<H;y+=256) for(let x=-gx;x<W;x+=256) octx.drawImage(noise,x,y);
+      octx.restore();
+    }
+    // 7. vignette
+    if(P.vignette>0){
+      const g=octx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.45,W/2,H/2,Math.max(W,H)*0.78);
+      g.addColorStop(0,"rgba(0,0,0,0)");
+      g.addColorStop(1,`rgba(0,0,0,${P.vignette})`);
+      octx.save();
+      octx.globalCompositeOperation="multiply";
+      octx.fillStyle=g; octx.fillRect(0,0,W,H);
+      octx.restore();
+    }
+  }
+
+  /* ================= glass shapes ================= */
+  function glassPath(ctx,type,cx,cy,r,rot){
+    if(type==="circle"){ ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); return; }
+    if(type==="ring"){ ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); ctx.arc(cx,cy,r*0.55,0,TAU,true); return; }
+    if(type==="tri"){ ctx.beginPath(); for(let i=0;i<3;i++){ const a=rot+i/3*TAU-Math.PI/2, x=cx+r*Math.cos(a), y=cy+r*Math.sin(a); i?ctx.lineTo(x,y):ctx.moveTo(x,y); } ctx.closePath(); return; }
+    if(type==="star"){ ctx.beginPath(); for(let i=0;i<10;i++){ const rr=i%2?r*0.45:r, a=rot+i/10*TAU-Math.PI/2, x=cx+rr*Math.cos(a), y=cy+rr*Math.sin(a); i?ctx.lineTo(x,y):ctx.moveTo(x,y); } ctx.closePath(); return; }
+    ctx.beginPath();
+    for(let i=0;i<=24;i++){ const a=rot+i/24*TAU, rr=r*(0.82+0.22*Math.sin(a*3+rot*1.7)+0.08*Math.sin(a*5)); const x=cx+rr*Math.cos(a), y=cy+rr*Math.sin(a); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.closePath();
+  }
+  function drawGlass(u){
+    if(P.glCount<1) return;
+    gsx.setTransform(1,0,0,1,0,0);
+    gsx.clearRect(0,0,W,H);
+    gsx.drawImage(out,0,0);
+    for(let i=0;i<P.glCount;i++){
+      const ph=i/P.glCount*TAU + i*1.7;
+      const orbR=Math.min(W,H)*(0.10+0.16*fxHash(i*7+3));
+      const cx=W/2 + Math.cos(TAU*P.glOrbK*u+ph)*orbR;
+      const cy=H/2 + Math.sin(TAU*P.glOrbK*u+ph)*orbR*0.8;
+      const r=P.glSize/100*Math.min(W,H)*(0.75+0.5*fxHash(i*13+5))*0.5;
+      const rot=TAU*P.glRotK*u + ph;
+      // refracted fill
+      octx.save();
+      glassPath(octx,P.glType,cx,cy,r,rot);
+      octx.clip(P.glType==="ring"?"evenodd":"nonzero");
+      const z=P.glRefr;
+      octx.translate(cx,cy); octx.scale(z,z); octx.translate(-cx,-cy);
+      octx.drawImage(glSnap,0,0);
+      octx.restore();
+      // rim + specular
+      if(P.glRim>0){
+        octx.save();
+        glassPath(octx,P.glType,cx,cy,r,rot);
+        octx.strokeStyle="rgba(255,255,255,"+(0.55*P.glRim).toFixed(3)+")";
+        octx.lineWidth=Math.max(1.2,r*0.022);
+        octx.stroke();
+        octx.globalAlpha=0.45*P.glRim;
+        octx.fillStyle="#ffffff";
+        octx.filter="blur("+(r*0.09)+"px)";
+        octx.beginPath();
+        octx.ellipse(cx-r*0.34,cy-r*0.4,r*0.26,r*0.08,-0.6,0,TAU);
+        octx.fill();
+        octx.restore();
+        octx.filter="none";
+        octx.globalAlpha=1;
+      }
+    }
+  }
+
+  /* ================= loop ================= */
+  function now(){ return performance.now()/1000; }
+  function loopPhase(){
+    const t = playing ? (now()-t0) : tPause;
+    return (t/P.period)%1;
+  }
+  function tick(){
+    if(!busyExport) renderFrame(loopPhase());
+    requestAnimationFrame(tick);
+  }
+  $("playBtn").addEventListener("click", ()=>{
+    if(playing){ tPause=now()-t0; } else { t0=now()-tPause; }
+    playing=!playing;
+    $("icoPause").classList.toggle("hide",!playing);
+    $("icoPlay").classList.toggle("hide",playing);
+  });
+
+  /* ================= exports ================= */
+  function status(msg,rec){
+    $("statusTxt").textContent = msg||"Готово";
+    $("statusDot").classList.toggle("rec",!!rec);
+  }
+  function downloadBlob(blob,name){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+  async function withExportSize(fn){
+    busyExport=true;
+    const prevRes=P.res;
+    resize(Math.min(3200,P.res*P.exScale));
+    try{ await fn(); }
+    finally{ resize(prevRes); busyExport=false; status(""); }
+  }
+  function exportStill(type,ext,q){
+    withExportSize(async ()=>{
+      status("Рендер…");
+      await new Promise(r=>setTimeout(r,20));
+      renderFrame(loopPhase());
+      await new Promise(res=>out.toBlob(b=>{ if(b) downloadBlob(b,"flux."+ext); res(); },type,q));
+    });
+  }
+  $("exPng").addEventListener("click",()=>exportStill("image/png","png"));
+  $("exJpg").addEventListener("click",()=>exportStill("image/jpeg","jpg",0.92));
+  $("exWebp").addEventListener("click",()=>exportStill("image/webp","webp",0.95));
+  $("exSvg").addEventListener("click",()=>{
+    withExportSize(async ()=>{
+      status("Рендер…");
+      await new Promise(r=>setTimeout(r,20));
+      renderFrame(loopPhase());
+      const png=out.toDataURL("image/png");
+      const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+<image href="${png}" x="0" y="0" width="${W}" height="${H}"/>
+</svg>`;
+      downloadBlob(new Blob([svg],{type:"image/svg+xml"}),"flux.svg");
+    });
+  });
+
+  let mp4Busy=false;
+  $("exMp4").addEventListener("click", async ()=>{
+    if(mp4Busy){ mp4Busy=false; return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer==="undefined"){
+      alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return;
+    }
+    mp4Busy=true;
+    $("mp4Label").textContent="■ Скасувати";
+    await withExportSize(async ()=>{
+      const fps=parseInt($("fps").value,10);
+      const total=Math.round(P.dur*fps);
+      let encErr=null;
+      const muxer=new Mp4Muxer.Muxer({
+        target:new Mp4Muxer.ArrayBufferTarget(),
+        video:{codec:"avc",width:W,height:H},
+        fastStart:"in-memory",
+      });
+      const enc=new VideoEncoder({
+        output:(c,m)=>muxer.addVideoChunk(c,m),
+        error:e=>{encErr=e;},
+      });
+      enc.configure({
+        codec: W*H>1500000 ? "avc1.640033" : "avc1.640028",
+        width:W,height:H,bitrate:P.bitrate*1e6,framerate:fps,
+      });
+      const loops=Math.max(1,Math.round(P.dur/P.period));
+      for(let f=0;f<total;f++){
+        if(!mp4Busy||encErr) break;
+        const u=((f/fps)/(P.dur/loops))%1;
+        renderFrame(u);
+        const frame=new VideoFrame(out,{timestamp:f*1e6/fps,duration:1e6/fps});
+        enc.encode(frame,{keyFrame:f%(fps*2)===0});
+        frame.close();
+        if(enc.encodeQueueSize>4) await new Promise(r=>setTimeout(r,12));
+        if(f%3===0){ status(`Рендер ${Math.round((f+1)/total*100)}%`,true); await new Promise(r=>setTimeout(r,0)); }
+      }
+      if(mp4Busy&&!encErr){
+        status("Кодування…",true);
+        await enc.flush();
+        muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer],{type:"video/mp4"}),"flux.mp4");
+      }
+      try{enc.close();}catch(e){}
+      if(encErr) alert("Помилка кодування MP4: "+(encErr.message||encErr));
+    });
+    mp4Busy=false;
+    $("mp4Label").textContent="MP4 (луп)";
+  });
+
+  let webmRec=null;
+  $("exWebm").addEventListener("click",()=>{
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream||!window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    const fps=parseInt($("fps").value,10);
+    const stream=out.captureStream(fps);
+    const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
+    const chunks=[];
+    try{ webmRec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:P.bitrate*1e6}); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec=null; return; }
+    webmRec.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop=()=>{
+      if(chunks.length) downloadBlob(new Blob(chunks,{type:"video/webm"}),"flux.webm");
+      webmRec=null; $("webmLabel").textContent="WebM (alpha)"; status("");
+    };
+    webmRec.start(200);
+    $("webmLabel").textContent="■ Стоп";
+    status("REC",true);
+    setTimeout(()=>{ if(webmRec) webmRec.stop(); },P.dur*1000);
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.addEventListener("click",()=>{
+      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll("[data-pane]").forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+      document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+    });
+  });
+
+  function bindRange(id,key,valId,opts){
+    opts=opts||{};
+    const el=$(id), v=valId?$(valId):null;
+    const fmt=opts.fmt||(x=>x);
+    el.value=P[key]; if(v) v.textContent=fmt(P[key]);
+    el.addEventListener("input",()=>{
+      P[key]=opts.int?parseInt(el.value,10):parseFloat(el.value);
+      if(v) v.textContent=fmt(P[key]);
+      clearStyleActive();
+      if(opts.tone) buildTone();
+      if(opts.size) resize();
+    });
+  }
+  const f2=x=>x.toFixed(2);
+
+  bindRange("count","count","vCount",{int:true});
+  bindRange("size","size","vSize",{int:true});
+  bindRange("spread","spread","vSpread",{int:true});
+  bindRange("soft","soft","vSoft",{int:true});
+  bindRange("period","period","vPeriod");
+  bindRange("orbR","orbR","vOrbR",{int:true});
+  bindRange("orbK","orbK","vOrbK",{int:true});
+  bindRange("rotK","rotK","vRotK",{int:true});
+  bindRange("pulse","pulse","vPulse",{int:true});
+  bindRange("ampX","ampX","vAmpX",{int:true});
+  bindRange("lamX","lamX","vLamX",{int:true});
+  bindRange("spdX","spdX","vSpdX",{int:true});
+  bindRange("ampY","ampY","vAmpY",{int:true});
+  bindRange("lamY","lamY","vLamY",{int:true});
+  bindRange("spdY","spdY","vSpdY",{int:true});
+  bindRange("harm","harm","vHarm",{fmt:f2});
+  bindRange("skew","skew","vSkew",{fmt:f2});
+  bindRange("phase","phase","vPhase",{fmt:f2});
+  bindRange("reps","reps","vReps",{int:true});
+  bindRange("cycleK","cycleK","vCycleK",{int:true});
+  bindRange("contrast","contrast","vContrast",{fmt:f2,tone:true});
+  bindRange("gamma","gamma","vGamma",{fmt:f2,tone:true});
+  bindRange("poster","poster","vPoster",{int:true,tone:true});
+  bindRange("sat","sat","vSat",{fmt:f2});
+  bindRange("hue","hue","vHue",{int:true});
+  bindRange("bright","bright","vBright",{fmt:f2});
+  bindRange("grain","grain","vGrain",{fmt:f2});
+  bindRange("vignette","vignette","vVignette",{fmt:f2});
+  bindRange("glCount","glCount","vGlCount",{int:true});
+  bindRange("glSize","glSize","vGlSize",{int:true});
+  bindRange("glRefr","glRefr","vGlRefr",{fmt:f2});
+  bindRange("glRim","glRim","vGlRim",{fmt:f2});
+  bindRange("glOrbK","glOrbK","vGlOrbK",{int:true});
+  bindRange("glRotK","glRotK","vGlRotK",{int:true});
+  $("glType").addEventListener("change",e=>{ P.glType=e.target.value; clearStyleActive(); });
+  bindRange("res","res","vRes",{int:true,size:true});
+  bindRange("exScale","exScale","vExScale",{int:true,fmt:x=>x+"×",size:true});
+  bindRange("dur","dur","vDur",{int:true});
+  bindRange("bitrate","bitrate","vBitrate",{int:true});
+
+  for(let i=0;i<5;i++){
+    const el=$("c"+i);
+    el.value=P.colors[i];
+    el.addEventListener("input",()=>{ P.colors[i]=el.value; clearStyleActive(); if(P.palette==="src") buildLUT(); });
+  }
+  $("bgColor").addEventListener("input",e=>{ P.bgColor=e.target.value; clearStyleActive(); if(P.palette==="src") buildLUT(); });
+  $("colorama").addEventListener("change",e=>{ P.colorama=e.target.checked; clearStyleActive(); syncColoramaBox(); });
+  function syncColoramaBox(){ $("coloramaBox").style.opacity = P.colorama?1:0.35; }
+
+  document.querySelectorAll("#modes .preset").forEach(p=>{
+    p.addEventListener("click",()=>{
+      document.querySelectorAll("#modes .preset").forEach(x=>x.classList.remove("active"));
+      p.classList.add("active"); P.mode=p.dataset.mode; clearStyleActive();
+    });
+  });
+  document.querySelectorAll("#mirrors .preset").forEach(p=>{
+    p.addEventListener("click",()=>{
+      document.querySelectorAll("#mirrors .preset").forEach(x=>x.classList.remove("active"));
+      p.classList.add("active"); P.mirror=p.dataset.mirror; clearStyleActive();
+    });
+  });
+  document.querySelectorAll("#ratios .preset").forEach(p=>{
+    p.addEventListener("click",()=>{
+      document.querySelectorAll("#ratios .preset").forEach(x=>x.classList.remove("active"));
+      p.classList.add("active"); P.ratio=p.dataset.ratio; resize();
+    });
+  });
+
+  /* palettes */
+  function palGradient(name){
+    const st = name==="src" ? [P.bgColor,...P.colors] : PALETTES[name];
+    return `linear-gradient(90deg, ${st.join(",")})`;
+  }
+  function markPalette(){
+    document.querySelectorAll("#palettes .preset").forEach(p=>p.classList.toggle("active",p.dataset.pal===P.palette));
+  }
+  const palBox=$("palettes");
+  PALETTE_ORDER.forEach(name=>{
+    const div=document.createElement("div");
+    div.className="preset"; div.dataset.pal=name;
+    div.innerHTML=`${name==="src"?"Source":name[0].toUpperCase()+name.slice(1)}<div class="pal" style="background:${palGradient(name)}"></div>`;
+    div.addEventListener("click",()=>{ P.palette=name; markPalette(); buildLUT(); clearStyleActive(); });
+    palBox.appendChild(div);
+  });
+
+  /* style presets */
+  function clearStyleActive(){ document.querySelectorAll("#stylePresets .preset").forEach(p=>p.classList.remove("active")); }
+  const spBox=$("stylePresets");
+  Object.keys(STYLE_PRESETS).forEach(name=>{
+    const div=document.createElement("div");
+    div.className="preset"; div.textContent=name;
+    div.addEventListener("click",()=>{ applyPreset(name); clearStyleActive(); div.classList.add("active"); });
+    spBox.appendChild(div);
+  });
+  function applyPreset(name){
+    const p=JSON.parse(JSON.stringify(DEFAULTS));
+    Object.assign(p, JSON.parse(JSON.stringify(STYLE_PRESETS[name])));
+    p.seed = P.seed;
+    Object.assign(P,p);
+    syncUI(); buildTone(); buildLUT(); reseed(); resize();
+  }
+  $("btnRand").addEventListener("click",()=>{
+    const keys=Object.keys(STYLE_PRESETS);
+    const name=keys[Math.floor(Math.random()*keys.length)];
+    applyPreset(name);
+    clearStyleActive();
+    document.querySelectorAll("#stylePresets .preset").forEach(p=>{ if(p.textContent===name) p.classList.add("active"); });
+  });
+  $("btnShuffle").addEventListener("click",()=>{ P.seed=(P.seed*7+3)%1000+1; reseed(); });
+  $("reset").addEventListener("click",()=>{
+    Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS)));
+    clearStyleActive(); syncUI(); buildTone(); buildLUT(); reseed(); resize();
+  });
+
+  function syncUI(){
+    const set=(id,key,val,fmt)=>{ $(id).value=P[key]; if(val) $(val).textContent=(fmt||(x=>x))(P[key]); };
+    set("count","count","vCount"); set("size","size","vSize"); set("spread","spread","vSpread"); set("soft","soft","vSoft");
+    set("period","period","vPeriod"); set("orbR","orbR","vOrbR"); set("orbK","orbK","vOrbK");
+    set("rotK","rotK","vRotK"); set("pulse","pulse","vPulse");
+    set("ampX","ampX","vAmpX"); set("lamX","lamX","vLamX"); set("spdX","spdX","vSpdX");
+    set("ampY","ampY","vAmpY"); set("lamY","lamY","vLamY"); set("spdY","spdY","vSpdY");
+    set("harm","harm","vHarm",f2); set("skew","skew","vSkew",f2);
+    set("phase","phase","vPhase",f2); set("reps","reps","vReps"); set("cycleK","cycleK","vCycleK");
+    set("contrast","contrast","vContrast",f2); set("gamma","gamma","vGamma",f2); set("poster","poster","vPoster");
+    set("sat","sat","vSat",f2); set("hue","hue","vHue"); set("bright","bright","vBright",f2);
+    set("grain","grain","vGrain",f2); set("vignette","vignette","vVignette",f2);
+    set("glCount","glCount","vGlCount"); set("glSize","glSize","vGlSize");
+    set("glRefr","glRefr","vGlRefr",f2); set("glRim","glRim","vGlRim",f2);
+    set("glOrbK","glOrbK","vGlOrbK"); set("glRotK","glRotK","vGlRotK");
+    $("glType").value=P.glType;
+    set("res","res","vRes"); set("exScale","exScale","vExScale",x=>x+"×");
+    set("dur","dur","vDur"); set("bitrate","bitrate","vBitrate");
+    for(let i=0;i<5;i++) $("c"+i).value=P.colors[i];
+    $("bgColor").value=P.bgColor;
+    $("colorama").checked=P.colorama;
+    document.querySelectorAll("#modes .preset").forEach(x=>x.classList.toggle("active",x.dataset.mode===P.mode));
+    document.querySelectorAll("#mirrors .preset").forEach(x=>x.classList.toggle("active",x.dataset.mirror===P.mirror));
+    document.querySelectorAll("#ratios .preset").forEach(x=>x.classList.toggle("active",x.dataset.ratio===P.ratio));
+    markPalette(); syncColoramaBox();
+  }
+
+  /* ================= boot ================= */
+  buildNoise(); buildTone(); buildLUT(); reseed(); syncUI(); resize(); tick();
+})();
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>

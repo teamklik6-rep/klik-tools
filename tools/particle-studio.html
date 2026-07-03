@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Particle Studio — сніг / дощ / іскри</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="1.4" fill="white" stroke="none"/><circle cx="16" cy="4" r="1" fill="white" stroke="none"/><circle cx="20" cy="11" r="1.3" fill="white" stroke="none"/><circle cx="11" cy="12" r="1.8" fill="white" stroke="none"/><circle cx="5" cy="17" r="1.1" fill="white" stroke="none"/><circle cx="15" cy="19" r="1.5" fill="white" stroke="none"/></svg>
+      </div>
+      <div><h1>Particle Studio</h1><p>сніг · сяючий дощ · іскри · зоряний ґлоу</p></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="btnRand">Випадковий стиль</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="group"><h2>Пресети (7 снігопадів + інші)</h2><div class="presets c3" id="stylePresets"></div></div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="part">Частинки</div>
+        <div class="tab" data-tab="fx">Режими</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <div data-pane="part" class="active">
+        <div class="group">
+          <h2>Тип частинок</h2>
+          <div class="presets c3" id="types">
+            <div class="preset active" data-type="snow">Сніг</div>
+            <div class="preset" data-type="rain">Дощ</div>
+            <div class="preset" data-type="sparks">Іскри</div>
+            <div class="preset" data-type="bokeh">Боке</div>
+            <div class="preset" data-type="stars">Зірки</div>
+            <div class="preset" data-type="confetti">Конфеті</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Параметри</h2>
+          <div class="row"><label class="lbl">Кількість</label><span class="val" id="vCount">160</span></div>
+          <input type="range" id="count" min="20" max="600" step="10" value="160">
+          <div class="row mt"><label class="lbl">Розмір</label><span class="val" id="vSize">3.0</span></div>
+          <input type="range" id="size" min="0.5" max="12" step="0.5" value="3">
+          <div class="row mt"><label class="lbl">Швидкість (екранів/цикл)</label><span class="val" id="vSpeed">1</span></div>
+          <input type="range" id="speed" min="1" max="6" step="1" value="1">
+          <div class="row mt"><label class="lbl">Вітер (нахил)</label><span class="val" id="vWind">10</span></div>
+          <input type="range" id="wind" min="-60" max="60" step="1" value="10">
+          <div class="row mt"><label class="lbl">Коливання (wobble)</label><span class="val" id="vWob">12</span></div>
+          <input type="range" id="wob" min="0" max="50" step="1" value="12">
+          <div class="row mt"><label class="lbl">Сяйво частинок</label><span class="val" id="vPGlow">0.5</span></div>
+          <input type="range" id="pGlow" min="0" max="1" step="0.05" value="0.5">
+          <label class="check"><input type="checkbox" id="starGlow"> Star glow (промені на частинках)</label>
+        </div>
+        <div class="group">
+          <h2>Кольори</h2>
+          <div class="colors">
+            <div class="color-field"><span>Колір A</span><div class="color-wrap"><input type="color" id="colA" value="#ffffff"><span class="hex" id="colAHex">#FFFFFF</span></div></div>
+            <div class="color-field"><span>Колір B</span><div class="color-wrap"><input type="color" id="colB" value="#9db8ff"><span class="hex" id="colBHex">#9DB8FF</span></div></div>
+          </div>
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Фон</span><div class="color-wrap"><input type="color" id="bg" value="#02030a"><span class="hex" id="bgHex">#02030A</span></div></div>
+          </div>
+          <label class="check"><input type="checkbox" id="bgTrans"> Прозорий фон (PNG / WebM)</label>
+        </div>
+      </div>
+
+      <div data-pane="fx">
+        <div class="group">
+          <h2>Фліккер (3 авторежими)</h2>
+          <div class="presets c4" id="flickers">
+            <div class="preset active" data-fl="0">Ні</div>
+            <div class="preset" data-fl="1">Софт</div>
+            <div class="preset" data-fl="2">Пульс</div>
+            <div class="preset" data-fl="3">Строб</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Шари (multiply-режими)</h2>
+          <label class="check"><input type="checkbox" id="mirror"> Дзеркальний шар (mirror)</label>
+          <label class="check"><input type="checkbox" id="bgLayer" checked> Фоновий шар (далекі частинки)</label>
+          <div class="row mt"><label class="lbl">Глибина фону</label><span class="val" id="vDepth">0.45</span></div>
+          <input type="range" id="depth" min="0.1" max="0.9" step="0.05" value="0.45">
+        </div>
+        <div class="group">
+          <h2>Fun-режими</h2>
+          <label class="check"><input type="checkbox" id="rave"> Rave mode (кольоровий цикл)</label>
+          <label class="check"><input type="checkbox" id="rays"> God rays (промені згори)</label>
+          <div class="row mt"><label class="lbl">Сила променів</label><span class="val" id="vRaysA">0.4</span></div>
+          <input type="range" id="raysA" min="0.05" max="1" step="0.05" value="0.4">
+        </div>
+        <div class="group">
+          <h2>Кадр</h2>
+          <div class="row"><label class="lbl">Віньєтка</label><span class="val" id="vVig">0.25</span></div>
+          <input type="range" id="vig" min="0" max="1" step="0.05" value="0.25">
+          <div class="row mt"><label class="lbl">Період циклу (с)</label><span class="val" id="vPeriod">8</span></div>
+          <input type="range" id="period" min="3" max="20" step="0.5" value="8">
+          <div class="note">Швидкість кратна періоду — частинки повертаються в стартові точки, MP4 виходить безшовним лупом. Прозорий WebM = готовий particle-асет для монтажу.</div>
+        </div>
+      </div>
+
+      <div data-pane="export">
+        <div class="group">
+          <h2>Полотно</h2>
+          <div class="presets c3" id="ratios">
+            <div class="preset active" data-ratio="16:9">16:9</div>
+            <div class="preset" data-ratio="9:16">9:16</div>
+            <div class="preset" data-ratio="1:1">1:1</div>
+            <div class="preset" data-ratio="4:5">4:5</div>
+            <div class="preset" data-ratio="4:3">4:3</div>
+            <div class="preset" data-ratio="21:9">21:9</div>
+          </div>
+          <div class="row mt"><label class="lbl">Роздільність (превʼю)</label><span class="val" id="vRes">1000</span></div>
+          <input type="range" id="res" min="500" max="1400" step="50" value="1000">
+          <div class="row mt"><label class="lbl">Масштаб експорту</label><span class="val" id="vExScale">2×</span></div>
+          <input type="range" id="exScale" min="1" max="3" step="1" value="2">
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid c3">
+            <button class="btn primary" id="exPng">PNG</button>
+            <button class="btn" id="exJpg">JPG</button>
+            <button class="btn" id="exWebp">WEBP</button>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">FPS</label></div>
+          <select id="fps"><option>24</option><option selected>30</option><option>60</option></select>
+          <div class="row mt"><label class="lbl">Тривалість (с)</label><span class="val" id="vDur">8</span></div>
+          <input type="range" id="dur" min="2" max="30" step="1" value="8">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">12</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="12">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (луп)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM (alpha)</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово локально (WebCodecs) — детермінований безшовний луп, нічого не вивантажується.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · обробка локальна у браузері · сніг/дощ + фліккер + fun-режими (як Particle Playground)</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+  const P = {
+    type:"snow", count:160, size:3, speed:1, wind:10, wob:12, pGlow:0.5, starGlow:false,
+    colA:"#ffffff", colB:"#9db8ff", bg:"#02030a", bgTrans:false,
+    flick:0, mirror:false, bgLayer:true, depth:0.45,
+    rave:false, rays:false, raysA:0.4,
+    vig:0.25, period:8, ratio:"16:9", res:1000, exScale:2, fps:30, dur:8, bitrate:12,
+  };
+  const DEFAULTS=JSON.parse(JSON.stringify(P));
+  const PRESETS={
+    "Тихий сніг":  {type:"snow",count:140,size:2.5,speed:1,wind:6,wob:10,pGlow:0.4},
+    "Снігопад":    {type:"snow",count:280,size:3,speed:1,wind:12,wob:14,pGlow:0.45},
+    "Заметіль":    {type:"snow",count:480,size:2.5,speed:2,wind:38,wob:20,pGlow:0.35},
+    "Великі пластівці":{type:"snow",count:90,size:6.5,speed:1,wind:8,wob:18,pGlow:0.5},
+    "Ніжний сніг": {type:"snow",count:200,size:2,speed:1,wind:2,wob:6,pGlow:0.6,depth:0.35},
+    "Сніг у місті":{type:"snow",count:240,size:3.5,speed:1,wind:18,wob:12,pGlow:0.3,bg:"#0a0e1a"},
+    "Сніг-боке":   {type:"snow",count:120,size:5,speed:1,wind:6,wob:10,pGlow:0.8,starGlow:true,depth:0.6},
+    "Сяючий дощ":  {type:"rain",count:260,size:2.5,speed:3,wind:14,wob:0,pGlow:0.8,colA:"#bfe0ff",colB:"#5c8aff"},
+    "Злива":       {type:"rain",count:500,size:2,speed:4,wind:26,wob:0,pGlow:0.5},
+    "Іскри":       {type:"sparks",count:180,size:2,speed:2,wind:-8,wob:24,pGlow:0.9,colA:"#ffd27a",colB:"#ff8a3c",bg:"#070402"},
+    "Світляки":    {type:"bokeh",count:60,size:4,speed:1,wind:4,wob:30,pGlow:0.9,flick:1,colA:"#eaffb0",colB:"#bbff32",bg:"#04070d"},
+    "Зоряне поле": {type:"stars",count:200,size:2.5,speed:1,wob:0,wind:0,pGlow:0.8,starGlow:true,flick:1,bg:"#010208"},
+    "Rave":        {type:"confetti",count:300,size:4,speed:2,wind:10,wob:20,rave:true,flick:2,pGlow:0.6,bg:"#050208"},
+    "Klik":        {type:"sparks",count:220,size:2.5,speed:1,wind:6,wob:16,pGlow:0.85,colA:"#bbff32",colB:"#eaffb0",bg:"#060612",rays:true},
+  };
+  const $=id=>document.getElementById(id);
+  const out=$("out"), octx=out.getContext("2d");
+  const fxA=document.createElement("canvas"), fxActx=fxA.getContext("2d");
+  let W=0,H=0;
+  let playing=true,t0=performance.now()/1000,tPause=0,busyExport=false,needsRender=true;
+  const clamp=(v,a,b)=>v<a?a:v>b?b:v, TAU=Math.PI*2;
+  const fxHash=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);};
+  function hexToRgb(h){const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+  function mix(a,b,t){return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+
+  function ratioWH(){const[a,b]=P.ratio.split(":").map(Number);return a/b;}
+  function resize(base){
+    const r=ratioWH(); let w,h;
+    if(r>=1){w=base||P.res;h=Math.round(w/r);}else{h=base||P.res;w=Math.round(h*r);}
+    W=w-w%2;H=h-h%2;
+    out.width=W;out.height=H;fxA.width=W;fxA.height=H;
+    $("dims").textContent=`${W} × ${H}px · ×${P.exScale}`;
+  }
+
+  function flickOf(u,i){
+    if(P.flick===0) return 1;
+    if(P.flick===1) return 0.6+0.4*Math.sin(TAU*(2*u+fxHash(i*7)));
+    if(P.flick===2) return 0.35+0.65*Math.pow(0.5+0.5*Math.sin(TAU*(3*u+fxHash(i*11))),2);
+    return fxHash(i*13+Math.floor(u*P.period*8))>0.4?1:0.12;
+  }
+  function drawParticle(x,y,r,col,alpha,i,u,layerScale){
+    const [cr,cg,cb]=col;
+    octx.globalAlpha=alpha;
+    if(P.type==="rain"){
+      const len=r*10*P.speed*layerScale, ang=Math.atan2(1,P.wind/60);
+      const dx=Math.cos(ang+Math.PI/2)*0, dy=0;
+      octx.strokeStyle=`rgba(${cr|0},${cg|0},${cb|0},${alpha})`;
+      octx.lineWidth=r*0.5; octx.lineCap="round";
+      octx.beginPath(); octx.moveTo(x,y); octx.lineTo(x-P.wind/60*len,y-len); octx.stroke();
+      octx.globalAlpha=1; return;
+    }
+    if(P.type==="confetti"){
+      octx.save(); octx.translate(x,y); octx.rotate(fxHash(i*3)*TAU+u*TAU*2*(fxHash(i*5)>0.5?1:-1));
+      octx.fillStyle=`rgb(${cr|0},${cg|0},${cb|0})`;
+      octx.fillRect(-r,-r*0.6,r*2,r*1.2); octx.restore();
+      octx.globalAlpha=1; return;
+    }
+    // glow-disc types
+    const g=octx.createRadialGradient(x,y,0,x,y,r*(1+P.pGlow*2.5));
+    g.addColorStop(0,`rgba(${cr|0},${cg|0},${cb|0},${alpha})`);
+    g.addColorStop(0.4,`rgba(${cr|0},${cg|0},${cb|0},${(alpha*0.4).toFixed(3)})`);
+    g.addColorStop(1,`rgba(${cr|0},${cg|0},${cb|0},0)`);
+    octx.fillStyle=g;
+    const rr=r*(1+P.pGlow*2.5);
+    octx.fillRect(x-rr,y-rr,rr*2,rr*2);
+    if(P.starGlow||P.type==="stars"){
+      octx.strokeStyle=`rgba(${cr|0},${cg|0},${cb|0},${(alpha*0.7).toFixed(3)})`;
+      octx.lineWidth=Math.max(0.6,r*0.22); octx.lineCap="round";
+      const L=r*(2.2+P.pGlow*3);
+      octx.beginPath();
+      octx.moveTo(x-L,y);octx.lineTo(x+L,y);
+      octx.moveTo(x,y-L);octx.lineTo(x,y+L);
+      octx.stroke();
+    }
+    octx.globalAlpha=1;
+  }
+  function drawLayer(u,layerScale,alphaMul,countMul,seedOff){
+    const n=Math.round(P.count*countMul);
+    const cA=hexToRgb(P.colA), cB=hexToRgb(P.colB);
+    for(let i=0;i<n;i++){
+      const si=i+seedOff;
+      const wraps=(1+((fxHash(si*3)*3)|0))*P.speed;
+      const x0=fxHash(si*7+1), phase=fxHash(si*13+5);
+      let ty=(phase + wraps*u)%1;
+      if(P.type==="sparks"||P.type==="bokeh") ty=1-ty;         // вгору
+      let y=ty*(H+80)-40;
+      let x=x0*W + P.wind/60*ty*H*0.4;
+      if(P.wob>0) x+=Math.sin(TAU*( (1+((fxHash(si*17)*2)|0))*u + fxHash(si*19)))*P.wob*layerScale;
+      x=((x%W)+W)%W;
+      if(P.type==="stars"){ y=fxHash(si*23)*H; x=fxHash(si*29)*W; }
+      const szr=(0.4+fxHash(si*31)*0.9)*P.size*layerScale;
+      let col=mix(cA,cB,fxHash(si*37));
+      if(P.rave){ const hue=(u*2+fxHash(si*41))%1;
+        const k=hue*6|0, f2=hue*6-k;
+        const pal=[[255,60,120],[255,180,60],[190,255,60],[60,255,200],[80,140,255],[200,80,255]];
+        col=mix(pal[k%6],pal[(k+1)%6],f2); }
+      const fl=flickOf(u,si);
+      if(fl<0.05) continue;
+      drawParticle(x,y,szr,col,clamp(0.85*alphaMul*fl,0,1),si,u,layerScale);
+    }
+  }
+
+  function renderFrame(u){
+    octx.setTransform(1,0,0,1,0,0);
+    octx.globalCompositeOperation="source-over";
+    if(P.bgTrans) octx.clearRect(0,0,W,H);
+    else { octx.fillStyle=P.bg; octx.fillRect(0,0,W,H); }
+    octx.globalCompositeOperation="lighter";
+    if(P.bgLayer) drawLayer(u*0.8, P.depth, 0.4, 0.7, 5000);   // далекий шар
+    drawLayer(u, 1, 1, 1, 0);
+    if(P.mirror){
+      octx.save(); octx.translate(W,0); octx.scale(-1,1);
+      octx.globalAlpha=0.5;
+      drawLayer(u,1,0.5,0.5,9000);
+      octx.restore(); octx.globalAlpha=1;
+    }
+    octx.globalCompositeOperation="source-over";
+    // god rays from top
+    if(P.rays){
+      fxActx.setTransform(1,0,0,1,0,0); fxActx.clearRect(0,0,W,H); fxActx.drawImage(out,0,0);
+      octx.globalCompositeOperation="lighter";
+      const K=7;
+      for(let i=1;i<=K;i++){
+        const s2=1+0.35*(i/K);
+        octx.globalAlpha=P.raysA*(1-i/(K+1))*0.25;
+        octx.setTransform(s2,0,0,s2,W/2*(1-s2),0);
+        octx.drawImage(fxA,0,0);
+      }
+      octx.setTransform(1,0,0,1,0,0); octx.globalAlpha=1; octx.globalCompositeOperation="source-over";
+    }
+    if(P.vig>0&&!P.bgTrans){
+      const g=octx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.45,W/2,H/2,Math.max(W,H)*0.78);
+      g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,"rgba(0,0,0,"+P.vig+")");
+      octx.save(); octx.globalCompositeOperation="multiply"; octx.fillStyle=g; octx.fillRect(0,0,W,H); octx.restore();
+    }
+  }
+
+  /* ---- scaffolding ---- */
+  const now=()=>performance.now()/1000;
+  const loopPhase=()=>{ const t=playing?(now()-t0):tPause; return (t/P.period)%1; };
+  function requestRender(){ needsRender=true; }
+  function tick(){ requestAnimationFrame(tick); if(!busyExport&&(needsRender||playing)){ needsRender=false; renderFrame(loopPhase()); } }
+  $("playBtn").addEventListener("click",()=>{ if(playing){tPause=now()-t0;}else{t0=now()-tPause;} playing=!playing;
+    $("icoPause").classList.toggle("hide",!playing); $("icoPlay").classList.toggle("hide",playing); requestRender(); });
+  function status(m,r){ $("statusTxt").textContent=m||"Готово"; $("statusDot").classList.toggle("rec",!!r); }
+  function downloadBlob(b,n){ const u=URL.createObjectURL(b),a=document.createElement("a"); a.href=u;a.download=n;a.click(); setTimeout(()=>URL.revokeObjectURL(u),1500); }
+  async function withExportSize(fn){ busyExport=true; const p=P.res; resize(Math.min(3200,P.res*P.exScale)); try{await fn();}finally{ resize(p); busyExport=false; status(""); requestRender(); } }
+  function exportStill(t,e,q){ withExportSize(async()=>{ status("Рендер…"); await new Promise(r=>setTimeout(r,20)); renderFrame(loopPhase());
+    await new Promise(res=>out.toBlob(b=>{ if(b)downloadBlob(b,"particles."+e); res(); },t,q)); }); }
+  $("exPng").addEventListener("click",()=>exportStill("image/png","png"));
+  $("exJpg").addEventListener("click",()=>exportStill("image/jpeg","jpg",0.92));
+  $("exWebp").addEventListener("click",()=>exportStill("image/webp","webp",0.95));
+  let mp4Busy=false;
+  $("exMp4").addEventListener("click",async()=>{
+    if(mp4Busy){mp4Busy=false;return;}
+    if(!("VideoEncoder" in window)||typeof Mp4Muxer==="undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    mp4Busy=true; $("mp4Label").textContent="■ Скасувати";
+    await withExportSize(async()=>{
+      const fps=parseInt($("fps").value,10), total=Math.round(P.dur*fps); let encErr=null;
+      const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:W,height:H},fastStart:"in-memory"});
+      const enc=new VideoEncoder({output:(c,m)=>muxer.addVideoChunk(c,m),error:e=>{encErr=e;}});
+      enc.configure({codec:W*H>1500000?"avc1.640033":"avc1.640028",width:W,height:H,bitrate:P.bitrate*1e6,framerate:fps});
+      const loops=Math.max(1,Math.round(P.dur/P.period));
+      for(let f=0;f<total;f++){
+        if(!mp4Busy||encErr)break;
+        renderFrame(((f/fps)/(P.dur/loops))%1);
+        const fr=new VideoFrame(out,{timestamp:f*1e6/fps,duration:1e6/fps});
+        enc.encode(fr,{keyFrame:f%(fps*2)===0}); fr.close();
+        if(enc.encodeQueueSize>4)await new Promise(r=>setTimeout(r,12));
+        if(f%3===0){ status(`Рендер ${Math.round((f+1)/total*100)}%`,true); await new Promise(r=>setTimeout(r,0)); }
+      }
+      if(mp4Busy&&!encErr){ status("Кодування…",true); await enc.flush(); muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer],{type:"video/mp4"}),"particles.mp4"); }
+      try{enc.close();}catch(e){}
+      if(encErr)alert("Помилка кодування MP4: "+(encErr.message||encErr));
+    });
+    mp4Busy=false; $("mp4Label").textContent="MP4 (луп)";
+  });
+  let webmRec=null;
+  $("exWebm").addEventListener("click",()=>{
+    if(webmRec){webmRec.stop();return;}
+    if(!out.captureStream||!window.MediaRecorder){alert("Запис недоступний у цьому браузері.");return;}
+    const chunks=[]; const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
+    try{ webmRec=new MediaRecorder(out.captureStream(parseInt($("fps").value,10)),{mimeType:mime,videoBitsPerSecond:P.bitrate*1e6}); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec=null; return; }
+    webmRec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    webmRec.onstop=()=>{ if(chunks.length)downloadBlob(new Blob(chunks,{type:"video/webm"}),"particles.webm"); webmRec=null; $("webmLabel").textContent="WebM (alpha)"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent="■ Стоп"; status("REC",true);
+    setTimeout(()=>{if(webmRec)webmRec.stop();},P.dur*1000);
+  });
+
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+  function bindRange(id,key,vid,opts){ opts=opts||{}; const el=$(id),v=vid?$(vid):null,fmt=opts.fmt||(x=>x);
+    el.value=P[key]; if(v)v.textContent=fmt(P[key]);
+    el.addEventListener("input",()=>{ P[key]=opts.int?parseInt(el.value,10):parseFloat(el.value);
+      if(v)v.textContent=fmt(P[key]); clearActive(); if(opts.size)resize(); requestRender(); }); }
+  const f2=x=>x.toFixed(2), f1=x=>x.toFixed(1);
+  bindRange("count","count","vCount",{int:true}); bindRange("size","size","vSize",{fmt:f1});
+  bindRange("speed","speed","vSpeed",{int:true}); bindRange("wind","wind","vWind",{int:true});
+  bindRange("wob","wob","vWob",{int:true}); bindRange("pGlow","pGlow","vPGlow",{fmt:f1});
+  bindRange("depth","depth","vDepth",{fmt:f2}); bindRange("raysA","raysA","vRaysA",{fmt:f1});
+  bindRange("vig","vig","vVig",{fmt:f2}); bindRange("period","period","vPeriod");
+  bindRange("res","res","vRes",{int:true,size:true}); bindRange("exScale","exScale","vExScale",{int:true,fmt:x=>x+"×"});
+  bindRange("dur","dur","vDur",{int:true}); bindRange("bitrate","bitrate","vBitrate",{int:true});
+  [["starGlow","starGlow"],["bgTrans","bgTrans"],["mirror","mirror"],["bgLayer","bgLayer"],["rave","rave"],["rays","rays"]].forEach(([id,key])=>{
+    $(id).addEventListener("change",e=>{P[key]=e.target.checked;clearActive();requestRender();}); });
+  [["colA","colAHex"],["colB","colBHex"],["bg","bgHex"]].forEach(([id,hx])=>{
+    $(id).addEventListener("input",e=>{P[id]=e.target.value;$(hx).textContent=e.target.value.toUpperCase();clearActive();requestRender();}); });
+  document.querySelectorAll("#types .preset").forEach(p=>{
+    p.addEventListener("click",()=>{ P.type=p.dataset.type;
+      document.querySelectorAll("#types .preset").forEach(x=>x.classList.toggle("active",x===p)); clearActive(); requestRender(); });
+  });
+  document.querySelectorAll("#flickers .preset").forEach(p=>{
+    p.addEventListener("click",()=>{ P.flick=parseInt(p.dataset.fl,10);
+      document.querySelectorAll("#flickers .preset").forEach(x=>x.classList.toggle("active",x===p)); clearActive(); requestRender(); });
+  });
+  document.querySelectorAll("#ratios .preset").forEach(p=>{
+    p.addEventListener("click",()=>{ P.ratio=p.dataset.ratio;
+      document.querySelectorAll("#ratios .preset").forEach(x=>x.classList.toggle("active",x===p)); resize(); requestRender(); });
+  });
+  function clearActive(){ document.querySelectorAll("#stylePresets .preset").forEach(p=>p.classList.remove("active")); }
+  const spBox=$("stylePresets");
+  Object.keys(PRESETS).forEach(name=>{
+    const div=document.createElement("div"); div.className="preset"; div.textContent=name;
+    div.addEventListener("click",()=>{ Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS)),PRESETS[name]);
+      syncUI(); clearActive(); div.classList.add("active"); resize(); requestRender(); });
+    spBox.appendChild(div);
+  });
+  $("btnRand").addEventListener("click",()=>{
+    const keys=Object.keys(PRESETS), name=keys[Math.floor(Math.random()*keys.length)];
+    Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS)),PRESETS[name]);
+    syncUI(); clearActive(); resize(); requestRender();
+    document.querySelectorAll("#stylePresets .preset").forEach(p=>{ if(p.textContent===name)p.classList.add("active"); });
+  });
+  $("reset").addEventListener("click",()=>{ Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS))); clearActive(); syncUI(); resize(); requestRender(); });
+  function syncUI(){
+    const set=(id,key,vid,fmt)=>{ $(id).value=P[key]; if(vid)$(vid).textContent=(fmt||(x=>x))(P[key]); };
+    set("count","count","vCount");set("size","size","vSize",f1);set("speed","speed","vSpeed");set("wind","wind","vWind");
+    set("wob","wob","vWob");set("pGlow","pGlow","vPGlow",f1);set("depth","depth","vDepth",f2);set("raysA","raysA","vRaysA",f1);
+    set("vig","vig","vVig",f2);set("period","period","vPeriod");
+    set("res","res","vRes");set("exScale","exScale","vExScale",x=>x+"×");set("dur","dur","vDur");set("bitrate","bitrate","vBitrate");
+    ["starGlow","bgTrans","mirror","bgLayer","rave","rays"].forEach(k=>$(k).checked=P[k]);
+    [["colA","colAHex"],["colB","colBHex"],["bg","bgHex"]].forEach(([id,hx])=>{ $(id).value=P[id]; $(hx).textContent=P[id].toUpperCase(); });
+    document.querySelectorAll("#types .preset").forEach(p=>p.classList.toggle("active",p.dataset.type===P.type));
+    document.querySelectorAll("#flickers .preset").forEach(p=>p.classList.toggle("active",parseInt(p.dataset.fl,10)===P.flick));
+    document.querySelectorAll("#ratios .preset").forEach(p=>p.classList.toggle("active",p.dataset.ratio===P.ratio));
+  }
+  syncUI(); resize(); tick();
+})();
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>

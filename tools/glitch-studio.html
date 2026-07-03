@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glitch Studio — глітч-машина</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M3 7h8M13 7h8M3 12h5M10 12h11M3 17h11M16 17h5"/></svg>
+      </div>
+      <div><h1>Glitch Studio</h1><p>хроматика · CRT-вигини · дизер-ґлоу · дисторсія</p></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="btnDemo">Демо</button>
+      <button class="btn primary" id="btnUpload">Завантажити фото</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="group"><h2>Пресети стилю</h2><div class="presets c3" id="stylePresets"></div></div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="dist">Дисторсія</div>
+        <div class="tab" data-tab="color">Колір</div>
+        <div class="tab" data-tab="text">Текст</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <div data-pane="dist" class="active">
+        <div class="group">
+          <h2>Хвильова дисторсія</h2>
+          <div class="row"><label class="lbl">Амплітуда</label><span class="val" id="vWaveA">14</span></div>
+          <input type="range" id="waveA" min="0" max="80" step="1" value="14">
+          <div class="row mt"><label class="lbl">Довжина хвилі (%)</label><span class="val" id="vWaveL">30</span></div>
+          <input type="range" id="waveL" min="4" max="120" step="1" value="30">
+          <div class="row mt"><label class="lbl">Швидкість (циклів)</label><span class="val" id="vWaveS">1</span></div>
+          <input type="range" id="waveS" min="-3" max="3" step="1" value="1">
+          <div class="row mt"><label class="lbl">CRT-вигин (bend)</label><span class="val" id="vBend">0</span></div>
+          <input type="range" id="bend" min="0" max="60" step="1" value="0">
+        </div>
+        <div class="group">
+          <h2>Зсуви та корупція</h2>
+          <div class="row"><label class="lbl">Зсув слайсів</label><span class="val" id="vSlice">10</span></div>
+          <input type="range" id="slice" min="0" max="60" step="1" value="10">
+          <div class="row mt"><label class="lbl">Кількість слайсів</label><span class="val" id="vSliceN">8</span></div>
+          <input type="range" id="sliceN" min="2" max="40" step="1" value="8">
+          <div class="row mt"><label class="lbl">Блокова корупція</label><span class="val" id="vBlocks">6</span></div>
+          <input type="range" id="blocks" min="0" max="30" step="1" value="6">
+          <div class="row mt"><label class="lbl">Джиттер (кроків/с)</label><span class="val" id="vJit">7</span></div>
+          <input type="range" id="jit" min="1" max="20" step="1" value="7">
+          <label class="check"><input type="checkbox" id="vert"> Вертикальні слайси</label>
+        </div>
+        <div class="group">
+          <h2>Скан-лінії</h2>
+          <div class="row"><label class="lbl">Інтенсивність</label><span class="val" id="vScan">0.25</span></div>
+          <input type="range" id="scan" min="0" max="0.8" step="0.05" value="0.25">
+          <div class="row mt"><label class="lbl">Період (px)</label><span class="val" id="vScanP">3</span></div>
+          <input type="range" id="scanP" min="2" max="10" step="1" value="3">
+          <div class="row mt"><label class="lbl">Шум (static)</label><span class="val" id="vNoiseA">0.12</span></div>
+          <input type="range" id="noiseA" min="0" max="0.8" step="0.05" value="0.12">
+        </div>
+      </div>
+
+      <div data-pane="color">
+        <div class="group">
+          <h2>Хроматична аберація</h2>
+          <div class="row"><label class="lbl">Зсув (px)</label><span class="val" id="vChroma">8</span></div>
+          <input type="range" id="chroma" min="0" max="40" step="1" value="8">
+          <div class="row mt"><label class="lbl">Кут (°)</label><span class="val" id="vChromaA">0</span></div>
+          <input type="range" id="chromaA" min="0" max="180" step="5" value="0">
+          <label class="check"><input type="checkbox" id="chromaGlow" checked> Сяюча аберація (glow)</label>
+        </div>
+        <div class="group">
+          <h2>Сяйво і дизер</h2>
+          <div class="row"><label class="lbl">Bloom</label><span class="val" id="vGlow">0.35</span></div>
+          <input type="range" id="glow" min="0" max="1" step="0.05" value="0.35">
+          <div class="row mt"><label class="lbl">Радіус bloom</label><span class="val" id="vGlowR">12</span></div>
+          <input type="range" id="glowR" min="2" max="34" step="1" value="12">
+          <div class="row mt"><label class="lbl">Дизер (Bayer)</label><span class="val" id="vDith">0.00</span></div>
+          <input type="range" id="dith" min="0" max="1" step="0.05" value="0">
+          <div class="row mt"><label class="lbl">Масштаб дизера</label><span class="val" id="vDithS">2</span></div>
+          <input type="range" id="dithS" min="1" max="6" step="1" value="2">
+          <div class="note">Дизер накладає впорядковану Bayer-текстуру на світлі ділянки — «vibrant dithering» з референсу.</div>
+        </div>
+        <div class="group">
+          <h2>Тон</h2>
+          <div class="row"><label class="lbl">Насиченість</label><span class="val" id="vSat">1.25</span></div>
+          <input type="range" id="sat" min="0" max="2.5" step="0.05" value="1.25">
+          <div class="row mt"><label class="lbl">Контраст</label><span class="val" id="vCon">1.05</span></div>
+          <input type="range" id="con" min="0.5" max="2" step="0.05" value="1.05">
+          <div class="row mt"><label class="lbl">Відтінок (°)</label><span class="val" id="vHue">0</span></div>
+          <input type="range" id="hue" min="0" max="360" step="5" value="0">
+        </div>
+      </div>
+
+      <div data-pane="text">
+        <div class="group">
+          <h2>Текстовий шар</h2>
+          <textarea id="text" rows="2" spellcheck="false"></textarea>
+          <div class="row mt"><label class="lbl">Розмір (% ширини)</label><span class="val" id="vTSize">12</span></div>
+          <input type="range" id="tSize" min="4" max="30" step="0.5" value="12">
+          <div class="row mt"><label class="lbl">Сяйво тексту</label><span class="val" id="vTGlow">0.6</span></div>
+          <input type="range" id="tGlow" min="0" max="1" step="0.05" value="0.6">
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Колір тексту</span><div class="color-wrap"><input type="color" id="tCol" value="#ffffff"><span class="hex" id="tColHex">#FFFFFF</span></div></div>
+          </div>
+          <label class="check"><input type="checkbox" id="tDither" checked> Дизер-ґлоу на тексті</label>
+          <div class="note">Порожнє поле — без тексту. Текст проходить крізь усі глітч-шари, як text layer у Glitch Machine.</div>
+        </div>
+        <div class="group">
+          <h2>Кадр</h2>
+          <div class="row"><label class="lbl">Віньєтка</label><span class="val" id="vVig">0.25</span></div>
+          <input type="range" id="vig" min="0" max="1" step="0.05" value="0.25">
+          <div class="row mt"><label class="lbl">Період циклу (с)</label><span class="val" id="vPeriod">6</span></div>
+          <input type="range" id="period" min="2" max="16" step="0.5" value="6">
+        </div>
+      </div>
+
+      <div data-pane="export">
+        <div class="group">
+          <h2>Полотно</h2>
+          <div class="row"><label class="lbl">Роздільність (превʼю)</label><span class="val" id="vRes">900</span></div>
+          <input type="range" id="res" min="500" max="1400" step="50" value="900">
+          <div class="row mt"><label class="lbl">Масштаб експорту</label><span class="val" id="vExScale">2×</span></div>
+          <input type="range" id="exScale" min="1" max="3" step="1" value="2">
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid c3">
+            <button class="btn primary" id="exPng">PNG</button>
+            <button class="btn" id="exJpg">JPG</button>
+            <button class="btn" id="exWebp">WEBP</button>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">FPS</label></div>
+          <select id="fps"><option>24</option><option selected>30</option><option>60</option></select>
+          <div class="row mt"><label class="lbl">Тривалість (с)</label><span class="val" id="vDur">6</span></div>
+          <input type="range" id="dur" min="2" max="30" step="1" value="6">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">12</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="12">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (луп)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово локально (WebCodecs) — детермінований безшовний луп, нічого не вивантажується.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · обробка локальна у браузері · displacement → chroma → dither → bloom (як Glitch Machine)</footer>
+</div>
+<input type="file" id="file" accept="image/*" class="hide">
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+  const P = {
+    waveA:14, waveL:30, waveS:1, bend:0,
+    slice:10, sliceN:8, blocks:6, jit:7, vert:false,
+    scan:0.25, scanP:3, noiseA:0.12,
+    chroma:8, chromaA:0, chromaGlow:true,
+    glow:0.35, glowR:12, dith:0, dithS:2,
+    sat:1.25, con:1.05, hue:0,
+    text:"", tSize:12, tGlow:0.6, tCol:"#ffffff", tDither:true,
+    vig:0.25, period:6,
+    res:900, exScale:2, fps:30, dur:6, bitrate:12,
+  };
+  const DEFAULTS=JSON.parse(JSON.stringify(P));
+  const PRESETS={
+    "Chroma Glow":{chroma:14,chromaGlow:true,glow:0.5,waveA:8,slice:6,blocks:3,sat:1.4},
+    "CRT Bend":  {bend:35,scan:0.4,scanP:3,chroma:6,waveA:4,noiseA:0.2,vig:0.45},
+    "VHS Trash": {waveA:10,slice:24,sliceN:14,blocks:12,chroma:10,noiseA:0.35,scan:0.3,sat:1.3},
+    "Databend":  {vert:true,slice:40,sliceN:22,blocks:18,waveA:0,chroma:5,jit:12,dith:0.3},
+    "Dither Punk":{dith:0.8,dithS:3,glow:0.5,chroma:6,sat:1.5,con:1.2,scan:0.2},
+    "Neon Text": {text:"GLITCH",tSize:16,tGlow:0.9,tCol:"#7ef0ff",tDither:true,chroma:10,glow:0.5,waveA:6,blocks:4},
+    "Broadcast": {waveA:3,slice:4,blocks:2,chroma:4,scan:0.35,noiseA:0.25,vig:0.4,con:1.1},
+    "Corrupt":   {blocks:26,slice:30,sliceN:30,jit:14,chroma:12,waveA:6,noiseA:0.2},
+    "Minimal":   {waveA:5,slice:0,blocks:0,chroma:5,scan:0.15,noiseA:0.05,glow:0.25},
+    "Klik":      {text:"KLIK",tSize:20,tCol:"#bbff32",tGlow:0.8,chroma:8,dith:0.4,glow:0.5,sat:1.2},
+  };
+  const $=id=>document.getElementById(id);
+  const out=$("out"), octx=out.getContext("2d",{willReadFrequently:true});
+  const srcC=document.createElement("canvas"), sctx=srcC.getContext("2d");
+  const fxA=document.createElement("canvas"), fxActx=fxA.getContext("2d");
+  const fxB=document.createElement("canvas"), fxBctx=fxB.getContext("2d");
+  const noise=document.createElement("canvas");
+  const BAYER4=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  let W=0,H=0,photo=null;
+  let playing=true,t0=performance.now()/1000,tPause=0,busyExport=false,needsRender=true;
+  const clamp=(v,a,b)=>v<a?a:v>b?b:v, TAU=Math.PI*2;
+  const fxHash=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s);};
+
+  function resize(base){
+    W=(base||P.res); W-=W%2;
+    H=Math.round(W*(photo?photo.height/photo.width:0.75)); H-=H%2;
+    out.width=W; out.height=H;
+    srcC.width=W; srcC.height=H;
+    fxA.width=W; fxA.height=H; fxB.width=W; fxB.height=H;
+    if(photo){ const sc=Math.max(W/photo.width,H/photo.height);
+      sctx.fillStyle="#000"; sctx.fillRect(0,0,W,H);
+      sctx.drawImage(photo,(W-photo.width*sc)/2,(H-photo.height*sc)/2,photo.width*sc,photo.height*sc); }
+    $("dims").textContent=`${W} × ${H}px · ×${P.exScale}`;
+  }
+  function buildNoise(){
+    noise.width=256; noise.height=256;
+    const nx=noise.getContext("2d"), img=nx.createImageData(256,256);
+    for(let i=0;i<img.data.length;i+=4){ const v=Math.random()*255|0; img.data[i]=img.data[i+1]=img.data[i+2]=v; img.data[i+3]=255; }
+    nx.putImageData(img,0,0);
+  }
+  function snap(ctx2,cnv){ ctx2.setTransform(1,0,0,1,0,0); ctx2.clearRect(0,0,W,H); ctx2.drawImage(cnv,0,0); }
+
+  function renderFrame(u){
+    if(!photo||!W) return;
+    const step=Math.floor(u*P.period*P.jit);
+    // 1. base: source + text into fxA
+    snap(fxActx,srcC);
+    if(P.text.trim()){
+      const fpx=P.tSize/100*W;
+      fxActx.font=`800 ${fpx}px Inter,Arial,sans-serif`;
+      fxActx.textAlign="center"; fxActx.textBaseline="middle";
+      const lines=P.text.split("\n");
+      lines.forEach((ln,li)=>{
+        const y=H/2+(li-(lines.length-1)/2)*fpx*1.1;
+        if(P.tGlow>0){ fxActx.save(); fxActx.shadowColor=P.tCol; fxActx.shadowBlur=fpx*0.45*P.tGlow;
+          fxActx.fillStyle=P.tCol; fxActx.fillText(ln,W/2,y); fxActx.restore(); }
+        fxActx.fillStyle=P.tCol; fxActx.fillText(ln,W/2,y);
+      });
+    }
+    // 2. wave + bend displacement rows -> out
+    octx.setTransform(1,0,0,1,0,0);
+    octx.fillStyle="#000"; octx.fillRect(0,0,W,H);
+    const lam=P.waveL/100*H, ph=TAU*P.waveS*u;
+    const sl=Math.max(1,Math.round(H/450));
+    for(let y=0;y<H;y+=sl){
+      let dx=0;
+      if(P.waveA>0) dx += P.waveA*Math.sin(TAU*y/lam+ph);
+      if(P.bend>0){ const t=(y/H-0.5)*2; dx += -P.bend*t*t*Math.sign(t)*0.5; }
+      octx.drawImage(fxA,0,y,W,sl,dx,y,W,sl);
+    }
+    // 3. slice shift
+    if(P.slice>0&&P.sliceN>0){
+      snap(fxBctx,out);
+      for(let i=0;i<P.sliceN;i++){
+        if(fxHash(step*53+i*11)<0.35) continue;
+        if(P.vert){
+          const x=(fxHash(step*31+i*7)*W)|0, sw=Math.max(2,(fxHash(step*17+i*13)*W*0.05)|0);
+          const dy=Math.round((fxHash(step*11+i*29)-0.5)*2*P.slice);
+          octx.drawImage(fxB,x,0,sw,H,x,dy,sw,H);
+        } else {
+          const y=(fxHash(step*31+i*7)*H)|0, sh=Math.max(2,(fxHash(step*17+i*13)*H*0.05)|0);
+          const dx=Math.round((fxHash(step*11+i*29)-0.5)*2*P.slice);
+          octx.drawImage(fxB,0,y,W,sh,dx,y,W,sh);
+        }
+      }
+    }
+    // 4. block corruption
+    if(P.blocks>0){
+      snap(fxBctx,out);
+      for(let i=0;i<P.blocks;i++){
+        if(fxHash(step*97+i*19)<0.3) continue;
+        const bw=(0.04+fxHash(step*7+i*3)*0.18)*W, bh=(0.02+fxHash(step*13+i*5)*0.08)*H;
+        const x=fxHash(step*23+i*7)*(W-bw), y=fxHash(step*29+i*11)*(H-bh);
+        const dx=(fxHash(step*37+i*13)-0.5)*W*0.15, dy=(fxHash(step*41+i*17)-0.5)*H*0.05;
+        octx.drawImage(fxB,x,y,bw,bh,x+dx,y+dy,bw,bh);
+      }
+    }
+    // 5. chromatic aberration (channel split, optionally glowing)
+    if(P.chroma>0){
+      snap(fxActx,out);
+      const ang=P.chromaA*Math.PI/180, dx=Math.cos(ang)*P.chroma, dy=Math.sin(ang)*P.chroma;
+      const tint=(col)=>{ fxBctx.setTransform(1,0,0,1,0,0);
+        fxBctx.globalCompositeOperation="source-over"; fxBctx.clearRect(0,0,W,H); fxBctx.drawImage(fxA,0,0);
+        fxBctx.globalCompositeOperation="multiply"; fxBctx.fillStyle=col; fxBctx.fillRect(0,0,W,H);
+        fxBctx.globalCompositeOperation="destination-in"; fxBctx.drawImage(fxA,0,0);
+        fxBctx.globalCompositeOperation="source-over"; };
+      octx.fillStyle="#000"; octx.fillRect(0,0,W,H);
+      octx.globalCompositeOperation="lighter";
+      const blur=P.chromaGlow?`blur(${Math.max(1,P.chroma*0.35)}px)`:"none";
+      tint("#ff0000"); octx.filter=blur; octx.drawImage(fxB,-dx,-dy);
+      tint("#00ff00"); octx.filter="none"; octx.drawImage(fxB,0,0);
+      tint("#0000ff"); octx.filter=blur; octx.drawImage(fxB,dx,dy);
+      octx.filter="none"; octx.globalCompositeOperation="source-over";
+    }
+    // 6. bloom
+    if(P.glow>0){
+      snap(fxActx,out);
+      octx.globalCompositeOperation="lighter"; octx.globalAlpha=P.glow;
+      octx.filter=`blur(${P.glowR}px)`; octx.drawImage(fxA,0,0);
+      octx.filter="none"; octx.globalAlpha=1; octx.globalCompositeOperation="source-over";
+    }
+    // 7. bayer dither texture on highlights
+    if(P.dith>0){
+      const img=octx.getImageData(0,0,W,H), d=img.data, s=P.dithS;
+      for(let y=0;y<H;y+=1){
+        const by=BAYER4[(y/s|0)%4];
+        for(let x=0;x<W;x+=1){
+          const j=(y*W+x)*4;
+          const l=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8;
+          if(l<40) continue;
+          const t=(by[(x/s|0)%4]+0.5)/16;
+          const m=1+P.dith*( l/255>t ? 0.25 : -0.45 );
+          d[j]*=m; d[j+1]*=m; d[j+2]*=m;
+        }
+      }
+      octx.putImageData(img,0,0);
+    }
+    // 8. tone filter
+    if(P.sat!==1||P.con!==1||P.hue!==0){
+      snap(fxActx,out);
+      octx.filter=`saturate(${P.sat}) contrast(${P.con}) hue-rotate(${P.hue}deg)`;
+      octx.drawImage(fxA,0,0); octx.filter="none";
+    }
+    // 9. scanlines + noise + vignette
+    if(P.scan>0){
+      octx.fillStyle=`rgba(0,0,0,${P.scan})`;
+      for(let y=0;y<H;y+=P.scanP*2) octx.fillRect(0,y,W,P.scanP);
+    }
+    if(P.noiseA>0){
+      octx.save(); octx.globalAlpha=P.noiseA*0.4; octx.globalCompositeOperation="overlay";
+      const gx=((u*997)|0)%128, gy=((u*7919)|0)%128;
+      for(let y=-gy;y<H;y+=256) for(let x=-gx;x<W;x+=256) octx.drawImage(noise,x,y);
+      octx.restore();
+    }
+    if(P.vig>0){
+      const g=octx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.4,W/2,H/2,Math.max(W,H)*0.75);
+      g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,"rgba(0,0,0,"+P.vig+")");
+      octx.save(); octx.globalCompositeOperation="multiply"; octx.fillStyle=g; octx.fillRect(0,0,W,H); octx.restore();
+    }
+  }
+
+  /* ---- scaffolding ---- */
+  const now=()=>performance.now()/1000;
+  const loopPhase=()=>{ const t=playing?(now()-t0):tPause; return (t/P.period)%1; };
+  const isAnimated=()=>true;
+  function requestRender(){ needsRender=true; }
+  function tick(){ requestAnimationFrame(tick); if(!busyExport&&(needsRender||(playing&&isAnimated()))){ needsRender=false; renderFrame(loopPhase()); } }
+  $("playBtn").addEventListener("click",()=>{ if(playing){tPause=now()-t0;}else{t0=now()-tPause;} playing=!playing;
+    $("icoPause").classList.toggle("hide",!playing); $("icoPlay").classList.toggle("hide",playing); requestRender(); });
+  function status(m,r){ $("statusTxt").textContent=m||"Готово"; $("statusDot").classList.toggle("rec",!!r); }
+  function downloadBlob(b,n){ const u=URL.createObjectURL(b),a=document.createElement("a"); a.href=u;a.download=n;a.click(); setTimeout(()=>URL.revokeObjectURL(u),1500); }
+  async function withExportSize(fn){ busyExport=true; const p=P.res; resize(Math.min(3200,P.res*P.exScale)); try{await fn();}finally{ resize(p); busyExport=false; status(""); requestRender(); } }
+  function exportStill(t,e,q){ withExportSize(async()=>{ status("Рендер…"); await new Promise(r=>setTimeout(r,20)); renderFrame(loopPhase());
+    await new Promise(res=>out.toBlob(b=>{ if(b)downloadBlob(b,"glitch."+e); res(); },t,q)); }); }
+  $("exPng").addEventListener("click",()=>exportStill("image/png","png"));
+  $("exJpg").addEventListener("click",()=>exportStill("image/jpeg","jpg",0.92));
+  $("exWebp").addEventListener("click",()=>exportStill("image/webp","webp",0.95));
+  let mp4Busy=false;
+  $("exMp4").addEventListener("click",async()=>{
+    if(mp4Busy){mp4Busy=false;return;}
+    if(!("VideoEncoder" in window)||typeof Mp4Muxer==="undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    mp4Busy=true; $("mp4Label").textContent="■ Скасувати";
+    await withExportSize(async()=>{
+      const fps=parseInt($("fps").value,10), total=Math.round(P.dur*fps); let encErr=null;
+      const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:W,height:H},fastStart:"in-memory"});
+      const enc=new VideoEncoder({output:(c,m)=>muxer.addVideoChunk(c,m),error:e=>{encErr=e;}});
+      enc.configure({codec:W*H>1500000?"avc1.640033":"avc1.640028",width:W,height:H,bitrate:P.bitrate*1e6,framerate:fps});
+      const loops=Math.max(1,Math.round(P.dur/P.period));
+      for(let f=0;f<total;f++){
+        if(!mp4Busy||encErr)break;
+        renderFrame(((f/fps)/(P.dur/loops))%1);
+        const fr=new VideoFrame(out,{timestamp:f*1e6/fps,duration:1e6/fps});
+        enc.encode(fr,{keyFrame:f%(fps*2)===0}); fr.close();
+        if(enc.encodeQueueSize>4)await new Promise(r=>setTimeout(r,12));
+        if(f%3===0){ status(`Рендер ${Math.round((f+1)/total*100)}%`,true); await new Promise(r=>setTimeout(r,0)); }
+      }
+      if(mp4Busy&&!encErr){ status("Кодування…",true); await enc.flush(); muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer],{type:"video/mp4"}),"glitch.mp4"); }
+      try{enc.close();}catch(e){}
+      if(encErr)alert("Помилка кодування MP4: "+(encErr.message||encErr));
+    });
+    mp4Busy=false; $("mp4Label").textContent="MP4 (луп)";
+  });
+  let webmRec=null;
+  $("exWebm").addEventListener("click",()=>{
+    if(webmRec){webmRec.stop();return;}
+    if(!out.captureStream||!window.MediaRecorder){alert("Запис недоступний у цьому браузері.");return;}
+    const chunks=[]; const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
+    try{ webmRec=new MediaRecorder(out.captureStream(parseInt($("fps").value,10)),{mimeType:mime,videoBitsPerSecond:P.bitrate*1e6}); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec=null; return; }
+    webmRec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    webmRec.onstop=()=>{ if(chunks.length)downloadBlob(new Blob(chunks,{type:"video/webm"}),"glitch.webm"); webmRec=null; $("webmLabel").textContent="WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent="■ Стоп"; status("REC",true);
+    setTimeout(()=>{if(webmRec)webmRec.stop();},P.dur*1000);
+  });
+
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+  function bindRange(id,key,vid,opts){ opts=opts||{}; const el=$(id),v=vid?$(vid):null,fmt=opts.fmt||(x=>x);
+    el.value=P[key]; if(v)v.textContent=fmt(P[key]);
+    el.addEventListener("input",()=>{ P[key]=opts.int?parseInt(el.value,10):parseFloat(el.value);
+      if(v)v.textContent=fmt(P[key]); clearActive(); if(opts.size)resize(); requestRender(); }); }
+  const f2=x=>x.toFixed(2), f1=x=>x.toFixed(1);
+  bindRange("waveA","waveA","vWaveA",{int:true}); bindRange("waveL","waveL","vWaveL",{int:true});
+  bindRange("waveS","waveS","vWaveS",{int:true}); bindRange("bend","bend","vBend",{int:true});
+  bindRange("slice","slice","vSlice",{int:true}); bindRange("sliceN","sliceN","vSliceN",{int:true});
+  bindRange("blocks","blocks","vBlocks",{int:true}); bindRange("jit","jit","vJit",{int:true});
+  bindRange("scan","scan","vScan",{fmt:f2}); bindRange("scanP","scanP","vScanP",{int:true});
+  bindRange("noiseA","noiseA","vNoiseA",{fmt:f2}); bindRange("chroma","chroma","vChroma",{int:true});
+  bindRange("chromaA","chromaA","vChromaA",{int:true}); bindRange("glow","glow","vGlow",{fmt:f2});
+  bindRange("glowR","glowR","vGlowR",{int:true}); bindRange("dith","dith","vDith",{fmt:f2});
+  bindRange("dithS","dithS","vDithS",{int:true}); bindRange("sat","sat","vSat",{fmt:f2});
+  bindRange("con","con","vCon",{fmt:f2}); bindRange("hue","hue","vHue",{int:true});
+  bindRange("tSize","tSize","vTSize",{fmt:f1}); bindRange("tGlow","tGlow","vTGlow",{fmt:f2});
+  bindRange("vig","vig","vVig",{fmt:f2}); bindRange("period","period","vPeriod");
+  bindRange("res","res","vRes",{int:true,size:true}); bindRange("exScale","exScale","vExScale",{int:true,fmt:x=>x+"×"});
+  bindRange("dur","dur","vDur",{int:true}); bindRange("bitrate","bitrate","vBitrate",{int:true});
+  [["vert","vert"],["chromaGlow","chromaGlow"],["tDither","tDither"]].forEach(([id,key])=>{
+    $(id).addEventListener("change",e=>{P[key]=e.target.checked;clearActive();requestRender();}); });
+  $("text").addEventListener("input",()=>{P.text=$("text").value;clearActive();requestRender();});
+  $("tCol").addEventListener("input",e=>{P.tCol=e.target.value;$("tColHex").textContent=e.target.value.toUpperCase();clearActive();requestRender();});
+  function clearActive(){ document.querySelectorAll("#stylePresets .preset").forEach(p=>p.classList.remove("active")); }
+  const spBox=$("stylePresets");
+  Object.keys(PRESETS).forEach(name=>{
+    const div=document.createElement("div"); div.className="preset"; div.textContent=name;
+    div.addEventListener("click",()=>{ Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS)),PRESETS[name]);
+      syncUI(); clearActive(); div.classList.add("active"); requestRender(); });
+    spBox.appendChild(div);
+  });
+  $("reset").addEventListener("click",()=>{ Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS))); clearActive(); syncUI(); resize(); requestRender(); });
+  function syncUI(){
+    const set=(id,key,vid,fmt)=>{ $(id).value=P[key]; if(vid)$(vid).textContent=(fmt||(x=>x))(P[key]); };
+    set("waveA","waveA","vWaveA");set("waveL","waveL","vWaveL");set("waveS","waveS","vWaveS");set("bend","bend","vBend");
+    set("slice","slice","vSlice");set("sliceN","sliceN","vSliceN");set("blocks","blocks","vBlocks");set("jit","jit","vJit");
+    set("scan","scan","vScan",f2);set("scanP","scanP","vScanP");set("noiseA","noiseA","vNoiseA",f2);
+    set("chroma","chroma","vChroma");set("chromaA","chromaA","vChromaA");set("glow","glow","vGlow",f2);set("glowR","glowR","vGlowR");
+    set("dith","dith","vDith",f2);set("dithS","dithS","vDithS");set("sat","sat","vSat",f2);set("con","con","vCon",f2);set("hue","hue","vHue");
+    set("tSize","tSize","vTSize",f1);set("tGlow","tGlow","vTGlow",f2);set("vig","vig","vVig",f2);set("period","period","vPeriod");
+    set("res","res","vRes");set("exScale","exScale","vExScale",x=>x+"×");set("dur","dur","vDur");set("bitrate","bitrate","vBitrate");
+    $("vert").checked=P.vert; $("chromaGlow").checked=P.chromaGlow; $("tDither").checked=P.tDither;
+    $("text").value=P.text; $("tCol").value=P.tCol; $("tColHex").textContent=P.tCol.toUpperCase();
+  }
+  function loadDemo(){
+    const c=document.createElement("canvas"); c.width=900;c.height=675; const x=c.getContext("2d");
+    const bg=x.createLinearGradient(0,0,900,675); bg.addColorStop(0,"#1c2b4a");bg.addColorStop(0.5,"#5a2a5e");bg.addColorStop(1,"#0a0d16");
+    x.fillStyle=bg;x.fillRect(0,0,900,675);
+    const gs=x.createRadialGradient(430,340,20,450,360,240);
+    gs.addColorStop(0,"#ffe9c9");gs.addColorStop(0.45,"#e0703a");gs.addColorStop(0.8,"#5e2450");gs.addColorStop(1,"rgba(20,10,30,0)");
+    x.fillStyle=gs;x.beginPath();x.arc(450,360,230,0,7);x.fill();
+    x.fillStyle="#0b0e18";x.fillRect(0,500,900,175);
+    const img=new Image(); img.onload=()=>{ photo=img; resize(); requestRender(); }; img.src=c.toDataURL();
+  }
+  $("btnDemo").addEventListener("click",loadDemo);
+  $("btnUpload").addEventListener("click",()=>$("file").click());
+  $("file").addEventListener("change",e=>{ const f=e.target.files[0]; if(!f||!f.type.startsWith("image/"))return;
+    const img=new Image(); img.onload=()=>{ photo=img; resize(); requestRender(); }; img.src=URL.createObjectURL(f); e.target.value=""; });
+  window.addEventListener("paste",e=>{ const items=e.clipboardData&&e.clipboardData.items; if(!items)return;
+    for(const it of items){ if(it.type.startsWith("image")){ const img=new Image(); img.onload=()=>{photo=img;resize();requestRender();}; img.src=URL.createObjectURL(it.getAsFile()); break; } } });
+
+  buildNoise(); syncUI(); loadDemo(); tick();
+})();
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>
