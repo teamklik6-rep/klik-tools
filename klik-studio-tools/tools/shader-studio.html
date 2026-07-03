@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shader Studio — WebGL-шейдери</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 5-8 5-8-5 8-5z"/><path d="M4 13l8 5 8-5"/></svg>
+      </div>
+      <div><h1>Shader Studio</h1><p>20 живих WebGL-шейдерів · градієнти, шуми, метаболи</p></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="btnRand">Випадковий стиль</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="group"><h2>Шейдери</h2><div class="presets c2" id="gallery"></div></div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="controls">Контроли</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <div data-pane="controls" class="active">
+        <div class="group">
+          <h2>Загальні</h2>
+          <div class="row"><label class="lbl">Швидкість</label><span class="val" id="vSpeed">1.00</span></div>
+          <input type="range" id="speed" min="0" max="2" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Масштаб</label><span class="val" id="vScale">1.00</span></div>
+          <input type="range" id="scale" min="0.3" max="3" step="0.05" value="1">
+        </div>
+        <div class="group">
+          <h2>Кольори</h2>
+          <div class="colors" id="colorBox"></div>
+        </div>
+        <div class="group">
+          <h2>Параметри шейдера</h2>
+          <div id="paramBox"></div>
+          <div class="note">Ті самі контроли, що на shaders.paper.design — свої значення для кожного шейдера.</div>
+        </div>
+      </div>
+
+      <div data-pane="export">
+        <div class="group">
+          <h2>Полотно</h2>
+          <div class="presets c3" id="ratios">
+            <div class="preset active" data-ratio="1:1">1:1</div>
+            <div class="preset" data-ratio="4:5">4:5</div>
+            <div class="preset" data-ratio="3:4">3:4</div>
+            <div class="preset" data-ratio="9:16">9:16</div>
+            <div class="preset" data-ratio="16:9">16:9</div>
+            <div class="preset" data-ratio="21:9">21:9</div>
+          </div>
+          <div class="row mt"><label class="lbl">Роздільність (превʼю)</label><span class="val" id="vRes">900</span></div>
+          <input type="range" id="res" min="500" max="1400" step="50" value="900">
+          <div class="row mt"><label class="lbl">Масштаб експорту</label><span class="val" id="vExScale">2×</span></div>
+          <input type="range" id="exScale" min="1" max="3" step="1" value="2">
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid c3">
+            <button class="btn primary" id="exPng">PNG</button>
+            <button class="btn" id="exJpg">JPG</button>
+            <button class="btn" id="exWebp">WEBP</button>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">FPS</label></div>
+          <select id="fps"><option>24</option><option selected>30</option><option>60</option></select>
+          <div class="row mt"><label class="lbl">Тривалість (с)</label><span class="val" id="vDur">8</span></div>
+          <input type="range" id="dur" min="2" max="30" step="1" value="8">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">14</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="14">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово локально (WebCodecs), нічого не вивантажується.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · WebGL2 у браузері · 20 шейдерів (як Paper Shaders)</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+  const SHADERS = [{"key": "mesh-gradient", "title": "Mesh Gradient", "nc": 4, "colors": ["#5100ff", "#00ff80", "#ffcc00", "#ea00ff"], "speedDef": 1, "params": [{"label": "Дисторсія", "min": 0, "max": 1, "step": 0.01, "def": 0.8}, {"label": "Свірл", "min": 0, "max": 1, "step": 0.01, "def": 0.1}, {"label": "Мікс зерна", "min": 0, "max": 1, "step": 0.01, "def": 0}, {"label": "Зерно поверх", "min": 0, "max": 1, "step": 0.01, "def": 0}], "code": "vec2 mgPole(int i, float t){\n  float fi = float(i);\n  vec2 ph = vec2(hash21(vec2(fi, 3.7)), hash21(vec2(fi, 9.1))) * 6.2831853;\n  vec2 p;\n  p.x = sin(t*0.60 + ph.x) + 0.55*sin(t*0.23 + ph.y*1.3);\n  p.y = cos(t*0.48 + ph.y) + 0.55*cos(t*0.31 + ph.x*1.7);\n  return p * 0.34;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n  float t = u_time * 0.5;\n\n  // Свірл: обертання, що росте з радіусом\n  float r = length(uv);\n  uv = rot2(u_p1 * (3.0*r + 0.4*sin(t*0.7))) * uv;\n\n  // Дисторсія: плавний доменний варп симплекс-шумом\n  float w1 = snoise(uv*1.4 + vec2( t*0.30, -t*0.22));\n  float w2 = snoise(uv*1.4 + vec2(-t*0.25,  t*0.33) + 7.31);\n  uv += u_p0 * 0.38 * vec2(w1, w2);\n\n  vec3 cols[5];\n  cols[0]=u_c0; cols[1]=u_c1; cols[2]=u_c2; cols[3]=u_c3; cols[4]=u_c4;\n\n  // 4-5 рухомих полюсів, зважування за оберненою відстанню\n  vec3 acc = vec3(0.0);\n  float wsum = 0.0;\n  for(int i=0; i<5; i++){\n    float on = step(float(i), u_nc - 0.5);\n    vec2 p = mgPole(i, t);\n    float d = length(uv - p);\n    float w = on / (0.015 + d*d*d);\n    acc += cols[i]*cols[i] * w; // мікс у лінійному просторі — м'якше\n    wsum += w;\n  }\n  vec3 col = sqrt(acc / max(wsum, 1e-5));\n\n  // Зерно\n  float g = hash21(gl_FragCoord.xy + fract(t)*17.0) - 0.5;\n  col = mix(col, clamp(col + g*0.6, 0.0, 1.0), u_p2*0.6);\n  col += g * u_p3 * 0.35;\n\n  outColor = vec4(clamp(col, 0.0, 1.0), 1.0);\n}"}, {"key": "static-mesh-gradient", "title": "Static Mesh Gradient", "nc": 5, "colors": ["#e0eaff", "#241d9a", "#f75092", "#9f50d3", "#ffd2a8"], "speedDef": 0, "params": [{"label": "Сід", "min": 0, "max": 10, "step": 1, "def": 0}, {"label": "Хвиля X", "min": 0, "max": 1, "step": 0.01, "def": 0.3}, {"label": "Хвиля Y", "min": 0, "max": 1, "step": 0.01, "def": 0.3}, {"label": "М'якість", "min": 0.5, "max": 3, "step": 0.01, "def": 1}], "code": "vec3 smg_palette(int i){\n  if(i==0) return u_c0;\n  if(i==1) return u_c1;\n  if(i==2) return u_c2;\n  if(i==3) return u_c3;\n  return u_c4;\n}\n\nvec2 smg_pole(float seed, float i){\n  vec2 h = hash22(vec2(seed*13.7 + i*3.17 + 0.71, seed*7.31 + i*5.73 + 2.19));\n  return (h - 0.5) * 1.5;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res)/min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float seed = floor(u_p0 + 0.5);\n\n  // синусні викривлення простору (Хвиля X / Хвиля Y)\n  vec2 w = uv;\n  w.x += u_p1 * 0.35 * sin(uv.y*4.0 + seed*1.7 + 1.3);\n  w.y += u_p2 * 0.35 * sin(uv.x*4.0 + seed*2.3 + 0.6);\n  w.x += u_p1 * 0.15 * sin(uv.y*9.0 - seed*0.9);\n  w.y += u_p2 * 0.15 * sin(uv.x*9.0 + seed*1.1);\n\n  float soft = max(u_p3, 0.1);\n  float expo = 2.0 / soft; // більша м'якість = плавніші переходи\n\n  int n = int(clamp(u_nc, 1.0, 5.0));\n  vec3 acc = vec3(0.0);\n  float wsum = 0.0;\n\n  for(int i=0; i<5; i++){\n    if(i >= n) break;\n    vec2 pos = smg_pole(seed, float(i));\n    float d = length(w - pos);\n    float wt = 1.0 / pow(d + 0.03, expo);\n    acc += smg_palette(i) * wt;\n    wsum += wt;\n  }\n\n  vec3 col = acc / max(wsum, 1e-6);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "static-radial-gradient", "title": "Static Radial Gradient", "nc": 4, "colors": ["#5100ff", "#00bfff", "#ffe1f0", "#ffab00"], "speedDef": 0, "params": [{"label": "Радіальність", "min": 0, "max": 1, "step": 0.01, "def": 1}, {"label": "Фокус X", "min": -1, "max": 1, "step": 0.01, "def": 0}, {"label": "Фокус Y", "min": -1, "max": 1, "step": 0.01, "def": 0}, {"label": "Зерно", "min": 0, "max": 1, "step": 0.01, "def": 0.15}, {"label": "Гама", "min": 0.5, "max": 2, "step": 0.01, "def": 1}], "code": "vec3 srgGetColor(float idx){\n  if(idx < 0.5) return u_c0;\n  if(idx < 1.5) return u_c1;\n  if(idx < 2.5) return u_c2;\n  if(idx < 3.5) return u_c3;\n  return u_c4;\n}\n\nvec3 srgPalette(float t){\n  t = clamp(t, 0.0, 1.0);\n  float n = clamp(u_nc, 1.0, 5.0);\n  if(n < 1.5) return u_c0;\n  float seg = t * (n - 1.0);\n  float i = floor(min(seg, n - 2.0));\n  float f = clamp(seg - i, 0.0, 1.0);\n  vec3 a = srgGetColor(i);\n  vec3 b = srgGetColor(i + 1.0);\n  return mix(a, b, f);\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  // фокус градієнта (у нормалізованих координатах)\n  vec2 focus = vec2(u_p1, -u_p2) * 0.5 / max(u_scale, 0.001);\n  vec2 d = uv - focus;\n\n  // радіальна складова: відстань від фокуса\n  float tRad = length(d) * 1.35;\n\n  // лінійна складова: вертикальний градієнт, зсунутий фокусом\n  float tLin = clamp(0.5 + (uv.y - focus.y) * 1.1, 0.0, 1.0);\n\n  // мікс лінійний -> радіальний\n  float t = mix(tLin, clamp(tRad, 0.0, 1.0), clamp(u_p0, 0.0, 1.0));\n\n  // гама-корекція переходу\n  t = pow(clamp(t, 0.0, 1.0), max(u_p4, 0.001));\n\n  // зерно (dither) — приховує бандинг на переходах\n  float g = hash21(gl_FragCoord.xy + vec2(0.37, 0.71));\n  t += (g - 0.5) * u_p3 * 0.18;\n  t = clamp(t, 0.0, 1.0);\n\n  // дуже слабке \"дихання\" при ненульовій швидкості\n  t = clamp(t + 0.015 * sin(u_time * 0.5), 0.0, 1.0);\n\n  vec3 col = srgPalette(t);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "grain-gradient", "title": "Grain Gradient", "nc": 3, "colors": ["#1a1a40", "#6a4dff", "#ffb35c"], "speedDef": 0.6, "params": [{"label": "Форма (0 хвиля, 1 крапки, 2 трюше, 3 кути, 4 брижі, 5 блоб, 6 сфера)", "min": 0, "max": 6, "step": 1, "def": 0}, {"label": "М'якість", "min": 0, "max": 1, "step": 0.01, "def": 0.5}, {"label": "Інтенсивність", "min": 0, "max": 1, "step": 0.01, "def": 0.6}, {"label": "Зерно", "min": 0, "max": 1, "step": 0.01, "def": 0.5}], "code": "vec3 ggPalette(float t){\n  vec3 cols[5];\n  cols[0]=u_c0; cols[1]=u_c1; cols[2]=u_c2; cols[3]=u_c3; cols[4]=u_c4;\n  float n=clamp(u_nc,1.0,5.0);\n  float x=clamp(t,0.0,1.0)*(n-1.0);\n  vec3 col=cols[0];\n  for(int i=0;i<4;i++){\n    float fi=float(i);\n    col=mix(col,cols[i+1],clamp(x-fi,0.0,1.0));\n  }\n  return col;\n}\n\nfloat ggField(vec2 uv, float tm){\n  float shape=floor(u_p0+0.5);\n  float f=0.5;\n  if(shape<0.5){                       // wave\n    float w=sin(uv.x*3.0+tm)*0.22+sin(uv.x*6.7-tm*0.6)*0.09;\n    f=0.5-(uv.y-w)*1.4;\n  } else if(shape<1.5){                // dots\n    vec2 p=uv*5.0; p.x+=tm*0.3;\n    vec2 g=fract(p)-0.5;\n    f=1.0-length(g)*2.2+0.15*sin(hash21(floor(p))*6.28+tm);\n  } else if(shape<2.5){                // truchet (наближено)\n    vec2 p=uv*4.0+vec2(tm*0.15,0.0);\n    vec2 id=floor(p), q=fract(p);\n    if(hash21(id)>0.5) q.x=1.0-q.x;\n    float d=min(abs(length(q)-0.5),abs(length(q-1.0)-0.5));\n    f=1.0-d*3.0;\n  } else if(shape<3.5){                // corners\n    vec2 a=abs(uv);\n    float d=length(vec2(0.75,0.55)-a);\n    f=1.0-d*(1.1+0.15*sin(tm));\n  } else if(shape<4.5){                // ripple\n    float r=length(uv);\n    f=0.5+0.5*sin(r*10.0-tm*1.6)*exp(-r*1.1);\n  } else if(shape<5.5){                // blob\n    float s=0.0;\n    for(int i=0;i<3;i++){\n      float fi=float(i);\n      vec2 c=0.45*vec2(sin(tm*0.7+fi*2.1),cos(tm*0.5+fi*2.6));\n      float d=length(uv-c);\n      s+=0.16/(d*d+0.05);\n    }\n    f=s*0.35-0.35;\n  } else {                             // sphere\n    float r=length(uv)/0.85;\n    if(r<1.0){\n      vec3 nrm=vec3(uv/0.85,sqrt(1.0-r*r));\n      vec3 L=normalize(vec3(cos(tm*0.4),sin(tm*0.4),0.8));\n      f=clamp(dot(nrm,L),0.0,1.0);\n    } else f=0.0;\n  }\n  return f;\n}\n\nvoid main(){\n  vec2 uv=(gl_FragCoord.xy-0.5*u_res)/min(u_res.x,u_res.y);\n  uv/=max(u_scale,0.001);\n  float tm=u_time*0.8;\n\n  float f=ggField(uv,tm);\n\n  // інтенсивність: контраст поля\n  f=0.5+(f-0.5)*mix(0.6,2.2,u_p2);\n\n  // м'якість: ширина переходу\n  float soft=mix(0.06,1.2,u_p1);\n  f=clamp((f-0.5)/soft+0.5,0.0,1.0);\n\n  // зерно: дизеринг поля\n  float g=hash21(gl_FragCoord.xy+vec2(fract(tm*0.37)*17.0));\n  f+=(g-0.5)*u_p3*0.55;\n  f=clamp(f,0.0,1.0);\n\n  vec3 col=ggPalette(f);\n  col+=(hash21(gl_FragCoord.yx*1.7)-0.5)*u_p3*0.08;\n  outColor=vec4(col,1.0);\n}"}, {"key": "dot-grid", "title": "Dot Grid", "nc": 2, "colors": ["#f0f0f0", "#3a3a3a"], "speedDef": 0, "params": [{"label": "Розмір точки", "min": 0.05, "max": 0.45, "step": 0.01, "def": 0.25}, {"label": "Проміжок", "min": 2, "max": 40, "step": 1, "def": 18}, {"label": "Форма", "min": 0, "max": 3, "step": 1, "def": 0}, {"label": "Розкид розміру", "min": 0, "max": 1, "step": 0.01, "def": 0}, {"label": "Розкид прозорості", "min": 0, "max": 1, "step": 0.01, "def": 0}, {"label": "Товщина обводки", "min": 0, "max": 0.3, "step": 0.01, "def": 0}], "code": "float dgTri(vec2 p, float r){\n  const float k = 1.7320508;\n  p.y = -p.y;\n  p.x = abs(p.x) - r;\n  p.y = p.y + r/k;\n  if(p.x + k*p.y > 0.0) p = vec2(p.x - k*p.y, -k*p.x - p.y)*0.5;\n  p.x -= clamp(p.x, -2.0*r, 0.0);\n  return -length(p)*sign(p.y);\n}\n\nvec3 dgPickColor(vec2 id){\n  float n = max(u_nc - 1.0, 1.0);\n  float k = floor(hash21(id + 3.7)*n);\n  vec3 c = u_c1;\n  if(k > 0.5) c = u_c2;\n  if(k > 1.5) c = u_c3;\n  if(k > 2.5) c = u_c4;\n  return c;\n}\n\nvoid main(){\n  vec2 p = gl_FragCoord.xy / max(u_scale, 0.001);\n  float gap = max(u_p1, 2.0);\n  vec2 g = p / gap;\n  vec2 id = floor(g);\n  vec2 q = (fract(g) - 0.5)*gap;\n\n  float rnd = hash21(id);\n  float sz = u_p0*gap*(1.0 - u_p2*rnd);\n  sz = max(sz, 0.001);\n\n  float shape = floor(u_p3 + 0.5);\n  float d;\n  if(shape < 0.5)      d = length(q) - sz;                       // коло\n  else if(shape < 1.5) d = (abs(q.x) + abs(q.y))*0.7071 - sz;    // ромб\n  else if(shape < 2.5) d = max(abs(q.x), abs(q.y)) - sz;         // квадрат\n  else                 d = dgTri(q, sz*1.3);                     // трикутник\n\n  float stroke = u_p5*gap;\n  if(stroke > 0.001) d = abs(d) - stroke*0.5;\n\n  float aa = 1.0/max(u_scale, 0.001);\n  float m = 1.0 - smoothstep(-aa*0.5, aa*0.5, d);\n  m *= 1.0 - u_p4*hash21(id + 11.3);\n\n  vec3 col = mix(u_c0, dgPickColor(id), clamp(m, 0.0, 1.0));\n  outColor = vec4(col, 1.0);\n}"}, {"key": "dot-orbit", "title": "Dot Orbit", "nc": 5, "colors": ["#212121", "#ff8a00", "#ff3d71", "#5a53ff", "#00c2ff"], "speedDef": 1, "params": [{"label": "Розмір точки", "min": 0.1, "max": 0.6, "step": 0.01, "def": 0.28}, {"label": "Розкид розміру", "min": 0, "max": 1, "step": 0.01, "def": 0.5}, {"label": "Розліт орбіти", "min": 0, "max": 1, "step": 0.01, "def": 0.6}, {"label": "Кроків на колір", "min": 1, "max": 5, "step": 1, "def": 1}], "code": "vec3 dorb_palette(float t){\n  // t in [0,1) -> one of dot colors u_c1..u_c4, limited by active count\n  float nd = max(u_nc - 1.0, 1.0);\n  float idx = floor(t * nd);\n  idx = clamp(idx, 0.0, nd - 1.0);\n  if (idx < 0.5) return u_c1;\n  else if (idx < 1.5) return u_c2;\n  else if (idx < 2.5) return u_c3;\n  else return u_c4;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res)/min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  vec2 p = uv * 7.0;            // grid density\n  vec2 base = floor(p);\n\n  float steps = max(u_p3, 1.0); // steps per color (quantize hue picks)\n  float nd = max(u_nc - 1.0, 1.0);\n\n  vec3 col = u_c0;              // background\n  float acc = 0.0;\n  vec3 dotCol = vec3(0.0);\n\n  for (int j = -1; j <= 1; j++){\n    for (int i = -1; i <= 1; i++){\n      vec2 id = base + vec2(float(i), float(j));\n      vec2 rnd = hash22(id);\n      float r2 = hash21(id + 17.13);\n      float r3 = hash21(id + 39.7);\n\n      // orbit: random phase, radius, direction and speed\n      float dir = (r3 > 0.5) ? 1.0 : -1.0;\n      float spd = 0.6 + 1.4*r2;\n      float ang = rnd.x * 6.2831853 + u_time * spd * dir;\n      float rad = u_p2 * (0.15 + 0.35*rnd.y);\n      vec2 center = id + 0.5 + rad * vec2(cos(ang), sin(ang));\n\n      // dot size with random variation\n      float sz = u_p0 * (1.0 - u_p1 * r2 * 0.85);\n\n      float d = length(p - center);\n      float aa = fwidth(d) * 1.2 + 0.005;\n      float m = 1.0 - smoothstep(sz - aa, sz + aa, d);\n\n      if (m > acc){\n        // color pick: hash quantized through steps-per-color\n        float t = hash21(id + 5.37);\n        float q = floor(t * nd * steps);\n        float ci = mod(q, nd) / nd;\n        dotCol = dorb_palette(ci + 0.0001);\n        acc = m;\n      }\n    }\n  }\n\n  col = mix(col, dotCol, acc);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "metaballs", "title": "Metaballs", "nc": 5, "colors": ["#0e0a2a", "#6a5bff", "#00d4ff", "#ff6ac1", "#ffd166"], "speedDef": 1, "params": [{"label": "Кількість", "min": 2, "max": 10, "step": 1, "def": 6}, {"label": "Розмір", "min": 0.1, "max": 1, "step": 0.01, "def": 0.55}, {"label": "Різкість краю", "min": 1, "max": 40, "step": 0.5, "def": 14}], "code": "vec3 mbPickColor(float idx){\n  float nb = max(u_nc - 1.0, 1.0);      // скільки кольорів для куль (без фону)\n  float t = mod(idx, nb);\n  vec3 col = u_c1;\n  if(t >= 1.0) col = u_c2;\n  if(t >= 2.0) col = u_c3;\n  if(t >= 3.0) col = u_c4;\n  return col;\n}\n\nvec2 mbCenter(float fi){\n  vec2 seed = vec2(fi*1.37 + 0.71, fi*2.11 + 1.33);\n  float a = 0.4 + 0.13*fi;\n  float b = 0.5 + 0.11*fi;\n  return vec2(\n    sin(u_time*a + seed.x*4.0) * (0.28 + 0.14*hash21(seed)),\n    cos(u_time*b + seed.y*3.0) * (0.28 + 0.14*hash21(seed + 5.0))\n  );\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float count = clamp(u_p0, 2.0, 10.0);\n  float size  = clamp(u_p1, 0.1, 1.0);\n  float sharp = clamp(u_p2, 1.0, 40.0);\n\n  float field = 0.0;\n  float bestW = 0.0;\n  vec3 ballCol = u_c1;\n\n  for(int i = 0; i < 10; i++){\n    float fi = float(i);\n    if(fi >= count) break;\n    vec2 c = mbCenter(fi);\n    float r = size * 0.32 * (0.6 + 0.4*hash21(vec2(fi+3.7, fi*0.91)));\n    vec2 d = uv - c;\n    float w = r*r / (dot(d,d) + 1e-5);   // класичне поле 1/d^2\n    field += w;\n    if(w > bestW){ bestW = w; ballCol = mbPickColor(fi); }\n  }\n\n  float wdt = 0.5 / sharp;                       // ширина краю\n  float mask = smoothstep(1.0 - wdt, 1.0 + wdt, field);\n\n  // легкий внутрішній градієнт для обʼєму\n  float inner = smoothstep(1.0, 3.5, field);\n  vec3 body = mix(ballCol, ballCol*1.25 + 0.08, inner*0.6);\n\n  vec3 col = mix(u_c0, body, mask);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "neuro-noise", "title": "Neuro Noise", "nc": 2, "colors": ["#03000f", "#b7f4e8"], "speedDef": 1, "params": [{"label": "Яскравість", "min": 0, "max": 2, "step": 0.01, "def": 1}, {"label": "Контраст", "min": 0.5, "max": 4, "step": 0.05, "def": 1.6}, {"label": "Ітерації", "min": 2, "max": 8, "step": 1, "def": 6}], "code": "float nn_field(vec2 p, float t, float iters){\n  vec2 sineAcc = vec2(0.0);\n  vec2 res = vec2(0.0);\n  float sc = 8.0;\n  for (int j = 0; j < 8; j++) {\n    if (float(j) >= iters) break;\n    p = rot2(1.0) * p;\n    sineAcc = rot2(1.0) * sineAcc;\n    vec2 layer = p * sc + float(j) + sineAcc - t;\n    sineAcc += sin(layer);\n    res += (0.5 + 0.5 * cos(layer)) / sc;\n    sc *= 1.2;\n  }\n  return res.x + res.y;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float brightness = u_p0;\n  float contrast = u_p1;\n  float iters = clamp(floor(u_p2 + 0.5), 2.0, 8.0);\n\n  float t = 0.5 * u_time;\n  float f = nn_field(uv, t, iters);\n\n  // тонкі яскраві волокна: беремо \"гребені\" поля\n  f = abs(f - 0.5) * 2.0;\n  f = pow(max(f, 0.0), contrast) * brightness;\n  f = clamp(f, 0.0, 1.0);\n\n  vec3 col;\n  if (u_nc < 1.5) {\n    col = u_c0 * f;\n  } else {\n    col = mix(u_c0, u_c1, f);\n  }\n\n  outColor = vec4(col, 1.0);\n}"}, {"key": "perlin-noise", "title": "Perlin Noise", "nc": 2, "colors": ["#262042", "#a2e6f2"], "speedDef": 0.4, "params": [{"label": "Пропорція", "min": 0, "max": 1, "step": 0.01, "def": 0.5}, {"label": "М'якість", "min": 0, "max": 1, "step": 0.01, "def": 0.15}, {"label": "Октави", "min": 1, "max": 6, "step": 1, "def": 3}, {"label": "Персистенція", "min": 0.2, "max": 0.9, "step": 0.01, "def": 0.55}, {"label": "Лакунарність", "min": 1.5, "max": 3, "step": 0.05, "def": 2}], "code": "float pn_fbm(vec2 p, float oct, float pers, float lac){\n  float v = 0.0;\n  float amp = 1.0;\n  float tot = 0.0;\n  for(int i = 0; i < 6; i++){\n    if(float(i) >= oct) break;\n    v += amp * snoise(p);\n    tot += amp;\n    p = p * lac + vec2(13.7, 71.3);\n    amp *= pers;\n  }\n  return v / max(tot, 0.0001) * 0.5 + 0.5;\n}\n\nvec3 pn_getColor(int i){\n  if(i <= 0) return u_c0;\n  if(i == 1) return u_c1;\n  if(i == 2) return u_c2;\n  if(i == 3) return u_c3;\n  return u_c4;\n}\n\nvec3 pn_ramp(float t, float soft){\n  float n = clamp(floor(u_nc + 0.5), 1.0, 5.0);\n  vec3 col = pn_getColor(0);\n  float w = mix(0.003, 0.35, soft);\n  for(int i = 1; i < 5; i++){\n    if(float(i) >= n) break;\n    float edge = float(i) / n;\n    col = mix(col, pn_getColor(i), smoothstep(edge - w, edge + w, t));\n  }\n  return col;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float oct = clamp(floor(u_p2 + 0.5), 1.0, 6.0);\n  float pers = clamp(u_p3, 0.2, 0.9);\n  float lac = clamp(u_p4, 1.5, 3.0);\n\n  // slow domain drift\n  vec2 p = uv * 3.0 + vec2(u_time * 0.12, -u_time * 0.08);\n\n  float n = pn_fbm(p, oct, pers, lac);\n\n  // proportion: shift the noise field so threshold balance changes\n  n = clamp(n + (u_p0 - 0.5) * 0.9, 0.0, 1.0);\n\n  vec3 col = pn_ramp(n, u_p1);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "simplex-noise", "title": "Simplex Noise", "nc": 5, "colors": ["#2b1a4e", "#5b3a9e", "#8a63d2", "#c9a7f5", "#f2e6ff"], "speedDef": 0.5, "params": [{"label": "Кроків на колір", "min": 1, "max": 8, "step": 1, "def": 2}, {"label": "М'якість", "min": 0, "max": 1, "step": 0.01, "def": 0.15}, {"label": "Деталізація", "min": 0.5, "max": 4, "step": 0.1, "def": 1.5}], "code": "vec3 snzPalette(float t){\n  float n = max(u_nc, 1.0);\n  float x = clamp(t, 0.0, 1.0) * (n - 1.0);\n  float i = floor(x);\n  float f = x - i;\n  vec3 cols[5];\n  cols[0]=u_c0; cols[1]=u_c1; cols[2]=u_c2; cols[3]=u_c3; cols[4]=u_c4;\n  vec3 a = cols[int(clamp(i, 0.0, 4.0))];\n  vec3 b = cols[int(clamp(i + 1.0, 0.0, 4.0))];\n  return mix(a, b, f);\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float freq = u_p2;\n  // time as third coordinate via domain shift\n  vec2 shift = vec2(u_time * 0.35, -u_time * 0.22);\n  vec2 p = uv * freq;\n  float n1 = snoise(p + shift);\n  float n2 = snoise(p * 0.5 - shift * 0.7 + vec2(37.2, 11.7));\n  float n = 0.5 + 0.5 * (0.65 * n1 + 0.35 * n2);\n  n = clamp(n, 0.0, 1.0);\n\n  // posterize: steps per color across whole palette\n  float stepsPerColor = max(floor(u_p0 + 0.5), 1.0);\n  float totalSteps = stepsPerColor * max(u_nc, 1.0);\n  float soft = clamp(u_p1, 0.0, 1.0);\n\n  float x = n * totalSteps;\n  float band = floor(x);\n  float frac = x - band;\n  // soften band edges\n  float w = max(soft * 0.5, 0.0001);\n  float edge = smoothstep(0.5 - w, 0.5 + w, frac);\n  float q = (band + edge) / totalSteps;\n  q = clamp(q, 0.0, 1.0);\n\n  vec3 col = snzPalette(q);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "smoke-ring", "title": "Smoke Ring", "nc": 3, "colors": ["#05050f", "#ffffff", "#4a90ff"], "speedDef": 1, "params": [{"label": "Радіус", "min": 0.2, "max": 0.9, "step": 0.01, "def": 0.5}, {"label": "Товщина", "min": 0.05, "max": 0.6, "step": 0.01, "def": 0.35}, {"label": "Внутрішня форма", "min": 0, "max": 1, "step": 0.01, "def": 0.5}, {"label": "Масштаб шуму", "min": 1, "max": 8, "step": 0.1, "def": 3}, {"label": "Ітерації шуму", "min": 2, "max": 6, "step": 1, "def": 4}], "code": "float srFbm(vec2 p, float iters){\n  float v = 0.0;\n  float a = 0.55;\n  for(int i = 0; i < 6; i++){\n    if(float(i) >= iters) break;\n    v += a * snoise(p);\n    p = rot2(0.65) * p * 2.05 + vec2(3.1, 7.7);\n    a *= 0.5;\n  }\n  return v;\n}\n\nvec3 srPalette(float t){\n  float n = clamp(u_nc - 1.0, 1.0, 4.0); // кількість кольорів диму\n  float x = clamp(t, 0.0, 1.0) * max(n - 1.0, 0.0001);\n  vec3 cols[4] = vec3[4](u_c1, u_c2, u_c3, u_c4);\n  vec3 c = cols[0];\n  for(int i = 0; i < 3; i++){\n    if(float(i) < n - 1.0){\n      c = mix(c, cols[i + 1], clamp(x - float(i), 0.0, 1.0));\n    }\n  }\n  return c;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float radius = u_p0 * 0.5;\n  float thick  = u_p1 * 0.5;\n  float inner  = clamp(u_p2, 0.0, 1.0);\n  float nScale = u_p3;\n  float iters  = clamp(floor(u_p4 + 0.5), 2.0, 6.0);\n\n  float r = length(uv);\n  float ang = atan(uv.y, uv.x) + u_time * 0.15;\n\n  // безшовний по куту шум: домен на колі + радіальна складова + течія в часі\n  vec2 circ = vec2(cos(ang), sin(ang));\n  vec2 np = circ * (0.9 + r * 1.4) * nScale * 0.6\n          + vec2(0.0, r * nScale - u_time * 0.35);\n  float n1 = srFbm(np, iters);\n  float n2 = srFbm(np * 1.7 + vec2(11.3, -4.2) + n1 * 0.8, iters);\n\n  // збурений радіус\n  float rr = r + n1 * thick * 0.9;\n  float d = rr - radius;\n\n  // зовнішній край м'який, внутрішній керується формою\n  float outerE = smoothstep(thick, thick * 0.05, d);\n  float innerW = thick * mix(2.6, 0.5, inner);\n  float innerE = smoothstep(-innerW, -innerW * 0.05, d);\n  float ring = outerE * innerE;\n\n  // димова текстура всередині кільця\n  float smoke = clamp(ring * (0.55 + 0.75 * n2), 0.0, 1.0);\n  smoke = pow(smoke, mix(1.6, 0.85, inner));\n\n  vec3 col = u_c0;\n  if(u_nc > 1.5){\n    vec3 sc = srPalette(clamp(0.5 + 0.6 * n2 + 0.3 * n1, 0.0, 1.0));\n    col = mix(u_c0, sc, smoke);\n  } else {\n    col = mix(u_c0, vec3(1.0), smoke);\n  }\n\n  outColor = vec4(col, 1.0);\n}"}, {"key": "spiral", "title": "Spiral", "nc": 2, "colors": ["#0d0d0d", "#f2f2f2"], "speedDef": 0.5, "params": [{"label": "Щільність", "min": 2, "max": 30, "step": 0.5, "def": 10}, {"label": "Дисторсія", "min": 0, "max": 1, "step": 0.01, "def": 0.15}, {"label": "Товщина штриха", "min": 0.1, "max": 0.9, "step": 0.01, "def": 0.5}, {"label": "Звуження штриха", "min": 0, "max": 1, "step": 0.01, "def": 0.3}, {"label": "Шум", "min": 0, "max": 1, "step": 0.01, "def": 0}], "code": "float spiralStripe(vec2 uv, float dens, float duty, float taper, out float rOut){\n  float r = length(uv);\n  float a = atan(uv.y, uv.x);\n  // Archimedean spiral phase: r grows with angle\n  float t = r * dens - a / 6.2831853 - u_time * 0.35;\n  float f = fract(t);\n  float d = abs(f - 0.5);\n  // taper: stroke gets thinner toward the center\n  float shrink = mix(1.0, clamp(r * 1.6, 0.05, 1.0), taper);\n  float w = duty * 0.5 * shrink;\n  float aa = fwidth(t) * 0.75 + 0.002;\n  rOut = r;\n  return smoothstep(w + aa, w - aa, d);\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float dens = u_p0;   // витки\n  float dist = u_p1;   // дисторсія\n  float duty = u_p2;   // товщина штриха\n  float taper = u_p3;  // звуження до центру\n  float nz = u_p4;     // шум\n\n  // noise-based warp of the domain (distortion)\n  if (dist > 0.001) {\n    vec2 np = uv * 2.5;\n    float wx = snoise(np + vec2(0.0, u_time * 0.15));\n    float wy = snoise(np + vec2(7.31, 3.7) - vec2(u_time * 0.15, 0.0));\n    uv += dist * 0.18 * vec2(wx, wy);\n  }\n\n  float r;\n  float stripe = spiralStripe(uv, dens, duty, taper, r);\n\n  // grain noise breaking the stroke edges\n  if (nz > 0.001) {\n    float g = hash21(gl_FragCoord.xy + fract(u_time) * 17.0);\n    stripe = clamp(stripe + (g - 0.5) * nz * 0.9 * smoothstep(0.0, 0.02, stripe) , 0.0, 1.0);\n    stripe = mix(stripe, stripe * step(nz * 0.5, g), nz * 0.35);\n  }\n\n  vec3 col = mix(u_c0, u_c1, stripe);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "swirl", "title": "Swirl", "nc": 4, "colors": ["#ffbe0b", "#fb5607", "#ff006e", "#8338ec"], "speedDef": 0.5, "params": [{"label": "К-сть смуг", "min": 2, "max": 24, "step": 1, "def": 6}, {"label": "Закрутка", "min": 0, "max": 3, "step": 0.01, "def": 1}, {"label": "М'якість", "min": 0, "max": 1, "step": 0.01, "def": 0}, {"label": "Шум", "min": 0, "max": 1, "step": 0.01, "def": 0}], "code": "vec3 swPick(float i){\n  float n = clamp(u_nc, 1.0, 5.0);\n  i = mod(i, n);\n  if(i < 0.5) return u_c0;\n  if(i < 1.5) return u_c1;\n  if(i < 2.5) return u_c2;\n  if(i < 3.5) return u_c3;\n  return u_c4;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res)/min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float bands = max(floor(u_p0 + 0.5), 2.0);\n  float twist = u_p1;\n  float soft  = clamp(u_p2, 0.0, 1.0);\n  float nz    = clamp(u_p3, 0.0, 1.0);\n\n  float r = length(uv);\n  float a = atan(uv.y, uv.x);\n\n  // вихор: кут закручується сильніше ближче до центру\n  a += twist * 6.2831853 * (1.0 - r);\n  // повільне обертання\n  a += u_time * 0.4;\n\n  // шумове збурення смуг\n  if(nz > 0.001){\n    float d = fbm(uv * 3.0 + vec2(u_time * 0.15, -u_time * 0.1)) - 0.5;\n    a += nz * d * 2.5;\n  }\n\n  // радіальні смуги по куту\n  float t = a / 6.2831853 * bands;\n  float idx = floor(t);\n  float f = fract(t);\n\n  vec3 cA = swPick(idx);\n  vec3 cB = swPick(idx + 1.0);\n\n  // м'якість: 0 = різкі краї (з невеликим AA), 1 = повний градієнт\n  float aa = 2.0 * bands / (min(u_res.x, u_res.y) * max(r, 0.05) * 6.2831853);\n  float half_w = mix(clamp(aa, 0.002, 0.08), 1.0, soft);\n  float blend = smoothstep(1.0 - half_w, 1.0, f);\n\n  vec3 col = mix(cA, cB, blend);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "voronoi", "title": "Voronoi", "nc": 5, "colors": ["#111111", "#ffb84d", "#ff5c8a", "#6bc9ff", "#b3f0a1"], "speedDef": 1, "params": [{"label": "Проміжок", "min": 0, "max": 0.2, "step": 0.005, "def": 0.04}, {"label": "Світіння", "min": 0, "max": 1, "step": 0.01, "def": 0.3}, {"label": "Кроків на колір", "min": 1, "max": 5, "step": 1, "def": 1}, {"label": "Дисторсія", "min": 0, "max": 1, "step": 0.01, "def": 0.5}], "code": "vec3 vorCellColor(float k){\n  if(k < 0.5) return u_c1;\n  if(k < 1.5) return u_c2;\n  if(k < 2.5) return u_c3;\n  return u_c4;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n  vec2 p = uv * 6.0;\n\n  vec2 ip = floor(p);\n  vec2 fp = fract(p);\n\n  float d1 = 8.0;\n  float d2 = 8.0;\n  vec2 cellId = vec2(0.0);\n\n  for(int y = -1; y <= 1; y++){\n    for(int x = -1; x <= 1; x++){\n      vec2 g = vec2(float(x), float(y));\n      vec2 c = ip + g;\n      vec2 o = hash22(c);\n      // анімований рух точок, амплітуда керується дисторсією\n      o += 0.35 * u_p3 * sin(u_time * 0.8 + 6.2831 * hash22(c + 3.7));\n      vec2 r = g + o - fp;\n      float d = length(r);\n      if(d < d1){\n        d2 = d1; d1 = d; cellId = c;\n      } else if(d < d2){\n        d2 = d;\n      }\n    }\n  }\n\n  float edge = d2 - d1; // відстань до межі клітини\n\n  // колір клітини з палітри (u_c1..u_c4), квантований по кроках\n  float cn = max(u_nc - 1.0, 1.0);\n  float steps = max(u_p2, 1.0);\n  float h = hash21(cellId + 17.3);\n  float total = cn * steps;\n  float t = floor(h * total) / max(total - 1.0, 1.0) * max(cn - 1.0, 0.0);\n  float idx = floor(t);\n  float fr = t - idx;\n  vec3 cellCol = mix(vorCellColor(idx), vorCellColor(min(idx + 1.0, cn - 1.0)), fr);\n\n  // легка внутрішня тінь до центру клітини\n  cellCol *= 0.88 + 0.12 * smoothstep(0.0, 0.6, d1);\n\n  // темна межа (u_c0) з товщиною \"проміжок\"\n  float gap = u_p0;\n  float b = smoothstep(gap, gap + 0.04, edge);\n  vec3 col = mix(u_c0, cellCol, b);\n\n  // світіння країв: підсвічування біля межі всередині клітини\n  float glow = u_p1 * exp(-max(edge - gap, 0.0) * 6.0) * b;\n  col += glow * (cellCol * 0.6 + vec3(0.35));\n\n  outColor = vec4(col, 1.0);\n}"}, {"key": "warp", "title": "Warp", "nc": 3, "colors": ["#262626", "#75c1f0", "#ffffff"], "speedDef": 0.6, "params": [{"label": "Форма (0 шахи / 1 смуги / 2 край)", "min": 0, "max": 2, "step": 1, "def": 0}, {"label": "Пропорція", "min": 0, "max": 1, "step": 0.01, "def": 0.5}, {"label": "М'якість", "min": 0, "max": 1, "step": 0.01, "def": 0.9}, {"label": "Дисторсія", "min": 0, "max": 2, "step": 0.01, "def": 0.25}, {"label": "Свірл", "min": 0, "max": 1, "step": 0.01, "def": 0.8}, {"label": "Ітерації свірлу", "min": 1, "max": 6, "step": 1, "def": 4}], "code": "vec3 warpPal(float t){\n  float n = clamp(u_nc, 1.0, 5.0);\n  float x = clamp(t, 0.0, 1.0) * (n - 1.0);\n  vec3 c = u_c0;\n  c = mix(c, u_c1, clamp(x, 0.0, 1.0));\n  c = mix(c, u_c2, clamp(x - 1.0, 0.0, 1.0));\n  c = mix(c, u_c3, clamp(x - 2.0, 0.0, 1.0));\n  c = mix(c, u_c4, clamp(x - 3.0, 0.0, 1.0));\n  return c;\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float t = 0.35 * u_time;\n  float shape      = u_p0;\n  float proportion = u_p1;\n  float softness   = u_p2;\n  float distortion = u_p3;\n  float swirl      = u_p4;\n  float iters      = clamp(u_p5, 1.0, 6.0);\n\n  // domain warp: noise distortion\n  vec2 nz = vec2(\n    snoise(uv * 1.4 + vec2(0.0, 0.4 * t)),\n    snoise(uv * 1.4 + vec2(5.2, 0.4 * t + 1.3))\n  );\n  uv += distortion * 0.6 * nz;\n\n  // rotational swirl warp\n  for (int i = 1; i <= 6; i++) {\n    float fi = float(i);\n    if (fi > iters + 0.5) { break; }\n    uv.x += (swirl / fi) * cos(t + fi * 1.5 * uv.y);\n    uv.y += (swirl / fi) * cos(t + fi * 1.0 * uv.x);\n  }\n\n  float soft = 0.015 + 0.9 * softness;\n  float mixer;\n  if (shape < 0.5) {\n    // checks\n    float c = sin(uv.x * 3.14159) * sin(uv.y * 3.14159);\n    c += (proportion - 0.5) * 1.6;\n    mixer = smoothstep(-soft, soft, c);\n  } else if (shape < 1.5) {\n    // stripes\n    float s = sin(uv.x * 3.14159) + (proportion - 0.5) * 2.0;\n    mixer = smoothstep(-soft, soft, s);\n  } else {\n    // edge: gradient boundary\n    float e = uv.y + (0.5 - proportion) * 2.0;\n    mixer = smoothstep(-soft, soft, e);\n  }\n\n  vec3 col = warpPal(mixer);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "waves", "title": "Waves", "nc": 2, "colors": ["#12121c", "#e8e4da"], "speedDef": 0, "params": [{"label": "Частота", "min": 1, "max": 20, "step": 0.1, "def": 6}, {"label": "Амплітуда", "min": 0, "max": 1, "step": 0.01, "def": 0.5}, {"label": "Інтервал", "min": 0.5, "max": 3, "step": 0.05, "def": 1.4}, {"label": "Duty", "min": 0.1, "max": 0.9, "step": 0.01, "def": 0.35}, {"label": "М'якість", "min": 0, "max": 1, "step": 0.01, "def": 0.05}, {"label": "Форма", "min": 0, "max": 2, "step": 1, "def": 0}], "code": "float wv_shape(float x, float shape){\n  float s = sin(x*6.28318530);\n  float t = fract(x);\n  float z = abs(t-0.5)*4.0-1.0;\n  float ir = snoise(vec2(x*1.7, 3.1))*1.1 + snoise(vec2(x*3.9, 7.7))*0.45;\n  if(shape < 0.5) return s;\n  else if(shape < 1.5) return z;\n  else return clamp(ir, -1.2, 1.2);\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res)/min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float freq  = u_p0;\n  float amp   = u_p1;\n  float sp    = u_p2;\n  float duty  = u_p3;\n  float soft  = u_p4;\n  float shape = u_p5;\n\n  float rowH = 0.06*sp;                       // висота ряду\n  float ph = uv.x*freq*0.5 + u_time*0.05;     // фаза хвилі (статична за природою)\n  float y = uv.y + amp*rowH*1.6*wv_shape(ph, shape);\n\n  float f = y/rowH;\n  float d = abs(fract(f)-0.5);                // 0 у центрі лінії\n  float hw = duty*0.5;                        // напівтовщина лінії\n  float aa = fwidth(f)*0.75 + soft*hw + 1e-4; // антиаліас + м'якість\n  float m = 1.0 - smoothstep(hw-aa, hw+aa, d);\n\n  vec3 col = mix(u_c0, u_c1, m);\n  outColor = vec4(col, 1.0);\n}"}, {"key": "god-rays", "title": "God Rays", "nc": 4, "colors": ["#0b0e24", "#5b4bff", "#42b8ff", "#9ef7ff"], "speedDef": 1, "params": [{"label": "Інтенсивність", "min": 0, "max": 2, "step": 0.01, "def": 1}, {"label": "Щільність", "min": 1, "max": 12, "step": 0.1, "def": 6}, {"label": "Плямистість", "min": 0, "max": 1, "step": 0.01, "def": 0.35}, {"label": "Розмір ядра", "min": 0, "max": 0.5, "step": 0.005, "def": 0.12}, {"label": "Яскравість ядра", "min": 0, "max": 2, "step": 0.01, "def": 1}, {"label": "Блум", "min": 0, "max": 1, "step": 0.01, "def": 0.4}], "code": "vec3 grRayColor(float t){\n  float m = clamp(u_nc, 2.0, 5.0) - 1.0; // кількість кольорів променів\n  float x = t * max(m - 1.0, 0.0);\n  vec3 c = u_c1;\n  c = mix(c, u_c2, clamp(x, 0.0, 1.0));\n  c = mix(c, u_c3, clamp(x - 1.0, 0.0, 1.0));\n  c = mix(c, u_c4, clamp(x - 2.0, 0.0, 1.0));\n  return c;\n}\n\nfloat grAngularNoise(vec2 dir, float freq, float t){\n  // шум по колу (без шва на +-PI), два октавних шари, що повільно обертаються\n  vec2 p1 = dir * freq;\n  vec2 p2 = dir * freq * 2.17 + vec2(13.7, 7.3);\n  float n1 = fbm(p1 + vec2(t * 0.22, -t * 0.17));\n  float n2 = fbm(p2 + vec2(-t * 0.13, t * 0.27));\n  return clamp(n1 * 0.7 + n2 * 0.45, 0.0, 1.0);\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float r = length(uv);\n  float a = atan(uv.y, uv.x);\n  vec2 dir = vec2(cos(a), sin(a));\n\n  // кутовий шум -> промені\n  float rays = grAngularNoise(dir, u_p1, u_time);\n  rays = pow(rays, 2.2);\n\n  // плямистість: модуляція вздовж радіуса\n  float sp = 0.5 + 0.5 * snoise(vec2(r * 4.0 - u_time * 0.45, rays * 5.0 + 3.1));\n  float spots = mix(1.0, sp, clamp(u_p2, 0.0, 1.0));\n\n  // радіальне затухання (блум трохи розтягує промені)\n  float fall = exp(-r * (2.6 - u_p5 * 1.4));\n  float strength = clamp(u_p0 * rays * spots * fall * 2.0, 0.0, 1.5);\n\n  // колір променя з палітри за шумом\n  float tPal = clamp(rays * 1.5 - 0.1 + 0.25 * snoise(dir * 2.0 + u_time * 0.1), 0.0, 1.0);\n  vec3 rc = grRayColor(tPal);\n\n  // ядро та блум по центру\n  float core = u_p4 * smoothstep(u_p3 + 0.001, 0.0, r);\n  float halo = u_p5 * exp(-r * r * 7.0);\n\n  vec3 col = u_c0;\n  col = mix(col, rc, min(strength, 1.0));\n  col += rc * max(strength - 1.0, 0.0) * 0.6;\n  col += rc * halo * 0.9;\n  col = mix(col, vec3(1.0), clamp(core, 0.0, 1.0));\n\n  outColor = vec4(col, 1.0);\n}"}, {"key": "pulsing-border", "title": "Pulsing Border", "nc": 4, "colors": ["#08070d", "#5800ff", "#ff2dd1", "#00f0ff"], "speedDef": 1, "params": [{"label": "Заокруглення", "min": 0, "max": 0.5, "step": 0.01, "def": 0.25}, {"label": "Товщина", "min": 0.01, "max": 0.3, "step": 0.005, "def": 0.08}, {"label": "Інтенсивність", "min": 0, "max": 2, "step": 0.05, "def": 1}, {"label": "Плям", "min": 1, "max": 6, "step": 1, "def": 4}, {"label": "Розмір плям", "min": 0.05, "max": 0.5, "step": 0.01, "def": 0.25}, {"label": "Пульс", "min": 0, "max": 1, "step": 0.05, "def": 0.5}], "code": "float pbSdRoundRect(vec2 p, vec2 b, float r){\n  vec2 q = abs(p) - b + vec2(r);\n  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;\n}\n\nvoid main(){\n  vec2 st = gl_FragCoord.xy / u_res;\n  vec2 asp = u_res / min(u_res.x, u_res.y);\n  vec2 p = (st - 0.5) * asp;\n\n  // рамка з відступом від краю; масштаб впливає на відступ\n  float inset = 0.06 * clamp(u_scale, 0.3, 3.0);\n  vec2 b = asp * 0.5 - vec2(inset);\n  float r = min(u_p0 * 0.5, min(b.x, b.y) - 0.001);\n  float sd = pbSdRoundRect(p, b, r);\n  float ad = abs(sd);\n\n  // профіль рамки: жорстке ядро + м'яке неонове сяйво (м'якість фіксована)\n  float th = u_p1;\n  float core = 1.0 - smoothstep(0.0, th * 0.5, ad);\n  float glow = exp(-(ad * ad) / (th * th * 1.2));\n  float band = core * 0.6 + glow * 0.9;\n\n  // параметр уздовж периметра (0..1)\n  float ang = atan(p.y, p.x) / 6.2831853 + 0.5;\n\n  // дим-шум, що повзе вздовж рамки\n  float smoke = 0.55 + 0.9 * fbm(p * 3.0 + vec2(u_time * 0.25, -u_time * 0.15));\n\n  vec3 col = u_c0;\n  float ncf = max(u_nc, 1.0);\n  float w = 0.02 + u_p4 * 0.18; // кутова ширина плями\n\n  for(int i = 0; i < 6; i++){\n    float fi = float(i);\n    if(fi >= u_p3) break;\n\n    // рух плями по периметру, різні швидкості й напрямки\n    float dir = (mod(fi, 2.0) < 1.0) ? 1.0 : -1.0;\n    float spd = 0.04 + 0.05 * hash21(vec2(fi, 3.7));\n    float t = fract(fi / max(u_p3, 1.0) + dir * u_time * spd);\n\n    // кутова відстань (циклічна)\n    float da = abs(fract(ang - t + 0.5) - 0.5);\n    float m = exp(-(da * da) / (2.0 * w * w));\n\n    // пульсація яскравості плями\n    float pl = mix(1.0, 0.35 + 0.65 * (0.5 + 0.5 * sin(u_time * 2.6 + fi * 2.1)), u_p5);\n\n    // вибір кольору плями з палітри (u_c1..u_c4)\n    vec3 sc = u_c1;\n    float j = mod(fi, max(ncf - 1.0, 1.0));\n    if(j >= 1.0) sc = u_c2;\n    if(j >= 2.0) sc = u_c3;\n    if(j >= 3.0) sc = u_c4;\n    if(ncf < 1.5) sc = u_c0 + vec3(0.6);\n\n    col += sc * band * m * u_p2 * pl * smoke * 1.6;\n  }\n\n  // легка базова лінія рамки, щоб контур читався між плямами\n  vec3 baseTint = (ncf > 1.5) ? u_c1 : vec3(0.5);\n  col += baseTint * band * 0.06 * u_p2 * smoke;\n\n  outColor = vec4(col, 1.0);\n}"}, {"key": "color-panels", "title": "Color Panels", "nc": 5, "colors": ["#0e0824", "#ff3d81", "#7a5cff", "#2fc7f0", "#ffd166"], "speedDef": 0.6, "params": [{"label": "Кут 1", "min": -1, "max": 1, "step": 0.01, "def": -0.2}, {"label": "Кут 2", "min": -1, "max": 1, "step": 0.01, "def": 0.2}, {"label": "Довжина", "min": 0.3, "max": 2, "step": 0.01, "def": 1.1}, {"label": "Краї", "min": 0, "max": 1, "step": 0.01, "def": 0.5}, {"label": "Блюр", "min": 0, "max": 1, "step": 0.01, "def": 0.12}, {"label": "Градієнт", "min": 0, "max": 1, "step": 0.01, "def": 0.35}], "code": "// Color Panels: pseudo-3D glass panels rotating around a vertical axis\nfloat cpProj(float t, float th){\n    // perspective projection of a point at distance t on a plane rotated by th\n    return t*cos(th)/(1.0 + t*sin(th)*0.35);\n}\n\nvec3 cpCol(float k){\n    if(k < 0.5) return u_c1;\n    if(k < 1.5) return u_c2;\n    if(k < 2.5) return u_c3;\n    return u_c4;\n}\n\nvoid main(){\n    vec2 uv = (gl_FragCoord.xy - 0.5*u_res)/min(u_res.x, u_res.y);\n    uv /= max(u_scale, 0.001);\n\n    // skew: top edge tilted by angle1, bottom by angle2\n    float skew = mix(u_p1, u_p0, clamp(uv.y + 0.5, 0.0, 1.0));\n    float px = uv.x + uv.y*skew*0.9;\n\n    vec3 col = u_c0; // background\n    float L = u_p2*0.55;\n    float blur = 0.004 + u_p4*0.12;\n    float pn = max(u_nc - 1.0, 1.0);\n\n    const int N = 10;\n    for(int i = 0; i < N; i++){\n        float fi = float(i);\n        float th = u_time*0.45 + fi*(6.2831853/float(N));\n\n        float xa = cpProj(-L, th);\n        float xb = cpProj( L, th);\n        float lo = min(xa, xb);\n        float hi = max(xa, xb);\n        float w  = hi - lo;\n\n        // soft coverage of the panel strip\n        float cov = smoothstep(lo - blur, lo + blur, px)\n                  * (1.0 - smoothstep(hi - blur, hi + blur, px));\n\n        // thin (edge-on) panels look denser, like glass seen from the side\n        float dens = 0.22/(w*1.8 + 0.22);\n\n        // bright rims near the panel edges\n        float rim = exp(-abs(px - lo)/(blur + 0.012))\n                  + exp(-abs(px - hi)/(blur + 0.012));\n\n        vec3 pc = cpCol(mod(fi, pn));\n        // vertical gradient across the panel\n        float g = clamp(uv.y*0.9 + 0.5, 0.0, 1.0);\n        pc = mix(pc, pc*(0.35 + 1.4*g), u_p5);\n\n        col += pc*cov*dens + pc*rim*cov*u_p3*0.6;\n    }\n\n    col = clamp(col, 0.0, 1.0);\n    outColor = vec4(col, 1.0);\n}"}, {"key": "liquid-metal", "title": "Liquid Metal", "nc": 3, "colors": ["#e9e9e9", "#ffffff", "#0a0a0a"], "speedDef": 0.6, "params": [{"label": "Повторення", "min": 1, "max": 10, "step": 0.1, "def": 4}, {"label": "М'якість", "min": 0, "max": 1, "step": 0.01, "def": 0.3}, {"label": "Зсув червоного", "min": -0.3, "max": 0.3, "step": 0.01, "def": 0.3}, {"label": "Зсув синього", "min": -0.3, "max": 0.3, "step": 0.01, "def": -0.3}, {"label": "Дисторсія", "min": 0, "max": 1, "step": 0.01, "def": 0.15}, {"label": "Контур", "min": 0, "max": 1, "step": 0.01, "def": 1}], "code": "float lmStripe(float f, float rep, float soft){\n  float w = 0.5 + 0.5*sin(f*6.2831853*rep - u_time*1.5);\n  float e = clamp(mix(0.03, 0.5, soft), 0.01, 0.5);\n  float s = smoothstep(0.5-e, 0.5+e, w);\n  // додатковий м'який блиск для металевого градієнта\n  float sheen = 0.5 + 0.5*sin(f*6.2831853*rep*0.5 + 1.7 - u_time*0.75);\n  return clamp(s*0.85 + sheen*0.15, 0.0, 1.0);\n}\n\nvoid main(){\n  vec2 uv = (gl_FragCoord.xy - 0.5*u_res)/min(u_res.x, u_res.y);\n  uv /= max(u_scale, 0.001);\n\n  float rep  = u_p0;\n  float soft = u_p1;\n  float dist = u_p4;\n  float cont = clamp(u_p5, 0.0, 1.0);\n\n  // доменний варп (рідинність)\n  float n1 = snoise(uv*1.8 + vec2(0.0, u_time*0.40));\n  float n2 = snoise(uv*1.8 + vec2(4.7, -u_time*0.35));\n  vec2 q = uv + dist*0.35*vec2(n1, n2);\n\n  // поле форми: сфера (лінза) або повний кадр\n  float R = 0.45;\n  float rr = clamp(length(q)/R, 0.0, 1.0);\n  float fSphere = 1.0 - sqrt(max(0.0, 1.0 - rr*rr));\n  float fFlat = q.y*1.1 + 0.25*q.x;\n  float f = mix(fFlat, fSphere, cont);\n\n  // смуги з кольоровим зсувом країв\n  float vG = lmStripe(f, rep, soft);\n  float vR = lmStripe(f + u_p2*0.5/max(rep,1.0), rep, soft);\n  float vB = lmStripe(f + u_p3*0.5/max(rep,1.0), rep, soft);\n\n  vec3 cLight = (u_nc > 1.5) ? u_c1 : vec3(1.0);\n  vec3 cDark  = (u_nc > 2.5) ? u_c2 : vec3(0.04);\n\n  vec3 metal;\n  metal.r = mix(cDark.r, cLight.r, vR);\n  metal.g = mix(cDark.g, cLight.g, vG);\n  metal.b = mix(cDark.b, cLight.b, vB);\n\n  // легкий обідок-відблиск на краю сфери\n  float rim = smoothstep(0.92, 1.0, rr) * cont;\n  metal = mix(metal, cLight, rim*0.35);\n\n  // маска кола (контур) поверх фону\n  float edge = min(0.02 + dist*0.02, 0.05);\n  float mask = 1.0 - smoothstep(R - edge, R, length(q));\n  mask = mix(1.0, mask, cont);\n\n  vec3 col = mix(u_c0, metal, mask);\n  outColor = vec4(col, 1.0);\n}"}];
+
+  const PRELUDE = `#version 300 es
+precision highp float;
+uniform vec2 u_res;
+uniform float u_time;
+uniform float u_scale;
+uniform vec3 u_c0,u_c1,u_c2,u_c3,u_c4;
+uniform float u_nc;
+uniform float u_p0,u_p1,u_p2,u_p3,u_p4,u_p5;
+out vec4 outColor;
+float hash21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+vec2 hash22(vec2 p){ float n=hash21(p); return vec2(n, hash21(p+n)); }
+float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+  return mix(mix(hash21(i),hash21(i+vec2(1,0)),u.x), mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),u.x), u.y); }
+float fbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*vnoise(p); p=p*2.03+vec2(7.3,3.1); a*=0.5; } return v; }
+vec3 permute3(vec3 x){ return mod(((x*34.0)+1.0)*x,289.0); }
+float snoise(vec2 v){ const vec4 C=vec4(0.211324865405187,0.366025403784439,-0.577350269189626,0.024390243902439);
+  vec2 i=floor(v+dot(v,C.yy)); vec2 x0=v-i+dot(i,C.xx); vec2 i1=(x0.x>x0.y)?vec2(1.0,0.0):vec2(0.0,1.0);
+  vec4 x12=x0.xyxy+C.xxzz; x12.xy-=i1; i=mod(i,289.0);
+  vec3 p=permute3(permute3(i.y+vec3(0.0,i1.y,1.0))+i.x+vec3(0.0,i1.x,1.0));
+  vec3 m=max(0.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.0); m=m*m; m=m*m;
+  vec3 x=2.0*fract(p*C.www)-1.0; vec3 h=abs(x)-0.5; vec3 ox=floor(x+0.5); vec3 a0=x-ox;
+  m*=1.79284291400159-0.85373472095314*(a0*a0+h*h);
+  vec3 g; g.x=a0.x*x0.x+h.x*x0.y; g.yz=a0.yz*x12.xz+h.yz*x12.yw; return 130.0*dot(m,g); }
+mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
+`;
+  const VS = `#version 300 es
+void main(){ vec2 v[3]=vec2[3](vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.)); gl_Position=vec4(v[gl_VertexID],0.,1.); }`;
+
+  const $=id=>document.getElementById(id);
+  const out=$("out");
+  const gl=out.getContext("webgl2",{preserveDrawingBuffer:true,antialias:true});
+  if(!gl){ $("statusTxt").textContent="WebGL2 недоступний"; return; }
+  const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+  function hexToRgb(h){const n=parseInt(h.slice(1),16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];}
+
+  const P={ shader:SHADERS[0].key, speed:1, scale:1, colors:[], params:[],
+            ratio:"1:1", res:900, exScale:2, fps:30, dur:8, bitrate:14 };
+  let W=0,H=0, playing=true, t0=performance.now()/1000, tPause=0, busyExport=false;
+  const progs={};
+
+  function compile(def){
+    if(progs[def.key]!==undefined) return progs[def.key];
+    const p=gl.createProgram();
+    const mk=(type,src)=>{ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+      if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.error(def.key, gl.getShaderInfoLog(s)); return null; } return s; };
+    const vs=mk(gl.VERTEX_SHADER,VS), fs=mk(gl.FRAGMENT_SHADER, PRELUDE+"\n"+def.code);
+    if(!vs||!fs){ progs[def.key]=null; return null; }
+    gl.attachShader(p,vs); gl.attachShader(p,fs); gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS)){ console.error(def.key, gl.getProgramInfoLog(p)); progs[def.key]=null; return null; }
+    const U={};
+    ["u_res","u_time","u_scale","u_nc","u_c0","u_c1","u_c2","u_c3","u_c4","u_p0","u_p1","u_p2","u_p3","u_p4","u_p5"]
+      .forEach(n=>U[n]=gl.getUniformLocation(p,n));
+    progs[def.key]={p,U};
+    return progs[def.key];
+  }
+  function cur(){ return SHADERS.find(s=>s.key===P.shader)||SHADERS[0]; }
+
+  function renderFrame(t){
+    const def=cur(), pr=compile(def);
+    gl.viewport(0,0,W,H);
+    if(!pr){ gl.clearColor(0.05,0.02,0.08,1); gl.clear(gl.COLOR_BUFFER_BIT); $("statusTxt").textContent="Помилка шейдера"; return; }
+    gl.useProgram(pr.p);
+    gl.uniform2f(pr.U.u_res,W,H);
+    gl.uniform1f(pr.U.u_time,t*P.speed);
+    gl.uniform1f(pr.U.u_scale,P.scale);
+    gl.uniform1f(pr.U.u_nc,def.nc);
+    for(let i=0;i<5;i++){
+      const c=hexToRgb(P.colors[i]||def.colors[i]||"#000000");
+      gl.uniform3f(pr.U["u_c"+i],c[0],c[1],c[2]);
+    }
+    for(let i=0;i<6;i++){
+      const pd=def.params[i];
+      gl.uniform1f(pr.U["u_p"+i], P.params[i]!==undefined?P.params[i]:(pd?pd.def:0));
+    }
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  }
+
+  function ratioWH(){const[a,b]=P.ratio.split(":").map(Number);return a/b;}
+  function resize(base){
+    const r=ratioWH(); let w,h;
+    if(r>=1){w=base||P.res;h=Math.round(w/r);}else{h=base||P.res;w=Math.round(h*r);}
+    W=w-w%2;H=h-h%2;
+    out.width=W;out.height=H;
+    $("dims").textContent=`${W} × ${H}px · ×${P.exScale}`;
+  }
+  const now=()=>performance.now()/1000;
+  const curT=()=>playing?(now()-t0):tPause;
+  function tick(){ requestAnimationFrame(tick); if(!busyExport) renderFrame(curT()); }
+  $("playBtn").addEventListener("click",()=>{ if(playing){tPause=now()-t0;}else{t0=now()-tPause;} playing=!playing;
+    $("icoPause").classList.toggle("hide",!playing); $("icoPlay").classList.toggle("hide",playing); });
+
+  /* ---------- UI ---------- */
+  function buildGallery(){
+    const g=$("gallery");
+    SHADERS.forEach(def=>{
+      const div=document.createElement("div"); div.className="preset"+(def.key===P.shader?" active":"");
+      div.textContent=def.title;
+      div.addEventListener("click",()=>{ selectShader(def.key); });
+      g.appendChild(div);
+    });
+  }
+  function selectShader(key){
+    P.shader=key;
+    const def=cur();
+    P.colors=def.colors.slice();
+    P.params=def.params.map(p=>p.def);
+    P.speed=def.speedDef;
+    $("speed").value=P.speed; $("vSpeed").textContent=P.speed.toFixed(2);
+    document.querySelectorAll("#gallery .preset").forEach(el=>el.classList.toggle("active",el.textContent===def.title));
+    buildControls();
+    $("statusTxt").textContent="Готово";
+  }
+  function buildControls(){
+    const def=cur();
+    const cb=$("colorBox"); cb.innerHTML="";
+    for(let i=0;i<def.nc;i++){
+      const field=document.createElement("div"); field.className="color-field";
+      field.innerHTML=`<span>${i+1}</span><div class="color-wrap"><input type="color" value="${P.colors[i]}"><span class="hex">${P.colors[i].toUpperCase()}</span></div>`;
+      const inp=field.querySelector("input");
+      inp.addEventListener("input",()=>{ P.colors[i]=inp.value; field.querySelector(".hex").textContent=inp.value.toUpperCase(); });
+      cb.appendChild(field);
+    }
+    const pb=$("paramBox"); pb.innerHTML="";
+    def.params.forEach((pd,i)=>{
+      const row=document.createElement("div");
+      row.innerHTML=`<div class="row${i?" mt":""}"><label class="lbl">${pd.label}</label><span class="val">${fmtP(P.params[i],pd)}</span></div>
+        <input type="range" min="${pd.min}" max="${pd.max}" step="${pd.step}" value="${P.params[i]}">`;
+      const inp=row.querySelector("input"), val=row.querySelector(".val");
+      inp.addEventListener("input",()=>{ P.params[i]=parseFloat(inp.value); val.textContent=fmtP(P.params[i],pd); });
+      pb.appendChild(row);
+    });
+  }
+  function fmtP(v,pd){ return pd.step>=1 ? String(Math.round(v)) : (+v).toFixed(2); }
+
+  function bindRange(id,key,vid,opts){ opts=opts||{}; const el=$(id),v=vid?$(vid):null,fmt=opts.fmt||(x=>x);
+    el.value=P[key]; if(v)v.textContent=fmt(P[key]);
+    el.addEventListener("input",()=>{ P[key]=opts.int?parseInt(el.value,10):parseFloat(el.value);
+      if(v)v.textContent=fmt(P[key]); if(opts.size)resize(); }); }
+  const f2=x=>x.toFixed(2);
+  bindRange("speed","speed","vSpeed",{fmt:f2});
+  bindRange("scale","scale","vScale",{fmt:f2});
+  bindRange("res","res","vRes",{int:true,size:true});
+  bindRange("exScale","exScale","vExScale",{int:true,fmt:x=>x+"×"});
+  bindRange("dur","dur","vDur",{int:true});
+  bindRange("bitrate","bitrate","vBitrate",{int:true});
+  document.querySelectorAll("#ratios .preset").forEach(p=>{
+    p.addEventListener("click",()=>{ P.ratio=p.dataset.ratio;
+      document.querySelectorAll("#ratios .preset").forEach(x=>x.classList.toggle("active",x===p)); resize(); });
+  });
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+  $("btnRand").addEventListener("click",()=>{
+    const def=SHADERS[Math.floor(Math.random()*SHADERS.length)];
+    selectShader(def.key);
+  });
+  $("reset").addEventListener("click",()=>{ selectShader(P.shader); P.scale=1; $("scale").value=1; $("vScale").textContent="1.00"; });
+
+  /* ---------- exports ---------- */
+  function status(m,r){ $("statusTxt").textContent=m||"Готово"; $("statusDot").classList.toggle("rec",!!r); }
+  function downloadBlob(b,n){ const u=URL.createObjectURL(b),a=document.createElement("a"); a.href=u;a.download=n;a.click(); setTimeout(()=>URL.revokeObjectURL(u),1500); }
+  async function withExportSize(fn){ busyExport=true; const p=P.res; resize(Math.min(3200,P.res*P.exScale)); try{await fn();}finally{ resize(p); busyExport=false; status(""); } }
+  function exportStill(t,e,q){ withExportSize(async()=>{ status("Рендер…"); await new Promise(r=>setTimeout(r,20)); renderFrame(curT());
+    await new Promise(res=>out.toBlob(b=>{ if(b)downloadBlob(b,"shader."+e); res(); },t,q)); }); }
+  $("exPng").addEventListener("click",()=>exportStill("image/png","png"));
+  $("exJpg").addEventListener("click",()=>exportStill("image/jpeg","jpg",0.92));
+  $("exWebp").addEventListener("click",()=>exportStill("image/webp","webp",0.95));
+  let mp4Busy=false;
+  $("exMp4").addEventListener("click",async()=>{
+    if(mp4Busy){mp4Busy=false;return;}
+    if(!("VideoEncoder" in window)||typeof Mp4Muxer==="undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    mp4Busy=true; $("mp4Label").textContent="■ Скасувати";
+    await withExportSize(async()=>{
+      const fps=parseInt($("fps").value,10), total=Math.round(P.dur*fps); let encErr=null;
+      const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:W,height:H},fastStart:"in-memory"});
+      const enc=new VideoEncoder({output:(c,m)=>muxer.addVideoChunk(c,m),error:e=>{encErr=e;}});
+      enc.configure({codec:W*H>1500000?"avc1.640033":"avc1.640028",width:W,height:H,bitrate:P.bitrate*1e6,framerate:fps});
+      const tBase=curT();
+      for(let f=0;f<total;f++){
+        if(!mp4Busy||encErr)break;
+        renderFrame(tBase+f/fps);
+        const fr=new VideoFrame(out,{timestamp:f*1e6/fps,duration:1e6/fps});
+        enc.encode(fr,{keyFrame:f%(fps*2)===0}); fr.close();
+        if(enc.encodeQueueSize>4)await new Promise(r=>setTimeout(r,12));
+        if(f%3===0){ status(`Рендер ${Math.round((f+1)/total*100)}%`,true); await new Promise(r=>setTimeout(r,0)); }
+      }
+      if(mp4Busy&&!encErr){ status("Кодування…",true); await enc.flush(); muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer],{type:"video/mp4"}),"shader.mp4"); }
+      try{enc.close();}catch(e){}
+      if(encErr)alert("Помилка кодування MP4: "+(encErr.message||encErr));
+    });
+    mp4Busy=false; $("mp4Label").textContent="MP4";
+  });
+  let webmRec=null;
+  $("exWebm").addEventListener("click",()=>{
+    if(webmRec){webmRec.stop();return;}
+    if(!out.captureStream||!window.MediaRecorder){alert("Запис недоступний у цьому браузері.");return;}
+    const chunks=[]; const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
+    try{ webmRec=new MediaRecorder(out.captureStream(parseInt($("fps").value,10)),{mimeType:mime,videoBitsPerSecond:P.bitrate*1e6}); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec=null; return; }
+    webmRec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    webmRec.onstop=()=>{ if(chunks.length)downloadBlob(new Blob(chunks,{type:"video/webm"}),"shader.webm"); webmRec=null; $("webmLabel").textContent="WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent="■ Стоп"; status("REC",true);
+    setTimeout(()=>{if(webmRec)webmRec.stop();},P.dur*1000);
+  });
+
+  /* ---------- boot ---------- */
+  buildGallery();
+  selectShader(SHADERS[0].key);
+  resize();
+  tick();
+})();
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>
