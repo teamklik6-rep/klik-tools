@@ -586,6 +586,18 @@
     "Скляні фігури заломлюють градієнт під собою — рефракція тепер чесна, порахована в шейдері.": ["Glass shapes refract the gradient beneath them — the refraction is now real, computed in the shader.", "Стеклянные фигуры преломляют градиент под собой — рефракция теперь честная, посчитана в шейдере."],
     "один файл · WebGL2 (GPU) у браузері · silk bands → wave warp → colorama · безшовні лупи": ["single file · WebGL2 (GPU) in the browser · silk bands → wave warp → colorama · seamless loops", "один файл · WebGL2 (GPU) в браузере · silk bands → wave warp → colorama · бесшовные лупы"],
 
+    /* === Flux blur & shine === */
+    "Блюр і Shine": ["Blur & Shine", "Блюр и Shine"],
+    "Розмиття (мікс)": ["Blur (mix)", "Размытие (микс)"],
+    "Радіус розмиття": ["Blur radius", "Радиус размытия"],
+    "Dreamy (світлий блюр)": ["Dreamy (bright blur)", "Dreamy (светлый блюр)"],
+    "Shine (сяйво)": ["Shine (glow)", "Shine (свечение)"],
+    "Поріг shine": ["Shine threshold", "Порог shine"],
+    "Радіус shine": ["Shine radius", "Радиус shine"],
+    "Анаморфність": ["Anamorphic", "Анаморфность"],
+    "Тінт shine": ["Shine tint", "Тинт shine"],
+    "Справжній двопрохідний гаусів блюр на GPU: окремі ланцюги для м'якого розмиття і сяйва з порогом. Анаморфність тягне shine по горизонталі, як кіно-об'єктив.": ["A real two-pass Gaussian blur on the GPU: separate chains for soft blur and thresholded shine. Anamorphic stretches the shine horizontally, like a cinema lens.", "Настоящий двухпроходный гауссов блюр на GPU: отдельные цепочки для мягкого размытия и свечения с порогом. Анаморфность тянет shine по горизонтали, как кинообъектив."],
+
     /* === Shader Studio === */
     "Shader Studio — WebGL-шейдери": ["Shader Studio — WebGL shaders", "Shader Studio — WebGL-шейдеры"],
     "20 живих WebGL-шейдерів · градієнти, шуми, метаболи": ["20 live WebGL shaders · gradients, noises, metaballs", "20 живых WebGL-шейдеров · градиенты, шумы, метаболы"],

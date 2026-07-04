@@ -205,6 +205,27 @@
           <input type="range" id="bright" min="0.5" max="1.6" step="0.02" value="1">
         </div>
         <div class="group">
+          <h2>Блюр і Shine</h2>
+          <div class="row"><label class="lbl">Розмиття (мікс)</label><span class="val" id="vBlurMix">0.00</span></div>
+          <input type="range" id="blurMix" min="0" max="1" step="0.05" value="0">
+          <div class="row mt"><label class="lbl">Радіус розмиття</label><span class="val" id="vBlurRad">16</span></div>
+          <input type="range" id="blurRad" min="2" max="80" step="1" value="16">
+          <div class="row mt"><label class="lbl">Dreamy (світлий блюр)</label><span class="val" id="vDreamy">0.00</span></div>
+          <input type="range" id="dreamy" min="0" max="1" step="0.05" value="0">
+          <div class="row mt"><label class="lbl">Shine (сяйво)</label><span class="val" id="vShine">0.50</span></div>
+          <input type="range" id="shine" min="0" max="1.5" step="0.05" value="0.5">
+          <div class="row mt"><label class="lbl">Поріг shine</label><span class="val" id="vShineThresh">0.55</span></div>
+          <input type="range" id="shineThresh" min="0" max="1" step="0.05" value="0.55">
+          <div class="row mt"><label class="lbl">Радіус shine</label><span class="val" id="vShineRad">30</span></div>
+          <input type="range" id="shineRad" min="4" max="100" step="1" value="30">
+          <div class="row mt"><label class="lbl">Анаморфність</label><span class="val" id="vShineAnam">0.25</span></div>
+          <input type="range" id="shineAnam" min="0" max="1" step="0.05" value="0.25">
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Тінт shine</span><div class="color-wrap"><input type="color" id="shineTint" value="#ffffff"></div></div>
+          </div>
+          <div class="note">Справжній двопрохідний гаусів блюр на GPU: окремі ланцюги для м'якого розмиття і сяйва з порогом. Анаморфність тягне shine по горизонталі, як кіно-об'єктив.</div>
+        </div>
+        <div class="group">
           <h2>Пост-ефекти</h2>
           <div class="row"><label class="lbl">Зерно</label><span class="val" id="vGrain">0.10</span></div>
           <input type="range" id="grain" min="0" max="1" step="0.05" value="0.1">
@@ -293,6 +314,8 @@
     phase:0, reps:1, cycleK:0, contrast:1.1, gamma:1, poster:0,
     sat:1.1, hue:0, bright:1,
     grain:0.1, vignette:0.2,
+    blurMix:0, blurRad:16, dreamy:0,
+    shine:0.5, shineThresh:0.55, shineRad:30, shineAnam:0.25, shineTint:"#ffffff",
     ratio:"1:1", res:1000, exScale:2, fps:30, dur:8, bitrate:16,
     seed:7,
   };
@@ -318,7 +341,8 @@
   const STYLE_PRESETS = {
     "Magnetic Silk": {},   // дефолт = референс
     "Chrome Silk": { mode:4, colors:["#e8e8ee","#23232b","#9aa0a6","#ffffff","#3a3a44"], bgColor:"#0a0a10",
-                     bandFreq:18, gloss:0.9, glossSharp:30, pinch:0.55, fan:20, heat:0.35, sat:0.4, grain:0.15 },
+                     bandFreq:18, gloss:0.9, glossSharp:30, pinch:0.55, fan:20, heat:0.35, sat:0.4, grain:0.15,
+                     shine:0.8, shineThresh:0.6, shineRad:40, shineAnam:0.6 },
     "Lava Silk":   { mode:4, colors:["#ff9d2e","#7a0c0c","#ffcf6a","#c2200a","#fff2d9"], bgColor:"#160301",
                      bandFreq:10, gloss:0.7, glossSharp:9, pinch:0.75, fan:-25, heat:0.8, flow:-1 },
     "Klik Silk":   { mode:4, colors:["#bbff32","#0f3a00","#eaffb0","#5c9e00","#ffffff"], bgColor:"#060612",
@@ -329,6 +353,7 @@
                  colorama:true, palette:"rainbow", reps:2, cycleK:1, contrast:1.3, gamma:1, poster:0,
                  sat:1.3, grain:0.1, vignette:0.1, gloss:0, heat:0 },
     "Aura":    { mode:0, colors:["#ff6a00","#2d4bff","#a02bff","#ff9d80","#ffd166"], bgColor:"#f4f1ea",
+                 dreamy:0.35, shine:0.15, shineThresh:0.75, blurMix:0.15, blurRad:30,
                  count:3, size:38, spread:24, soft:110, period:10, orbR:10, orbK:1, pulse:12,
                  ampX:18, lamX:120, spdX:1, ampY:14, lamY:100, spdY:-1, harm:0.2, mirror:0,
                  colorama:false, sat:1.05, grain:0.08, vignette:0, gloss:0, heat:0,
@@ -416,12 +441,12 @@ vec2 warp(vec2 uv){
   float phx=TAU*u_spdX*u_t, phy=TAU*u_spdY*u_t;
   if(ax>0.0003){
     float w=ax*sin(TAU*uv.y/lx+phx+u_skew*TAU*uv.y);
-    if(u_harm>0.0)w+=ax*u_harm*0.5*sin(TAU*uv.y*2.7/lx-phx*1.5);
+    if(u_harm>0.0)w+=ax*u_harm*0.5*sin(TAU*uv.y*2.7/lx-phx*2.0);
     uv.x+=w;
   }
   if(ay>0.0003){
     float w=ay*sin(TAU*uv.x/ly+phy+u_skew*TAU*uv.x);
-    if(u_harm>0.0)w+=ay*u_harm*0.5*sin(TAU*uv.x*2.7/ly-phy*1.5);
+    if(u_harm>0.0)w+=ay*u_harm*0.5*sin(TAU*uv.x*2.7/ly-phy*2.0);
     uv.y+=w;
   }
   return uv;
@@ -479,7 +504,8 @@ vec3 field(vec2 uv){
   float fade=clamp(1.0-fw*0.35,0.0,1.0);
   float body=0.5+0.5*s*fade;
   /* колір тіла смуги: палітра по фазі смуги + повільний градієнт по полю */
-  float slow=clamp(0.5+0.35*sin(TAU*(band*0.5))+0.25*q.y,0.0,1.0);
+  float band2=u_bandFreq*psi*0.5+u_flow*u_t;
+  float slow=clamp(0.5+0.35*sin(TAU*band2)+0.25*q.y,0.0,1.0);
   vec3 col=mix(u_bg,pal5(slow),pow(body,1.45));
   /* глянець на гребенях */
   float spec=pow(clamp(s,0.0,1.0),max(u_glossSharp,1.0))*u_gloss*fade;
@@ -579,39 +605,117 @@ void main(){
   }
   col*=u_bright;
 
-  /* зерно (дизер проти бандингу) */
-  float g=hash21(gl_FragCoord.xy+fract(u_t)*13.0)-0.5;
-  col+=g*u_grain*0.10;
-  col+=g*(1.5/255.0); /* завжди легкий дизер */
-
-  /* віньєтка */
-  float vd=length(st-0.5);
-  col*=1.0-u_vig*smoothstep(0.35,0.85,vd);
-
   outColor=vec4(clamp(col,0.0,1.0),1.0);
 }`;
 
-  function mkShader(type,src){
-    const s=gl.createShader(type);
-    gl.shaderSource(s,src); gl.compileShader(s);
-    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(s)); return null; }
-    return s;
+  const FS_BLUR=`#version 300 es
+precision highp float;
+uniform sampler2D u_src;
+uniform vec2 u_size,u_step;
+uniform float u_thresh;
+out vec4 o;
+vec3 samp(vec2 p){
+  vec3 c=texture(u_src,p).rgb;
+  if(u_thresh>0.001){
+    float l=dot(c,vec3(0.299,0.587,0.114));
+    c*=smoothstep(u_thresh,u_thresh+0.22,l);
   }
-  const prog=gl.createProgram();
-  gl.attachShader(prog,mkShader(gl.VERTEX_SHADER,VS));
-  gl.attachShader(prog,mkShader(gl.FRAGMENT_SHADER,FS));
-  gl.linkProgram(prog);
-  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){ console.error(gl.getProgramInfoLog(prog)); $("statusTxt").textContent="Помилка шейдера"; return; }
-  gl.useProgram(prog);
-  const U={};
-  ["u_res","u_t","u_mode","u_seed","u_bg","u_c0","u_c1","u_c2","u_c3","u_c4",
-   "u_count","u_size","u_spread","u_soft","u_orbR","u_orbK","u_rotK","u_pulse",
-   "u_ampX","u_lamX","u_spdX","u_ampY","u_lamY","u_spdY","u_harm","u_skew","u_mirror",
-   "u_bandFreq","u_gloss","u_glossSharp","u_pinch","u_fan","u_flow","u_heat","u_pinchPos",
-   "u_colorama","u_phase","u_reps","u_cycleK","u_contrast","u_gamma","u_poster",
-   "u_sat","u_hue","u_bright","u_grain","u_vig",
-   "u_glCount","u_glSize","u_glRefr","u_glRim","u_glOrbK","u_glRotK","u_glType","u_pal"
-  ].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
+  return c;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_size;
+  float w[7]=float[7](0.199471,0.176033,0.120985,0.064759,0.026995,0.008764,0.002216);
+  vec3 acc=samp(uv)*w[0];
+  for(int i=1;i<7;i++){
+    vec2 o2=u_step*float(i);
+    acc+=samp(uv+o2)*w[i];
+    acc+=samp(uv-o2)*w[i];
+  }
+  o=vec4(acc,1.0);
+}`;
+
+  const FS_COMP=`#version 300 es
+precision highp float;
+uniform sampler2D u_scene,u_soft,u_bloom;
+uniform vec2 u_size;
+uniform float u_blurMix,u_dreamy,u_shineI,u_grain2,u_vig2,u_tt;
+uniform vec3 u_shineC;
+out vec4 o;
+float hashc(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_size;
+  vec3 sc=texture(u_scene,uv).rgb;
+  vec3 sf=texture(u_soft,uv).rgb;
+  vec3 bl=texture(u_bloom,uv).rgb;
+  vec3 col=mix(sc,sf,clamp(u_blurMix,0.0,1.0));
+  col=1.0-(1.0-col)*(1.0-sf*u_dreamy);           /* dreamy: світлий screen-блюр */
+  col+=bl*u_shineI*u_shineC;                      /* shine */
+  float g=hashc(gl_FragCoord.xy+fract(u_tt)*13.0)-0.5;
+  col+=g*(u_grain2*0.10+1.5/255.0);
+  float vd=length(uv-0.5);
+  col*=1.0-u_vig2*smoothstep(0.35,0.85,vd);
+  o=vec4(clamp(col,0.0,1.0),1.0);
+}`;
+
+  function mkShader(type,src){
+    const sh=gl.createShader(type);
+    gl.shaderSource(sh,src);gl.compileShader(sh);
+    if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(sh));return null;}
+    return sh;
+  }
+  function mkProgram(fs,uniforms){
+    const p=gl.createProgram();
+    const v=mkShader(gl.VERTEX_SHADER,VS),f=mkShader(gl.FRAGMENT_SHADER,fs);
+    if(!v||!f)return null;
+    gl.attachShader(p,v);gl.attachShader(p,f);gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS)){console.error(gl.getProgramInfoLog(p));return null;}
+    const Um={};
+    uniforms.forEach(n=>Um[n]=gl.getUniformLocation(p,n));
+    return {p,U:Um};
+  }
+  const progS=mkProgram(FS,
+   ["u_res","u_t","u_mode","u_seed","u_bg","u_c0","u_c1","u_c2","u_c3","u_c4",
+    "u_count","u_size","u_spread","u_soft","u_orbR","u_orbK","u_rotK","u_pulse",
+    "u_ampX","u_lamX","u_spdX","u_ampY","u_lamY","u_spdY","u_harm","u_skew","u_mirror",
+    "u_bandFreq","u_gloss","u_glossSharp","u_pinch","u_fan","u_flow","u_heat","u_pinchPos",
+    "u_colorama","u_phase","u_reps","u_cycleK","u_contrast","u_gamma","u_poster",
+    "u_sat","u_hue","u_bright","u_grain","u_vig",
+    "u_glCount","u_glSize","u_glRefr","u_glRim","u_glOrbK","u_glRotK","u_glType","u_pal"]);
+  const progB=mkProgram(FS_BLUR,["u_src","u_size","u_step","u_thresh"]);
+  const progC=mkProgram(FS_COMP,["u_scene","u_soft","u_bloom","u_size","u_blurMix","u_dreamy","u_shineI","u_grain2","u_vig2","u_tt","u_shineC"]);
+  if(!progS||!progB||!progC){$("statusTxt").textContent="Помилка шейдера";return;}
+  const U=progS.U;
+
+  /* FBO-пайплайн: сцена + два блюр-ланцюги (soft і shine) на пів-роздільності */
+  let sceneTex=null,softA=null,softB=null,bloomA=null,bloomB=null;
+  let fboScene=null,fboSA=null,fboSB=null,fboBA=null,fboBB=null,HW=0,HH=0;
+  function mkTex(w,h){
+    const t=gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    return t;
+  }
+  function mkFbo(t){
+    const f=gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    return f;
+  }
+  function rebuildTargets(){
+    [sceneTex,softA,softB,bloomA,bloomB].forEach(t=>{if(t)gl.deleteTexture(t);});
+    [fboScene,fboSA,fboSB,fboBA,fboBB].forEach(f=>{if(f)gl.deleteFramebuffer(f);});
+    HW=Math.max(2,W>>1);HH=Math.max(2,H>>1);
+    sceneTex=mkTex(W,H);fboScene=mkFbo(sceneTex);
+    softA=mkTex(HW,HH);fboSA=mkFbo(softA);
+    softB=mkTex(HW,HH);fboSB=mkFbo(softB);
+    bloomA=mkTex(HW,HH);fboBA=mkFbo(bloomA);
+    bloomB=mkTex(HW,HH);fboBB=mkFbo(bloomB);
+  }
 
   /* палітра-текстура */
   const palTex=gl.createTexture();
@@ -638,11 +742,27 @@ void main(){
     if(r>=1){w=base||P.res;h=Math.round(w/r);}else{h=base||P.res;w=Math.round(h*r);}
     W=w-w%2;H=h-h%2;
     out.width=W;out.height=H;
+    rebuildTargets();
     $("dims").textContent=`${W} × ${H}px · ×${P.exScale} = ${W*P.exScale} × ${H*P.exScale}`;
   }
   function set3(loc,hex){const c=hexToRgb01(hex);gl.uniform3f(loc,c[0],c[1],c[2]);}
 
+  function blurPass(srcTex,dstFbo,dw,dh,radius,dirX,dirY,thresh){
+    gl.useProgram(progB.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,dstFbo);
+    gl.viewport(0,0,dw,dh);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D,srcTex);
+    gl.uniform1i(progB.U.u_src,1);
+    gl.uniform2f(progB.U.u_size,dw,dh);
+    const stepPx=Math.max(radius,0.5)/6.0*0.5; /* радіус у px повного кадру -> пів-роздільність */
+    gl.uniform2f(progB.U.u_step,dirX*stepPx/dw,dirY*stepPx/dh);
+    gl.uniform1f(progB.U.u_thresh,thresh);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  }
   function renderFrame(u){
+    gl.useProgram(progS.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fboScene);
     gl.viewport(0,0,W,H);
     gl.uniform2f(U.u_res,W,H);
     gl.uniform1f(U.u_t,u);
@@ -675,6 +795,32 @@ void main(){
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D,palTex);
     gl.uniform1i(U.u_pal,0);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+
+    /* блюр-ланцюг shine (bright-pass) — з анаморфним розтягом по X */
+    const anam=1.0+P.shineAnam*3.0;
+    blurPass(sceneTex,fboBA,HW,HH,P.shineRad*anam,1,0,P.shineThresh);
+    blurPass(bloomA,fboBB,HW,HH,P.shineRad,0,1,0);
+    /* блюр-ланцюг soft (повний кадр без порога) */
+    blurPass(sceneTex,fboSA,HW,HH,P.blurRad,1,0,0);
+    blurPass(softA,fboSB,HW,HH,P.blurRad,0,1,0);
+
+    /* композит на канву */
+    gl.useProgram(progC.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    gl.viewport(0,0,W,H);
+    gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.uniform1i(progC.U.u_scene,2);
+    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,softB);gl.uniform1i(progC.U.u_soft,3);
+    gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,bloomB);gl.uniform1i(progC.U.u_bloom,4);
+    gl.uniform2f(progC.U.u_size,W,H);
+    gl.uniform1f(progC.U.u_blurMix,P.blurMix);
+    gl.uniform1f(progC.U.u_dreamy,P.dreamy);
+    gl.uniform1f(progC.U.u_shineI,P.shine);
+    gl.uniform1f(progC.U.u_grain2,P.grain);
+    gl.uniform1f(progC.U.u_vig2,P.vignette);
+    gl.uniform1f(progC.U.u_tt,u);
+    const sc=hexToRgb01(P.shineTint);
+    gl.uniform3f(progC.U.u_shineC,sc[0],sc[1],sc[2]);
     gl.drawArrays(gl.TRIANGLES,0,3);
   }
 
@@ -780,6 +926,14 @@ void main(){
   bindRange("bright","bright","vBright",{fmt:f2});
   bindRange("grain","grain","vGrain",{fmt:f2});
   bindRange("vignette","vignette","vVignette",{fmt:f2});
+  bindRange("blurMix","blurMix","vBlurMix",{fmt:f2});
+  bindRange("blurRad","blurRad","vBlurRad",{int:true});
+  bindRange("dreamy","dreamy","vDreamy",{fmt:f2});
+  bindRange("shine","shine","vShine",{fmt:f2});
+  bindRange("shineThresh","shineThresh","vShineThresh",{fmt:f2});
+  bindRange("shineRad","shineRad","vShineRad",{int:true});
+  bindRange("shineAnam","shineAnam","vShineAnam",{fmt:f2});
+  $("shineTint").addEventListener("input",e=>{P.shineTint=e.target.value;clearStyleActive();});
   bindRange("glCount","glCount","vGlCount",{int:true});
   bindRange("glSize","glSize","vGlSize",{int:true});
   bindRange("glRefr","glRefr","vGlRefr",{fmt:f2});
@@ -880,6 +1034,11 @@ void main(){
     set("contrast","contrast","vContrast",f2);set("gamma","gamma","vGamma",f2);set("poster","poster","vPoster");
     set("sat","sat","vSat",f2);set("hue","hue","vHue");set("bright","bright","vBright",f2);
     set("grain","grain","vGrain",f2);set("vignette","vignette","vVignette",f2);
+    set("blurMix","blurMix","vBlurMix",f2);set("blurRad","blurRad","vBlurRad");
+    set("dreamy","dreamy","vDreamy",f2);set("shine","shine","vShine",f2);
+    set("shineThresh","shineThresh","vShineThresh",f2);set("shineRad","shineRad","vShineRad");
+    set("shineAnam","shineAnam","vShineAnam",f2);
+    $("shineTint").value=P.shineTint;
     set("glCount","glCount","vGlCount");set("glSize","glSize","vGlSize");
     set("glRefr","glRefr","vGlRefr",f2);set("glRim","glRim","vGlRim",f2);
     set("glOrbK","glOrbK","vGlOrbK");set("glRotK","glRotK","vGlRotK");
