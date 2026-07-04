@@ -497,11 +497,11 @@
                    preBlur:2.5, trailBlur:4, bloom:0.3, smearL:0, grain:0.5, vignette:0.45, rgb:0,
                    contrast:1.5, gamma:1.15, overlay:true, ovFollow:false, ovStroke:0, ovFill:1, ovColor:"#fff6ec", text:"FOCUS", fsize:15, ratio:"4:5" },
     "Amsterdam": { palette:"aurora", orbR:0, orbK:0, spinK:0, pendA:0, pulseA:6, driftX:0, driftY:4, shake:0,
-                   echoN:120, echoT:22, decay:0.985, echoI:0.12, additive:true, stepRot:0, stepScale:0, stepX:0, stepY:-3.4,
-                   preBlur:1, trailBlur:2.5, bloom:0.35, smearL:45, smearA:90, grain:0.2, vignette:0.15, rgb:0,
-                   contrast:1.15, gamma:1.25, overlay:true, ovFollow:false, ovStroke:0, ovFill:1, ovColor:"#c40b0b", text:"Amsterdam", upper:false, fsize:13, posY:38, ratio:"4:5" },
+                   echoN:140, echoT:22, decay:0.968, echoI:0.5, additive:true, stepRot:0, stepScale:0, stepX:0, stepY:-4.4,
+                   preBlur:1, trailBlur:2.5, bloom:0.35, smearL:35, smearA:90, grain:0.2, vignette:0.15, rgb:0,
+                   contrast:1.25, gamma:1.0, overlay:true, ovFollow:false, ovStroke:0, ovFill:1, ovColor:"#c40b0b", text:"Amsterdam", upper:false, fsize:13, posY:38, ratio:"4:5" },
     "Inferno":   { palette:"inferno", orbR:0, orbK:0, spinK:0, pendA:10, pulseA:0, driftY:6, shake:4,
-                   echoN:90, echoT:20, decay:0.982, echoI:0.16, additive:true, stepY:-2.6, stepRot:0.4,
+                   echoN:90, echoT:20, decay:0.96, echoI:0.45, additive:true, stepY:-2.6, stepRot:0.4,
                    preBlur:2.5, trailBlur:8, bloom:0.4, smearL:28, smearA:90, grain:0.35, vignette:0.3,
                    contrast:1.2, gamma:1.05, overlay:true, ovFollow:true, ovStroke:2.5, ovFill:0, ovColor:"#ffe9c9", text:"HEAT", fsize:20, ratio:"1:1" },
     "Plasma":    { palette:"plasma", orbR:8, orbK:2, spinK:1, pendA:0, pulseA:10, desync:0.5,
@@ -509,7 +509,7 @@
                    preBlur:2, trailBlur:10, bloom:0.45, grain:0.1, vignette:0.25, rgb:6,
                    contrast:1.2, gamma:1.0, overlay:true, ovStroke:1.5, ovFill:0, ovColor:"#ffffff", text:"PLASMA", fsize:14, ratio:"1:1" },
     "Toxic Melt":{ palette:"toxic", orbR:0, orbK:0, pendA:14, pulseA:0, driftY:0,
-                   echoN:110, echoT:24, decay:0.983, echoI:0.14, additive:true, stepY:3.2, stepScale:0.4,
+                   echoN:110, echoT:24, decay:0.962, echoI:0.42, additive:true, stepY:3.2, stepScale:0.4,
                    preBlur:2, trailBlur:6, bloom:0.4, smearL:30, smearA:270, grain:0.25, vignette:0.3,
                    contrast:1.2, gamma:1.1, overlay:true, ovStroke:2, ovFill:0, ovColor:"#eaffb0", text:"TOXIC", fsize:17, ratio:"4:5" },
     "Chrome":    { palette:"chrome", orbR:5, orbK:1, pendA:30, pulseA:0, desync:0.6,
@@ -755,7 +755,7 @@
       const taps = 14;
       wctx.globalCompositeOperation = "lighter";
       for(let k=1;k<=taps;k++){
-        wctx.globalAlpha = (1-k/(taps+1))*0.45;
+        wctx.globalAlpha = (1-k/(taps+1))*0.22;
         wctx.drawImage(snap, dx*len*k/taps, dy*len*k/taps);
       }
       wctx.globalAlpha = 1;
