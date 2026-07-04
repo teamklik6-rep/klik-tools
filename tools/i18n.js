@@ -570,6 +570,22 @@
     "Зсув синього": ["Blue shift", "Сдвиг синего"],
     "Контур": ["Contour", "Контур"],
 
+    /* === Flux GPU / Silk === */
+    "рідкі градієнти · шовкові стрічки · GPU": ["liquid gradients · silk ribbons · GPU", "жидкие градиенты · шёлковые ленты · GPU"],
+    "Шовк": ["Silk", "Шёлк"],
+    "Шовк і глянець": ["Silk & gloss", "Шёлк и глянец"],
+    "Частота смуг": ["Band frequency", "Частота полос"],
+    "Глянець": ["Gloss", "Глянец"],
+    "Різкість відблиску": ["Highlight sharpness", "Резкость блика"],
+    "Пінч (сходження)": ["Pinch (convergence)", "Пинч (схождение)"],
+    "Фокус X (%)": ["Focus X (%)", "Фокус X (%)"],
+    "Фокус Y (%)": ["Focus Y (%)", "Фокус Y (%)"],
+    "Кут віяла (°)": ["Fan angle (°)", "Угол веера (°)"],
+    "Течія (циклів)": ["Flow (cycles)", "Течение (циклов)"],
+    "Двигун «Шовк»: гіперболічні лінії потоку сходяться у фокус, гребені мають глянцеві відблиски — референсна якість, рендер на GPU.": ["The Silk engine: hyperbolic flow lines converge into the focus, crests get glossy highlights — reference quality, GPU rendering.", "Движок «Шёлк»: гиперболические линии потока сходятся в фокус, гребни получают глянцевые блики — референсное качество, рендер на GPU."],
+    "Скляні фігури заломлюють градієнт під собою — рефракція тепер чесна, порахована в шейдері.": ["Glass shapes refract the gradient beneath them — the refraction is now real, computed in the shader.", "Стеклянные фигуры преломляют градиент под собой — рефракция теперь честная, посчитана в шейдере."],
+    "один файл · WebGL2 (GPU) у браузері · silk bands → wave warp → colorama · безшовні лупи": ["single file · WebGL2 (GPU) in the browser · silk bands → wave warp → colorama · seamless loops", "один файл · WebGL2 (GPU) в браузере · silk bands → wave warp → colorama · бесшовные лупы"],
+
     /* === Shader Studio === */
     "Shader Studio — WebGL-шейдери": ["Shader Studio — WebGL shaders", "Shader Studio — WebGL-шейдеры"],
     "20 живих WebGL-шейдерів · градієнти, шуми, метаболи": ["20 live WebGL shaders · gradients, noises, metaballs", "20 живых WebGL-шейдеров · градиенты, шумы, метаболы"],
