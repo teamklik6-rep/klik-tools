@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DotMatrix Studio — силует із квадратиків, як у Milk & Peppers</title>
+<link rel="stylesheet" href="studio.css">
+<style>
+  #out{image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+  .filebtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  input[type=text]{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="white" stroke="none">
+          <rect x="3" y="3" width="4" height="4" rx="0.5"/><rect x="10" y="3" width="4" height="4" rx="0.5"/><rect x="17" y="3" width="4" height="4" rx="0.5"/>
+          <rect x="3" y="10" width="4" height="4" rx="0.5"/><rect x="17" y="10" width="4" height="4" rx="0.5"/>
+          <rect x="3" y="17" width="4" height="4" rx="0.5"/><rect x="10" y="17" width="4" height="4" rx="0.5"/><rect x="17" y="17" width="4" height="4" rx="0.5"/>
+        </svg>
+      </div>
+      <div><h1>DotMatrix Studio</h1><p>mosaic → threshold → pixel matte · 24 fps</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="obj">Обʼєкт</div>
+        <div class="tab" data-tab="scene">Сцена</div>
+        <div class="tab" data-tab="grid">Мозаїка</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ OBJECT ============ -->
+      <div data-pane="obj" class="active">
+        <div class="group">
+          <h2>Силует</h2>
+          <div class="presets c3" id="shapes">
+            <div class="preset active" data-shape="eagle">Орел</div>
+            <div class="preset" data-shape="butterfly">Метелик</div>
+            <div class="preset" data-shape="jelly">Медуза</div>
+            <div class="preset" data-shape="whale">Кит</div>
+            <div class="preset" data-shape="rocket">Ракета</div>
+            <div class="preset" data-shape="heart">Серце</div>
+            <div class="preset" data-shape="text">Текст</div>
+            <div class="preset" data-shape="file">Свій файл</div>
+          </div>
+          <div class="group" id="textGroup" style="display:none;margin:12px 0 0">
+            <input type="text" id="maskText" value="KLIK" placeholder="Свій текст…">
+          </div>
+          <div class="note">Будь-що біле на чорному стає силуетом: пресети малюються процедурно, «Текст» — довільний напис, «Свій файл» — відео (повним кадром) або фото (летить по траєкторії).</div>
+        </div>
+        <div class="group">
+          <h2>Рух</h2>
+          <div class="presets c2" id="motions">
+            <div class="preset active" data-motion="hover">Ширяння</div>
+            <div class="preset" data-motion="fly">Проліт</div>
+          </div>
+          <div class="row mt"><label class="lbl">Розмір обʼєкта</label><span class="val" id="vSize">0.55</span></div>
+          <input type="range" id="size" min="0.2" max="0.95" step="0.01" value="0.55">
+          <div class="row mt"><label class="lbl">Швидкість</label><span class="val" id="vSpeed">1.00</span></div>
+          <input type="range" id="speed" min="0.2" max="3" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Дрейф (комірок)</label><span class="val" id="vAmp">4.0</span></div>
+          <input type="range" id="amp" min="0" max="16" step="0.5" value="4">
+          <div class="row mt"><label class="lbl">Темп анімації</label><span class="val" id="vTempo">1.20</span></div>
+          <input type="range" id="tempo" min="0.3" max="3" step="0.05" value="1.2">
+          <div class="row mt"><label class="lbl">Розсип країв</label><span class="val" id="vSpray">0.25</span></div>
+          <input type="range" id="spray" min="0" max="1" step="0.05" value="0.25">
+          <div class="note">Розсип підкидає випадкові комірки над верхнім краєм силуету — те саме мерехтіння «пірʼя», що в оригінальному футажі орла.</div>
+        </div>
+      </div>
+
+      <!-- ============ SCENE ============ -->
+      <div data-pane="scene">
+        <div class="group">
+          <h2>Фон</h2>
+          <div class="colors">
+            <div class="color-field"><span>Колір фону</span><div class="color-wrap"><input type="color" id="bgColor" value="#3a41d8"></div></div>
+          </div>
+          <div class="filebtns" style="margin-top:10px">
+            <button class="btn" id="bgLoad">Відео або фото фону</button>
+            <button class="btn" id="bgClear">Прибрати фон</button>
+          </div>
+          <div class="note">Перетягни відео неба прямо на превʼю. Без файлу — рівний колір, як у фінальному арті референса.</div>
+        </div>
+        <div class="group">
+          <h2>Хмари</h2>
+          <div class="row"><label class="lbl">Кількість хмар</label><span class="val" id="vClouds">2</span></div>
+          <input type="range" id="clouds" min="0" max="4" step="1" value="2">
+          <div class="switch-row"><span class="lbl">Хмара поверх обʼєкта</span>
+            <label class="switch"><input type="checkbox" id="cloudFront" checked><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Оформлення</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Сітка ліній</span>
+            <label class="switch"><input type="checkbox" id="gridOn" checked><span class="track"></span></label></div>
+          <div class="row mt"><label class="lbl">Прозорість сітки</label><span class="val" id="vGridAlpha">0.70</span></div>
+          <input type="range" id="gridAlpha" min="0" max="1" step="0.05" value="0.7">
+          <div class="row mt"><label class="lbl">Вертикальний підпис</label></div>
+          <input type="text" id="caption" value="grow wings and fly" placeholder="Підпис уздовж лінії…">
+          <div class="presets c2" id="capSides" style="margin-top:8px">
+            <div class="preset" data-side="l">Ліворуч</div>
+            <div class="preset active" data-side="r">Праворуч</div>
+          </div>
+          <div class="switch-row"><span class="lbl">Іскри</span>
+            <label class="switch"><input type="checkbox" id="sparksOn" checked><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Годинник-таймер</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Показати таймер</span>
+            <label class="switch"><input type="checkbox" id="clockOn"><span class="track"></span></label></div>
+          <div class="presets c2" id="clockModes" style="margin-top:10px">
+            <div class="preset active" data-cmode="tc">Таймкод 24fps</div>
+            <div class="preset" data-cmode="clock">Поточний час</div>
+          </div>
+          <div class="presets c4" id="clockCorners" style="margin-top:8px">
+            <div class="preset active" data-corner="tl">↖</div>
+            <div class="preset" data-corner="tr">↗</div>
+            <div class="preset" data-corner="bl">↙</div>
+            <div class="preset" data-corner="br">↘</div>
+          </div>
+          <div class="note">Цифри зібрані з тієї самої dot-сітки — шрифт 3×5 комірок.</div>
+        </div>
+      </div>
+
+      <!-- ============ MOSAIC ============ -->
+      <div data-pane="grid">
+        <div class="group">
+          <h2>Мозаїка</h2>
+          <div class="row"><label class="lbl">Сітка X (комірок)</label><span class="val" id="vGridX">72</span></div>
+          <input type="range" id="gridX" min="16" max="160" step="4" value="72">
+          <div class="row mt"><label class="lbl">Сітка Y (комірок)</label><span class="val" id="vGridY">128</span></div>
+          <input type="range" id="gridY" min="16" max="240" step="4" value="128">
+          <div class="row mt"><label class="lbl">Threshold (Level)</label><span class="val" id="vLevel">0</span></div>
+          <input type="range" id="level" min="0" max="254" step="1" value="0">
+          <div class="note">Як в AE: комірка вмикається, коли її середня яскравість &gt; Level. Level 0 — спалахує будь-яка зачеплена комірка, силует жирніє і «сипле» краями.</div>
+        </div>
+        <div class="group">
+          <h2>Квадрати</h2>
+          <div class="row"><label class="lbl">Заповнення квадрата</label><span class="val" id="vDotFill">0.87 · 13px</span></div>
+          <input type="range" id="dotFill" min="0.5" max="1" step="0.01" value="0.87">
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Колір квадратів</span><div class="color-wrap"><input type="color" id="dotColor" value="#ffffff"></div></div>
+          </div>
+          <div class="note">Пайплайн референса 1:1 — Mosaic 72×128 → Threshold 0 → Unmult → PIXEL-комп 15×15 із квадратом 13×13 → CC RepeTile → Luma Matte. Позиція семплиться до квантування — квадратики «перескакують» по сітці.</div>
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid"><button class="btn primary full" id="exPng">PNG</button></div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">Тривалість (с)</label><span class="val" id="vDur">10</span></div>
+          <input type="range" id="dur" min="2" max="60" step="1" value="10">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">16</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="16">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (24 fps)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 кодується локально (WebCodecs) з живого превʼю на 24 fps — нічого не вивантажується.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · Mosaic 72×128 → Threshold 0 → Unmult → PIXEL 15×15 (13×13) → RepeTile → Luma Matte · 24 fps · все локально</footer>
+</div>
+<input type="file" id="bgFile" accept="video/*,image/*" hidden>
+<input type="file" id="maskFile" accept="video/*,image/*" hidden>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const CELL = 15;        // PIXEL-комп: комірка 15×15 px, квадрат за замовчуванням 13×13
+  const FPS  = 24;        // степінг як в AE-компі референса
+  const P = {
+    shape:"eagle", maskText:"KLIK",
+    motion:"hover", size:0.55, speed:1, amp:4, tempo:1.2, spray:0.25,
+    bgColor:"#3a41d8", clouds:2, cloudFront:true,
+    gridOn:true, gridAlpha:0.7, caption:"grow wings and fly", capSide:"r", sparksOn:true,
+    clockOn:false, clockMode:"tc", clockCorner:"tl",
+    gridX:72, gridY:128, level:0, dotFill:13/15, dotColor:"#ffffff",
+    dur:10, bitrate:16,
+  };
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  const $ = id => document.getElementById(id);
+  const TAU = Math.PI*2;
+  const out = $("out");
+  const ctx = out.getContext("2d");
+
+  /* маска семплиться у сітку через offscreen-канвас (двоступеневий даунскейл для відео) */
+  const gm  = document.createElement("canvas"), g  = gm.getContext("2d",{willReadFrequently:true});
+  const mid = document.createElement("canvas"), gmid = mid.getContext("2d");
+
+  let W=0, H=0;
+  function rebuild(){
+    W = P.gridX*CELL; H = P.gridY*CELL;
+    out.width = W; out.height = H;
+    gm.width = P.gridX; gm.height = P.gridY;
+    mid.width = P.gridX*4; mid.height = P.gridY*4;
+    $("dims").textContent = `${P.gridX} × ${P.gridY} комірок · ${W} × ${H}px`;
+    needRender = true;
+  }
+
+  /* детермінований хеш */
+  function hash(x){ const s = Math.sin(x*127.1 + 311.7)*43758.5453; return s - Math.floor(s); }
+  const h2 = (a,b) => hash(a*7.13 + b*57.7);
+
+  /* ================= джерела файлів ================= */
+  let bg = null;           // {type:'video'|'image', el, url}
+  let maskFileSrc = null;  // {type:'video'|'image', el, url}
+
+  function freeSrc(s){ if(s && s.url) URL.revokeObjectURL(s.url); if(s && s.type==="video"){ try{s.el.pause();}catch(e){} } }
+  function loadFile(file, cb){
+    const url = URL.createObjectURL(file);
+    if(file.type.startsWith("video/")){
+      const v = document.createElement("video");
+      v.muted = true; v.loop = true; v.playsInline = true; v.src = url;
+      v.addEventListener("loadeddata", () => { v.play().catch(()=>{}); cb({type:"video", el:v, url}); }, {once:true});
+    } else {
+      const im = new Image();
+      im.onload = () => cb({type:"image", el:im, url});
+      im.src = url;
+    }
+  }
+  $("bgLoad").addEventListener("click", () => $("bgFile").click());
+  $("bgFile").addEventListener("change", e => { if(e.target.files[0]) loadFile(e.target.files[0], s => { freeSrc(bg); bg = s; needRender = true; }); e.target.value=""; });
+  $("bgClear").addEventListener("click", () => { freeSrc(bg); bg = null; needRender = true; });
+  $("maskFile").addEventListener("change", e => {
+    if(e.target.files[0]) loadFile(e.target.files[0], s => { freeSrc(maskFileSrc); maskFileSrc = s; setShape("file"); });
+    e.target.value = "";
+  });
+
+  const stage = $("stage");
+  ["dragenter","dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if(f) loadFile(f, s => { freeSrc(bg); bg = s; needRender = true; }); });
+
+  /* ================= процедурні силуети =================
+     Кожен малюється білим у одиничних координатах (центр 0,0, ширина ≈1),
+     phase — власна анімація. Позиція НЕ квантована — сітку робить мозаїка. */
+  const SHAPES = {
+    eagle(gc, ph){
+      const f = Math.sin(ph)*0.05; // мах крил
+      gc.beginPath();
+      /* ліве крило з «пальцями» пірʼя */
+      gc.moveTo(-0.04,-0.02);
+      gc.quadraticCurveTo(-0.28,-0.12+f, -0.5,-0.09+f);
+      gc.lineTo(-0.49,-0.03+f);
+      gc.lineTo(-0.42, 0.10+f*0.7); gc.lineTo(-0.40, 0.05+f*0.7);
+      gc.lineTo(-0.33, 0.11+f*0.5); gc.lineTo(-0.31, 0.06+f*0.5);
+      gc.lineTo(-0.24, 0.11+f*0.3); gc.lineTo(-0.22, 0.06+f*0.3);
+      gc.lineTo(-0.15, 0.10);       gc.lineTo(-0.13, 0.05);
+      gc.lineTo(-0.04, 0.05);
+      gc.closePath(); gc.fill();
+      /* праве крило */
+      gc.save(); gc.scale(-1,1);
+      gc.beginPath();
+      gc.moveTo(-0.04,-0.02);
+      gc.quadraticCurveTo(-0.28,-0.12-f, -0.5,-0.09-f);
+      gc.lineTo(-0.49,-0.03-f);
+      gc.lineTo(-0.42, 0.10-f*0.7); gc.lineTo(-0.40, 0.05-f*0.7);
+      gc.lineTo(-0.33, 0.11-f*0.5); gc.lineTo(-0.31, 0.06-f*0.5);
+      gc.lineTo(-0.24, 0.11-f*0.3); gc.lineTo(-0.22, 0.06-f*0.3);
+      gc.lineTo(-0.15, 0.10);       gc.lineTo(-0.13, 0.05);
+      gc.lineTo(-0.04, 0.05);
+      gc.closePath(); gc.fill();
+      gc.restore();
+      /* тіло, голова з дзьобом, хвіст-віяло */
+      gc.beginPath(); gc.ellipse(0, 0.02, 0.10, 0.05, 0, 0, TAU); gc.fill();
+      gc.beginPath(); gc.arc(0.11, -0.005, 0.034, 0, TAU); gc.fill();
+      gc.beginPath(); gc.moveTo(0.13,-0.02); gc.lineTo(0.175,0.005); gc.lineTo(0.13,0.015); gc.closePath(); gc.fill();
+      gc.beginPath(); gc.moveTo(-0.07,0.03); gc.lineTo(-0.18,0.10); gc.lineTo(-0.15,0.045); gc.lineTo(-0.18,0.01); gc.closePath(); gc.fill();
+    },
+    butterfly(gc, ph){
+      const w = 0.25 + 0.75*Math.abs(Math.cos(ph)); // складання крил
+      for(const s of [1,-1]){
+        gc.save(); gc.scale(s*w, 1);
+        gc.beginPath(); // верхнє крило
+        gc.moveTo(0.02,-0.06);
+        gc.bezierCurveTo(0.30,-0.42, 0.52,-0.28, 0.46,-0.10);
+        gc.bezierCurveTo(0.42, 0.00, 0.15, 0.02, 0.02,-0.02);
+        gc.closePath(); gc.fill();
+        gc.beginPath(); // нижнє крило
+        gc.moveTo(0.02, 0.00);
+        gc.bezierCurveTo(0.34, 0.05, 0.36, 0.32, 0.16, 0.34);
+        gc.bezierCurveTo(0.05, 0.34, 0.02, 0.12, 0.02, 0.04);
+        gc.closePath(); gc.fill();
+        gc.restore();
+      }
+      gc.beginPath(); gc.ellipse(0, 0.04, 0.035, 0.17, 0, 0, TAU); gc.fill();
+      gc.beginPath(); gc.arc(0, -0.16, 0.035, 0, TAU); gc.fill();
+      gc.lineWidth = 0.014; gc.strokeStyle = "#fff";
+      gc.beginPath(); gc.moveTo(-0.01,-0.18); gc.quadraticCurveTo(-0.08,-0.30, -0.13,-0.32);
+      gc.moveTo(0.01,-0.18); gc.quadraticCurveTo(0.08,-0.30, 0.13,-0.32); gc.stroke();
+    },
+    jelly(gc, ph){
+      const puls = 1 + 0.09*Math.sin(ph);
+      gc.save(); gc.translate(0, Math.sin(ph)*0.03 - 0.08); gc.scale(puls, 1);
+      gc.beginPath(); // купол зі спідницею
+      gc.moveTo(-0.30, 0.02);
+      gc.bezierCurveTo(-0.32,-0.28, 0.32,-0.28, 0.30, 0.02);
+      gc.bezierCurveTo(0.20, 0.06+0.03*Math.sin(ph*2), 0.10, 0.01, 0, 0.05);
+      gc.bezierCurveTo(-0.10, 0.01, -0.20, 0.06-0.03*Math.sin(ph*2), -0.30, 0.02);
+      gc.closePath(); gc.fill();
+      gc.restore();
+      gc.lineWidth = 0.035; gc.strokeStyle = "#fff"; gc.lineCap = "round";
+      for(let i = 0; i < 5; i++){
+        const x0 = -0.2 + i*0.1;
+        gc.beginPath(); gc.moveTo(x0, -0.02);
+        gc.quadraticCurveTo(x0 + Math.sin(ph + i*1.7)*0.09, 0.22, x0 + Math.sin(ph*0.8 + i)*0.13, 0.42);
+        gc.stroke();
+      }
+    },
+    whale(gc, ph){
+      const tf = Math.sin(ph)*0.07;
+      gc.beginPath(); // тіло
+      gc.moveTo(-0.40, 0.00);
+      gc.bezierCurveTo(-0.12,-0.16, 0.22,-0.15, 0.42,-0.02);
+      gc.bezierCurveTo(0.46, 0.03, 0.44, 0.09, 0.36, 0.10);
+      gc.bezierCurveTo(0.10, 0.13, -0.20, 0.10, -0.40, 0.03);
+      gc.closePath(); gc.fill();
+      gc.beginPath(); // хвостові лопаті
+      gc.moveTo(-0.38, 0.015+tf*0.4);
+      gc.lineTo(-0.52,-0.10+tf); gc.lineTo(-0.44, 0.015+tf*0.4);
+      gc.lineTo(-0.54, 0.10+tf); gc.closePath(); gc.fill();
+      gc.beginPath(); // грудний плавець
+      gc.moveTo(0.06, 0.09); gc.lineTo(-0.04, 0.20); gc.lineTo(0.13, 0.115); gc.closePath(); gc.fill();
+    },
+    rocket(gc, ph, frame){
+      gc.save(); gc.translate((hash(frame*3.7)-0.5)*0.015, 0); // тряска
+      gc.beginPath(); // корпус + ніс
+      gc.moveTo(-0.09,-0.26); gc.lineTo(0,-0.45); gc.lineTo(0.09,-0.26);
+      gc.lineTo(0.09, 0.16); gc.quadraticCurveTo(0, 0.20, -0.09, 0.16);
+      gc.closePath(); gc.fill();
+      gc.beginPath(); // стабілізатори
+      gc.moveTo(-0.09, 0.02); gc.lineTo(-0.20, 0.24); gc.lineTo(-0.09, 0.20); gc.closePath(); gc.fill();
+      gc.beginPath();
+      gc.moveTo(0.09, 0.02); gc.lineTo(0.20, 0.24); gc.lineTo(0.09, 0.20); gc.closePath(); gc.fill();
+      gc.globalCompositeOperation = "destination-out"; // ілюмінатор
+      gc.beginPath(); gc.arc(0, -0.13, 0.045, 0, TAU); gc.fill();
+      gc.globalCompositeOperation = "source-over";
+      const fl = 0.14 + 0.14*hash(frame*7.3); // полумʼя мерехтить покадрово
+      gc.beginPath(); gc.moveTo(-0.055, 0.20); gc.lineTo(0, 0.20 + fl); gc.lineTo(0.055, 0.20); gc.closePath(); gc.fill();
+      gc.restore();
+    },
+    heart(gc, ph){
+      const b = Math.pow(Math.max(0, Math.sin(ph)), 4) + 0.6*Math.pow(Math.max(0, Math.sin(ph - 0.7)), 4);
+      const s = 1 + 0.10*b;
+      gc.save(); gc.scale(s, s);
+      gc.beginPath();
+      gc.moveTo(0,-0.12);
+      gc.bezierCurveTo(-0.10,-0.32, -0.42,-0.28, -0.40,-0.02);
+      gc.bezierCurveTo(-0.38, 0.16, -0.12, 0.24, 0, 0.36);
+      gc.bezierCurveTo(0.12, 0.24, 0.38, 0.16, 0.40,-0.02);
+      gc.bezierCurveTo(0.42,-0.28, 0.10,-0.32, 0,-0.12);
+      gc.closePath(); gc.fill();
+      gc.restore();
+    },
+  };
+  /* нахил по траєкторії доречний не всім */
+  const TILT = { eagle:1, butterfly:0.5, jelly:0, whale:0.7, rocket:0, heart:0.3, text:0.2, file:0.7 };
+
+  function drawTextMask(gc, cx, cy, span, ph){
+    const txt = P.maskText || "KLIK";
+    gc.save(); gc.translate(cx, cy + Math.sin(ph*0.5)*1.2);
+    let fs = span*0.5;
+    gc.font = `900 ${fs}px Onest, Inter, -apple-system, Arial, sans-serif`;
+    const tw = gc.measureText(txt).width;
+    const maxW = P.gridX*0.9;
+    if(tw > maxW){ fs *= maxW/tw; gc.font = `900 ${fs}px Onest, Inter, -apple-system, Arial, sans-serif`; }
+    gc.textAlign = "center"; gc.textBaseline = "middle";
+    gc.fillStyle = "#fff"; gc.fillText(txt, 0, 0);
+    gc.restore();
+  }
+
+  /* ================= траєкторія ================= */
+  function motionPos(t){
+    const u = t*P.speed;
+    const span = P.gridX*P.size;
+    let x, y, vx = 0;
+    if(P.motion === "fly"){
+      const travel = P.gridX + span*2;
+      x = ((u*8) % travel) - span; vx = 8;
+    } else {
+      x = P.gridX/2 + Math.sin(u*0.45)*P.amp*0.7; vx = Math.cos(u*0.45)*0.315*P.amp;
+    }
+    y = P.gridY*0.42 + Math.sin(u*0.9)*P.amp*0.6 + Math.sin(u*0.31 + 1.7)*P.amp*0.35;
+    const vy = Math.cos(u*0.9)*0.54*P.amp + Math.cos(u*0.31 + 1.7)*0.108*P.amp;
+    const tilt = Math.atan2(vy*P.speed, Math.max(4, Math.abs(vx)*P.speed + 4)) * (TILT[P.shape] ?? 0.5);
+    return { x, y, span, tilt, phase: t*P.tempo*TAU*0.6 };
+  }
+
+  /* ================= маска → мозаїка → threshold ================= */
+  function coverDraw(gc, el, w, h){
+    const sw = el.videoWidth || el.naturalWidth, sh = el.videoHeight || el.naturalHeight;
+    if(!sw || !sh) return;
+    const k = Math.max(w/sw, h/sh);
+    gc.drawImage(el, (w - sw*k)/2, (h - sh*k)/2, sw*k, sh*k);
+  }
+  function sampleMask(t, frame){
+    g.setTransform(1,0,0,1,0,0);
+    g.fillStyle = "#000";
+    g.fillRect(0, 0, P.gridX, P.gridY);
+    const f = motionPos(t);
+    if(P.shape === "file" && maskFileSrc){
+      if(maskFileSrc.type === "video"){
+        gmid.fillStyle = "#000"; gmid.fillRect(0, 0, mid.width, mid.height);
+        coverDraw(gmid, maskFileSrc.el, mid.width, mid.height);
+        g.drawImage(mid, 0, 0, P.gridX, P.gridY);
+      } else {
+        const iw = maskFileSrc.el.naturalWidth, ih = maskFileSrc.el.naturalHeight;
+        const w = f.span, h = f.span*ih/iw;
+        g.save(); g.translate(f.x, f.y); g.rotate(f.tilt);
+        g.drawImage(maskFileSrc.el, -w/2, -h/2, w, h);
+        g.restore();
+      }
+    } else if(P.shape === "text"){
+      drawTextMask(g, f.x, f.y, f.span, f.phase);
+    } else {
+      g.save(); g.translate(f.x, f.y); g.rotate(f.tilt); g.scale(f.span, f.span);
+      g.fillStyle = "#fff";
+      (SHAPES[P.shape] || SHAPES.eagle)(g, f.phase, frame);
+      g.restore();
+    }
+    return g.getImageData(0, 0, P.gridX, P.gridY).data;
+  }
+
+  /* Threshold (AE): яскравість > Level → комірка увімкнена */
+  function thresholdCells(data){
+    const on = new Uint8Array(P.gridX*P.gridY);
+    const thr = P.level;
+    let i = 0;
+    for(let c = 0; c < on.length; c++, i += 4)
+      if((data[i] + data[i+1] + data[i+2])/3 > thr) on[c] = 1;
+    return on;
+  }
+  /* розсип: випадкові комірки над верхнім краєм силуету (мерехтіння пірʼя) */
+  function applySpray(on, frame){
+    if(P.spray <= 0) return;
+    const gx = P.gridX, gy = P.gridY;
+    for(let y = 1; y < gy; y++)
+      for(let x = 0; x < gx; x++){
+        const c = y*gx + x;
+        if(on[c] !== 1 || on[c - gx]) continue;   // тільки верхня межа
+        const r = h2(x + frame*13.7, y);
+        if(r < P.spray*0.5){
+          on[c - gx] = 2;
+          const up = 1 + Math.floor(h2(frame + x*3.1, y*1.9)*3);
+          if(r < P.spray*0.18 && y - 1 - up >= 0) on[c - gx - up*gx] = 2;
+        }
+      }
+  }
+
+  /* ================= піксельний годинник (шрифт 3×5) ================= */
+  const FONT = {
+    "0":["111","101","101","101","111"], "1":["010","110","010","010","111"],
+    "2":["111","001","111","100","111"], "3":["111","001","111","001","111"],
+    "4":["101","101","111","001","001"], "5":["111","100","111","001","111"],
+    "6":["111","100","111","101","111"], "7":["111","001","001","010","010"],
+    "8":["111","101","111","101","111"], "9":["111","101","111","001","111"],
+    ":":["0","1","0","1","0"],
+  };
+  function clockText(t){
+    if(P.clockMode === "clock"){
+      const d = new Date(), p = n => String(n).padStart(2, "0");
+      return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    }
+    const f = Math.floor(t*FPS), p = n => String(n).padStart(2, "0");
+    return `${p(Math.floor(f/FPS/60)%100)}:${p(Math.floor(f/FPS)%60)}:${p(f%FPS)}`;
+  }
+  function drawClock(t, sz, off){
+    const txt = clockText(t);
+    let wCells = -1;
+    for(const ch of txt) wCells += FONT[ch][0].length + 1;
+    const pad = 2;
+    let cx = (P.clockCorner === "tr" || P.clockCorner === "br") ? P.gridX - pad - wCells : pad;
+    const cy = (P.clockCorner === "bl" || P.clockCorner === "br") ? P.gridY - pad - 5 : pad;
+    for(const ch of txt){
+      const gl = FONT[ch];
+      for(let r = 0; r < 5; r++)
+        for(let c = 0; c < gl[r].length; c++)
+          if(gl[r][c] === "1")
+            ctx.fillRect((cx+c)*CELL + off, (cy+r)*CELL + off, sz, sz);
+      cx += gl[0].length + 1;
+    }
+  }
+
+  /* ================= хмари (процедурні кумулюси) ================= */
+  const cloudCache = {};
+  function makeCloud(seed){
+    if(cloudCache[seed]) return cloudCache[seed];
+    const c = document.createElement("canvas"); c.width = 600; c.height = 320;
+    const cc = c.getContext("2d");
+    for(let i = 0; i < 11; i++){
+      const hx = hash(seed*31.7 + i*7.9), hy = hash(seed*17.3 + i*3.1);
+      const r = (40 + hx*60) * (1 - Math.abs(i - 5)/9);
+      const x = 70 + i*(460/10) + (hy - 0.5)*40;
+      const y = 205 - r*0.6 - hash(seed + i*11.3)*35;
+      const gr = cc.createRadialGradient(x, y, r*0.15, x, y, r);
+      gr.addColorStop(0, "rgba(255,255,255,1)");
+      gr.addColorStop(0.7, "rgba(255,255,255,.96)");
+      gr.addColorStop(1, "rgba(255,255,255,0)");
+      cc.fillStyle = gr;
+      cc.fillRect(x - r, y - r, r*2, r*2);
+    }
+    /* плаский низ кумулюса */
+    const er = cc.createLinearGradient(0, 195, 0, 320);
+    er.addColorStop(0, "rgba(0,0,0,0)"); er.addColorStop(0.5, "rgba(0,0,0,1)");
+    cc.globalCompositeOperation = "destination-out";
+    cc.fillStyle = er; cc.fillRect(0, 195, 600, 125);
+    cc.globalCompositeOperation = "source-over";
+    cloudCache[seed] = c;
+    return c;
+  }
+  function drawClouds(t, front){
+    for(let i = 0; i < P.clouds; i++){
+      const isFront = P.cloudFront && i === 0;
+      if(isFront !== front) continue;
+      const spr = makeCloud(i + 1);
+      const sc = (0.45 + hash(i*9.7)*0.45) * W/600;
+      const cw = 600*sc, ch = 320*sc;
+      const drift = t*P.speed*CELL*(0.25 + hash(i + 4)*0.5);
+      const x = ((hash(i)*1.2*W + drift) % (W + cw)) - cw;
+      const y = H*(isFront ? 0.47 : 0.15 + hash(i + 7)*0.6) - ch/2;
+      ctx.drawImage(spr, x, y, cw, ch);
+    }
+  }
+
+  /* ================= сцена ================= */
+  /* у референсі лінії стоять на межах комірок мозаїки (15/72, 58/72 і 36/128, 86/128) —
+     тому зберігаємо частки, а малюємо по найближчій межі: зміна мозаїки рухає лінії */
+  const LINE_FX = [15/72, 58/72], LINE_FY = [36/128, 86/128];
+  const gridLineCols = () => LINE_FX.map(f => Math.round(P.gridX*f));
+  const gridLineRows = () => LINE_FY.map(f => Math.round(P.gridY*f));
+  function drawGridLines(){
+    if(!P.gridOn || P.gridAlpha <= 0) return;
+    ctx.save(); ctx.globalAlpha = P.gridAlpha; ctx.fillStyle = "#fff";
+    const lw = Math.max(1, Math.round(CELL*0.2));
+    for(const c of gridLineCols()) ctx.fillRect(c*CELL - (lw>>1), 0, lw, H);
+    for(const r of gridLineRows()) ctx.fillRect(0, r*CELL - (lw>>1), W, lw);
+    ctx.restore();
+  }
+  function drawCaption(){
+    const txt = P.caption.trim();
+    if(!txt) return;
+    ctx.save();
+    const cols = gridLineCols();
+    const x = (P.capSide === "r" ? cols[1] : cols[0])*CELL + CELL*2;
+    ctx.translate(x, H*0.72);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillStyle = "#fff";
+    ctx.font = `italic 500 ${Math.round(W*0.024)}px Onest, Inter, -apple-system, sans-serif`;
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillText(txt, 0, 0);
+    ctx.restore();
+  }
+  const SPARK_COLORS = ["#ffffff","#ffffff","#ff4b2e","#3fae4a","#ff9d2e","#ffffff"];
+  function drawSparks(t){
+    if(!P.sparksOn) return;
+    const n = 10, tick = Math.floor(t*0.8);
+    for(let i = 0; i < n; i++){
+      if(h2(i, tick) < 0.35) continue; // блимання
+      const x = hash(i*13.7)*W, y = hash(i*7.1 + 3)*H;
+      const s = Math.round(W/360) + (i%3 === 0 ? Math.round(W/540) : 0);
+      ctx.fillStyle = SPARK_COLORS[i % SPARK_COLORS.length];
+      ctx.fillRect(Math.round(x), Math.round(y), s, s);
+    }
+  }
+
+  /* ================= кадр ================= */
+  function renderFrame(t, frame){
+    /* фон: рівний колір або відео/фото */
+    ctx.imageSmoothingEnabled = true;
+    if(bg){ ctx.fillStyle = "#000"; ctx.fillRect(0,0,W,H); coverDraw(ctx, bg.el, W, H); }
+    else { ctx.fillStyle = P.bgColor; ctx.fillRect(0, 0, W, H); }
+
+    drawGridLines();
+    drawClouds(t, false);
+
+    /* mosaic → threshold → «pixel matte»: білі квадрати 13×13 у комірках 15×15 */
+    const on = thresholdCells(sampleMask(t, frame));
+    applySpray(on, frame);
+    const sz = Math.max(1, Math.round(P.dotFill*CELL));
+    const off = Math.floor((CELL - sz)/2);
+    ctx.fillStyle = P.dotColor;
+    let c = 0;
+    for(let y = 0; y < P.gridY; y++)
+      for(let x = 0; x < P.gridX; x++, c++)
+        if(on[c]) ctx.fillRect(x*CELL + off, y*CELL + off, sz, sz);
+
+    drawClouds(t, true);
+    drawCaption();
+    drawSparks(t);
+    if(P.clockOn) drawClock(t, sz, off);
+  }
+
+  /* ================= 24 fps цикл ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, t0 = now(), tPause = 0;
+  let lastFrame = -1, needRender = true;
+  let rec = null;
+
+  function tick(){
+    requestAnimationFrame(tick);
+    const t = playing ? now() - t0 : tPause;
+    const frame = Math.floor(t*FPS);              // квантуємо час до 1/24 с
+    if(frame !== lastFrame || needRender){
+      lastFrame = frame; needRender = false;
+      renderFrame(frame/FPS, frame);
+      if(rec) recFrame();
+    }
+  }
+  $("playBtn").addEventListener("click", () => {
+    if(playing){ tPause = now() - t0; } else { t0 = now() - tPause; }
+    playing = !playing;
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+  });
+
+  /* ================= exports ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+
+  $("exPng").addEventListener("click", () => out.toBlob(b => { if(b) downloadBlob(b, "dotmatrix.png"); }, "image/png"));
+
+  function recFrame(){
+    if(rec.err){ stopMp4(false); return; }
+    const fr = new VideoFrame(out, { timestamp: rec.frames*1e6/FPS, duration: 1e6/FPS });
+    rec.enc.encode(fr, { keyFrame: rec.frames % (FPS*2) === 0 }); fr.close();
+    rec.frames++;
+    if(rec.frames % 6 === 0) status(`Рендер ${Math.round(rec.frames/rec.total*100)}%`, true);
+    if(rec.frames >= rec.total) stopMp4(true);
+  }
+  async function stopMp4(ok){
+    const r = rec; rec = null;
+    $("mp4Label").textContent = "MP4 (24 fps)";
+    try{
+      if(ok && !r.err){
+        status("Кодування…", true);
+        await r.enc.flush(); r.muxer.finalize();
+        downloadBlob(new Blob([r.muxer.target.buffer], {type:"video/mp4"}), "dotmatrix.mp4");
+      }
+      r.enc.close();
+    }catch(e){}
+    if(r.err) alert("Помилка кодування MP4: " + (r.err.message || r.err));
+    status("");
+  }
+  $("exMp4").addEventListener("click", () => {
+    if(rec){ stopMp4(false); return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    if(!playing) $("playBtn").click();
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:W, height:H }, fastStart:"in-memory" });
+    const r = { muxer, frames:0, total: P.dur*FPS, err:null };
+    r.enc = new VideoEncoder({ output:(c,m) => muxer.addVideoChunk(c,m), error:e => { r.err = e; } });
+    r.enc.configure({ codec: W*H > 1500000 ? "avc1.640033" : "avc1.640028", width:W, height:H, bitrate:P.bitrate*1e6, framerate:FPS });
+    rec = r;
+    $("mp4Label").textContent = "■ Скасувати";
+    status("Запис…", true);
+  });
+
+  let webmRec = null;
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    if(!playing) $("playBtn").click();
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    try{ webmRec = new MediaRecorder(out.captureStream(FPS), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+    webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop = () => { if(chunks.length) downloadBlob(new Blob(chunks, {type:"video/webm"}), "dotmatrix.webm"); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    setTimeout(() => { if(webmRec) webmRec.stop(); }, P.dur*1000);
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  function setShape(shape){
+    P.shape = shape;
+    document.querySelectorAll("#shapes .preset").forEach(p => p.classList.toggle("active", p.dataset.shape === shape));
+    $("textGroup").style.display = shape === "text" ? "block" : "none";
+    needRender = true;
+  }
+  document.querySelectorAll("#shapes .preset").forEach(p => p.addEventListener("click", () => {
+    if(p.dataset.shape === "file"){
+      if(maskFileSrc) setShape("file");
+      $("maskFile").click();
+    } else setShape(p.dataset.shape);
+  }));
+  $("maskText").addEventListener("input", e => { P.maskText = e.target.value; needRender = true; });
+
+  function bindPresets(sel, key, attr){
+    document.querySelectorAll(sel + " .preset").forEach(p => p.addEventListener("click", () => {
+      document.querySelectorAll(sel + " .preset").forEach(x => x.classList.remove("active"));
+      p.classList.add("active"); P[key] = p.dataset[attr]; needRender = true;
+    }));
+  }
+  bindPresets("#motions", "motion", "motion");
+  bindPresets("#capSides", "capSide", "side");
+  bindPresets("#clockModes", "clockMode", "cmode");
+  bindPresets("#clockCorners", "clockCorner", "corner");
+
+  function bindRange(id, key, vid, opts){
+    opts = opts || {};
+    const el = $(id), v = vid ? $(vid) : null, fmt = opts.fmt || (x => x);
+    el.value = P[key]; if(v) v.textContent = fmt(P[key]);
+    el.addEventListener("input", () => {
+      P[key] = opts.int ? parseInt(el.value, 10) : parseFloat(el.value);
+      if(v) v.textContent = fmt(P[key]);
+      if(opts.size) rebuild();
+      needRender = true;
+    });
+  }
+  const f2 = x => x.toFixed(2), f1 = x => x.toFixed(1);
+  bindRange("size", "size", "vSize", {fmt:f2});
+  bindRange("speed", "speed", "vSpeed", {fmt:f2});
+  bindRange("amp", "amp", "vAmp", {fmt:f1});
+  bindRange("tempo", "tempo", "vTempo", {fmt:f2});
+  bindRange("spray", "spray", "vSpray", {fmt:f2});
+  bindRange("clouds", "clouds", "vClouds", {int:true});
+  bindRange("gridAlpha", "gridAlpha", "vGridAlpha", {fmt:f2});
+  bindRange("gridX", "gridX", "vGridX", {int:true, size:true});
+  bindRange("gridY", "gridY", "vGridY", {int:true, size:true});
+  bindRange("level", "level", "vLevel", {int:true});
+  bindRange("dotFill", "dotFill", "vDotFill", {fmt: x => `${x.toFixed(2)} · ${Math.max(1, Math.round(x*CELL))}px`});
+  bindRange("dur", "dur", "vDur", {int:true});
+  bindRange("bitrate", "bitrate", "vBitrate", {int:true});
+
+  $("bgColor").addEventListener("input", e => { P.bgColor = e.target.value; needRender = true; });
+  $("dotColor").addEventListener("input", e => { P.dotColor = e.target.value; needRender = true; });
+  $("caption").addEventListener("input", e => { P.caption = e.target.value; needRender = true; });
+  [["cloudFront","cloudFront"],["gridOn","gridOn"],["sparksOn","sparksOn"],["clockOn","clockOn"]].forEach(([id,key]) =>
+    $(id).addEventListener("change", e => { P[key] = e.target.checked; needRender = true; }));
+
+  function syncUI(){
+    const set = (id, key, vid, fmt) => { $(id).value = P[key]; if(vid) $(vid).textContent = (fmt || (x => x))(P[key]); };
+    set("size", "size", "vSize", f2); set("speed", "speed", "vSpeed", f2);
+    set("amp", "amp", "vAmp", f1); set("tempo", "tempo", "vTempo", f2); set("spray", "spray", "vSpray", f2);
+    set("clouds", "clouds", "vClouds"); set("gridAlpha", "gridAlpha", "vGridAlpha", f2);
+    set("gridX", "gridX", "vGridX"); set("gridY", "gridY", "vGridY"); set("level", "level", "vLevel");
+    set("dotFill", "dotFill", "vDotFill", x => `${x.toFixed(2)} · ${Math.max(1, Math.round(x*CELL))}px`);
+    set("dur", "dur", "vDur"); set("bitrate", "bitrate", "vBitrate");
+    $("bgColor").value = P.bgColor; $("dotColor").value = P.dotColor;
+    $("caption").value = P.caption; $("maskText").value = P.maskText;
+    $("cloudFront").checked = P.cloudFront; $("gridOn").checked = P.gridOn;
+    $("sparksOn").checked = P.sparksOn; $("clockOn").checked = P.clockOn;
+    const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x.dataset[attr] === val));
+    mark("#shapes", "shape", P.shape);
+    mark("#motions", "motion", P.motion);
+    mark("#capSides", "side", P.capSide);
+    mark("#clockModes", "cmode", P.clockMode);
+    mark("#clockCorners", "corner", P.clockCorner);
+    $("textGroup").style.display = P.shape === "text" ? "block" : "none";
+  }
+  $("reset").addEventListener("click", () => {
+    Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
+    syncUI(); rebuild();
+  });
+
+  /* ================= boot ================= */
+  rebuild(); syncUI(); tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

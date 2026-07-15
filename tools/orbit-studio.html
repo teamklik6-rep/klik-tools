@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Orbit Studio — спіраль і глобус із фото-карток</title>
+<link rel="stylesheet" href="studio.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+  input[type=text]{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
+  #thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+  #thumbs:empty{display:none}
+  .thumb{position:relative;aspect-ratio:1;border-radius:7px;overflow:hidden;border:1px solid hsl(var(--border));
+    background-size:cover;background-position:center;cursor:pointer}
+  .thumb:hover::after{content:"✕";position:absolute;inset:0;display:grid;place-items:center;
+    background:rgba(0,0,0,.55);color:#fff;font-size:15px;font-weight:700}
+  .thumb .n{position:absolute;left:3px;top:3px;font-size:9px;font-weight:700;color:#fff;
+    background:rgba(0,0,0,.5);border-radius:4px;padding:1px 4px;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6">
+          <rect x="9" y="8" width="10" height="8" rx="1" fill="white" stroke="none"/>
+          <rect x="5" y="11" width="5" height="4" rx="0.7" fill="white" stroke="none" opacity=".72"/>
+          <rect x="2.5" y="13" width="2.6" height="2" rx="0.5" fill="white" stroke="none" opacity=".45"/>
+          <ellipse cx="13" cy="12" rx="10.5" ry="4.6" transform="rotate(-18 13 12)" opacity=".5"/>
+        </svg>
+      </div>
+      <div><h1>Orbit Studio</h1><p>фото-картки → спіраль · 3D-глобус</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="photos">Фото</div>
+        <div class="tab" data-tab="layout">Розкладка</div>
+        <div class="tab" data-tab="scene">Сцена</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ PHOTOS ============ -->
+      <div data-pane="photos" class="active">
+        <div class="group">
+          <h2>Фотографії</h2>
+          <div class="btns-grid">
+            <button class="btn primary full" id="addBtn">Додати фото</button>
+            <button class="btn" id="shuffleBtn">Перемішати</button>
+            <button class="btn" id="clearBtn">Прибрати всі</button>
+          </div>
+          <div id="thumbs"></div>
+          <div class="note">Перетягни фото прямо на превʼю, або встав із буфера (⌘V). Клік по мініатюрі — видалити. Без фото студія показує демо-картки.</div>
+        </div>
+        <div class="group">
+          <h2>Кількість карток</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Авто — за кількістю фото</span>
+            <label class="switch"><input type="checkbox" id="autoCount" checked><span class="track"></span></label></div>
+          <div class="row mt"><label class="lbl">Кількість карток</label><span class="val" id="vCount">26</span></div>
+          <input type="range" id="count" min="1" max="200" step="1" value="26">
+          <div class="note">Якщо карток більше, ніж фото — фото повторюються по колу. Працює і з одним фото: воно розкладеться по всій спіралі чи глобусу.</div>
+        </div>
+      </div>
+
+      <!-- ============ LAYOUT ============ -->
+      <div data-pane="layout">
+        <div class="group">
+          <h2>Режим</h2>
+          <div class="presets c2" id="modes">
+            <div class="preset active" data-mode="spiral">Спіраль</div>
+            <div class="preset" data-mode="globe">Глобус</div>
+          </div>
+        </div>
+
+        <div id="spiralCtrls">
+          <div class="group">
+            <h2>Спіраль</h2>
+            <div class="row"><label class="lbl">Оберти</label><span class="val" id="vSpSweep">0.85</span></div>
+            <input type="range" id="spSweep" min="0.1" max="1.5" step="0.01" value="0.85">
+            <div class="row mt"><label class="lbl">Стартовий кут (°)</label><span class="val" id="vSpStart">126</span></div>
+            <input type="range" id="spStart" min="0" max="360" step="1" value="126">
+            <div class="row mt"><label class="lbl">Радіус</label><span class="val" id="vSpRadius">0.33</span></div>
+            <input type="range" id="spRadius" min="0.05" max="0.6" step="0.01" value="0.33">
+            <div class="row mt"><label class="lbl">Ріст радіуса</label><span class="val" id="vSpGrow">0.10</span></div>
+            <input type="range" id="spGrow" min="0" max="0.6" step="0.01" value="0.1">
+            <div class="row mt"><label class="lbl">Мін. картка</label><span class="val" id="vSMin">0.6%</span></div>
+            <input type="range" id="sMin" min="0.002" max="0.15" step="0.001" value="0.006">
+            <div class="row mt"><label class="lbl">Макс. картка</label><span class="val" id="vSMax">42%</span></div>
+            <input type="range" id="sMax" min="0.05" max="0.8" step="0.01" value="0.42">
+            <div class="row mt"><label class="lbl">Центр X</label><span class="val" id="vSpCX">0.50</span></div>
+            <input type="range" id="spCX" min="0" max="1" step="0.01" value="0.5">
+            <div class="row mt"><label class="lbl">Центр Y</label><span class="val" id="vSpCY">0.47</span></div>
+            <input type="range" id="spCY" min="0" max="1" step="0.01" value="0.47">
+            <div class="switch-row"><span class="lbl">Проти годинникової</span>
+              <label class="switch"><input type="checkbox" id="spCCW"><span class="track"></span></label></div>
+            <div class="note">Картки йдуть по дузі від крихітної до найбільшої — остання лягає поверх усіх, як у референсі.</div>
+          </div>
+        </div>
+
+        <div id="globeCtrls" style="display:none">
+          <div class="group">
+            <h2>Глобус</h2>
+            <div class="row"><label class="lbl">Розмір глобуса</label><span class="val" id="vGlSize">0.78</span></div>
+            <input type="range" id="glSize" min="0.2" max="1.3" step="0.01" value="0.78">
+            <div class="row mt"><label class="lbl">Розмір карток</label><span class="val" id="vGlCard">0.42</span></div>
+            <input type="range" id="glCard" min="0.08" max="1.2" step="0.01" value="0.42">
+            <div class="row mt"><label class="lbl">Перспектива</label><span class="val" id="vGlDist">2.6</span></div>
+            <input type="range" id="glDist" min="1.5" max="6" step="0.05" value="2.6">
+            <div class="row mt"><label class="lbl">Поворот (°)</label><span class="val" id="vGlYaw">18</span></div>
+            <input type="range" id="glYaw" min="-180" max="180" step="1" value="18">
+            <div class="row mt"><label class="lbl">Нахил (°)</label><span class="val" id="vGlPitch">-12</span></div>
+            <input type="range" id="glPitch" min="-90" max="90" step="1" value="-12">
+            <div class="row mt"><label class="lbl">Згасання дальніх</label><span class="val" id="vGlFade">0.50</span></div>
+            <input type="range" id="glFade" min="0" max="1" step="0.05" value="0.5">
+            <div class="switch-row"><span class="lbl">Картки дотично до сфери</span>
+              <label class="switch"><input type="checkbox" id="glTangent" checked><span class="track"></span></label></div>
+            <div class="note">Картки сидять по уявних кутах глобуса (спіраль Фібоначчі) і проєктуються у 3D. Вимкни «дотично» — і вони повернуться обличчям до камери.</div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Хаос</h2>
+          <div class="row"><label class="lbl">Розкид повороту (°)</label><span class="val" id="vJitterRot">6</span></div>
+          <input type="range" id="jitterRot" min="0" max="45" step="0.5" value="6">
+          <div class="row mt"><label class="lbl">Розкид позиції</label><span class="val" id="vJitterPos">0.03</span></div>
+          <input type="range" id="jitterPos" min="0" max="0.25" step="0.005" value="0.03">
+          <div class="btns-grid" style="margin-top:12px"><button class="btn full" id="reseed">Новий випадковий розкид</button></div>
+        </div>
+      </div>
+
+      <!-- ============ SCENE ============ -->
+      <div data-pane="scene">
+        <div class="group">
+          <h2>Фон</h2>
+          <div class="colors">
+            <div class="color-field"><span>Колір фону</span><div class="color-wrap"><input type="color" id="bgColor" value="#e9e9e6"></div></div>
+          </div>
+          <div class="switch-row"><span class="lbl">Прозорий фон (PNG / SVG / WebP)</span>
+            <label class="switch"><input type="checkbox" id="bgTransparent" checked><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Картки</h2>
+          <div class="row"><label class="lbl">Пропорції карток</label></div>
+          <select id="aspect">
+            <option value="orig" selected>Оригінальні пропорції</option>
+            <option value="1">Квадрат 1:1</option>
+            <option value="0.8">Портрет 4:5</option>
+            <option value="1.5">Фото 3:2</option>
+            <option value="1.7778">Кіно 16:9</option>
+          </select>
+          <div class="row mt"><label class="lbl">Тінь</label><span class="val" id="vShadow">0.35</span></div>
+          <input type="range" id="shadow" min="0" max="1" step="0.05" value="0.35">
+          <div class="row mt"><label class="lbl">Заокруглення</label><span class="val" id="vCorner">0.00</span></div>
+          <input type="range" id="corner" min="0" max="0.2" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Рамка</label><span class="val" id="vBorder">0.00</span></div>
+          <input type="range" id="border" min="0" max="0.08" step="0.005" value="0">
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Колір рамки</span><div class="color-wrap"><input type="color" id="borderColor" value="#ffffff"></div></div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Текст по центру</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Показати текст</span>
+            <label class="switch"><input type="checkbox" id="capOn"><span class="track"></span></label></div>
+          <div class="row mt"><label class="lbl">Напис</label></div>
+          <input type="text" id="caption" value="Move your cursor" placeholder="Текст по центру…">
+          <div class="row mt"><label class="lbl">Розмір тексту</label><span class="val" id="vCapSize">0.075</span></div>
+          <input type="range" id="capSize" min="0.02" max="0.2" step="0.005" value="0.075">
+          <div class="row mt"><label class="lbl">Позиція тексту Y</label><span class="val" id="vCapY">0.50</span></div>
+          <input type="range" id="capY" min="0.1" max="0.9" step="0.01" value="0.5">
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Колір тексту</span><div class="color-wrap"><input type="color" id="capColor" value="#ffffff"></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Насиченість шрифту</label></div>
+          <select id="capWeight">
+            <option value="400">Regular 400</option>
+            <option value="500">Medium 500</option>
+            <option value="700" selected>Bold 700</option>
+            <option value="900">Black 900</option>
+          </select>
+          <div class="switch-row"><span class="lbl">Текст поверх карток</span>
+            <label class="switch"><input type="checkbox" id="capTop"><span class="track"></span></label></div>
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Полотно</h2>
+          <div class="presets c2" id="sizes">
+            <div class="preset active" data-w="1600" data-h="1400">1600 × 1400</div>
+            <div class="preset" data-w="2048" data-h="2048">Квадрат 2048</div>
+            <div class="preset" data-w="1638" data-h="2048">Портрет 4:5</div>
+            <div class="preset" data-w="1152" data-h="2048">Сторіз 9:16</div>
+            <div class="preset" data-w="2048" data-h="1152">Екран 16:9</div>
+            <div class="preset" data-w="3840" data-h="2160">4K UHD</div>
+          </div>
+          <div class="row mt"><label class="lbl">Ширина (px)</label><span class="val" id="vW">1600</span></div>
+          <input type="range" id="cw" min="640" max="4096" step="16" value="1600">
+          <div class="row mt"><label class="lbl">Висота (px)</label><span class="val" id="vH">1400</span></div>
+          <input type="range" id="ch" min="640" max="4096" step="16" value="1400">
+        </div>
+        <div class="group">
+          <h2>Формат файлу</h2>
+          <div class="presets c2" id="scales">
+            <div class="preset active" data-scale="1">×1</div>
+            <div class="preset" data-scale="2">×2</div>
+          </div>
+          <div class="row mt"><label class="lbl">Якість (JPG / WebP)</label><span class="val" id="vQ">0.92</span></div>
+          <input type="range" id="q" min="0.5" max="1" step="0.01" value="0.92">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn primary" id="exPng">PNG</button>
+            <button class="btn primary" id="exSvg">SVG</button>
+            <button class="btn" id="exJpg">JPG</button>
+            <button class="btn" id="exWebp">WebP</button>
+          </div>
+          <div class="note">Все рендериться локально у браузері. Прозорість зберігають PNG, SVG і WebP; JPG завжди з непрозорим фоном. SVG — вектор із вбудованими фото: картки лишаються окремими обʼєктами для Figma чи Illustrator.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · спіраль і 3D-глобус із фото-карток · від 1 до 200 карток · експорт PNG / SVG / JPG / WebP · все локально</footer>
+</div>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const P = {
+    mode:"spiral", count:26, autoCount:true,
+    spSweep:0.85, spStart:126, spRadius:0.33, spGrow:0.10, sMin:0.006, sMax:0.42,
+    spCX:0.5, spCY:0.47, spCCW:false,
+    glSize:0.78, glCard:0.42, glDist:2.6, glYaw:18, glPitch:-12, glFade:0.5, glTangent:true,
+    jitterRot:6, jitterPos:0.03, seed:1,
+    bgColor:"#e9e9e6", bgTransparent:true,
+    aspect:"orig", shadow:0.35, corner:0, border:0, borderColor:"#ffffff",
+    capOn:false, caption:"Move your cursor", capSize:0.075, capY:0.5, capColor:"#ffffff", capWeight:"700", capTop:false,
+    W:1600, H:1400, exScale:1, q:0.92,
+  };
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  const $ = id => document.getElementById(id);
+  const TAU = Math.PI*2, D2R = Math.PI/180;
+  const out = $("out");
+  const ctx = out.getContext("2d");
+
+  /* детермінований хеш — розкид стабільний між кадрами та експортами */
+  function hash(x){ const s = Math.sin(x*127.1 + 311.7)*43758.5453; return s - Math.floor(s); }
+  const h2 = (a,b) => hash(a*7.13 + b*57.7);
+
+  /* ================= фото ================= */
+  const PHOTOS = []; // {src: canvas|img, url}
+
+  function addFiles(files){
+    const imgs = [...files].filter(f => f.type.startsWith("image/"));
+    imgs.forEach(f => {
+      const url = URL.createObjectURL(f);
+      const im = new Image();
+      im.onload = () => {
+        /* даунскейл до 1600px по більшій стороні — швидкий drawImage навіть із сотнею фото */
+        const k = Math.min(1, 1600/Math.max(im.naturalWidth, im.naturalHeight));
+        let src = im;
+        if(k < 1){
+          const cv = document.createElement("canvas");
+          cv.width = Math.round(im.naturalWidth*k); cv.height = Math.round(im.naturalHeight*k);
+          cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+          src = cv;
+        }
+        /* alpha=true → у SVG вбудовуємо як PNG, щоб не втратити прозорість */
+        PHOTOS.push({src, url, alpha: f.type !== "image/jpeg"});
+        syncCount(); renderThumbs(); render();
+      };
+      im.src = url;
+    });
+  }
+  function removePhoto(i){
+    URL.revokeObjectURL(PHOTOS[i].url);
+    PHOTOS.splice(i, 1);
+    syncCount(); renderThumbs(); render();
+  }
+  function renderThumbs(){
+    const t = $("thumbs");
+    t.innerHTML = "";
+    PHOTOS.forEach((p, i) => {
+      const d = document.createElement("div");
+      d.className = "thumb";
+      d.style.backgroundImage = `url("${p.url}")`;
+      d.innerHTML = `<span class="n">${i+1}</span>`;
+      d.title = "Видалити";
+      d.addEventListener("click", () => removePhoto(i));
+      t.appendChild(d);
+    });
+  }
+  $("addBtn").addEventListener("click", () => $("fileInput").click());
+  $("fileInput").addEventListener("change", e => { addFiles(e.target.files); e.target.value = ""; });
+  $("clearBtn").addEventListener("click", () => {
+    PHOTOS.forEach(p => URL.revokeObjectURL(p.url));
+    PHOTOS.length = 0;
+    syncCount(); renderThumbs(); render();
+  });
+  $("shuffleBtn").addEventListener("click", () => {
+    for(let i = PHOTOS.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random()*(i + 1));
+      [PHOTOS[i], PHOTOS[j]] = [PHOTOS[j], PHOTOS[i]];
+    }
+    P.seed = Math.floor(Math.random()*1e4);
+    renderThumbs(); render();
+  });
+
+  const stage = $("stage");
+  ["dragenter","dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => addFiles(e.dataTransfer.files));
+  document.addEventListener("paste", e => { if(e.clipboardData && e.clipboardData.files.length) addFiles(e.clipboardData.files); });
+
+  /* ---------- демо-картки: градієнти у палітрі референса ---------- */
+  const PAL = [
+    ["#c95f28","#e2955f"], ["#a7b289","#cdd3ae"], ["#20324a","#57708c"], ["#d9d0a9","#f0ead0"],
+    ["#7d1e12","#c24726"], ["#39546b","#8fa9bd"], ["#2b2320","#6b5140"], ["#b9c46f","#e4e9b8"],
+  ];
+  const PLACEHOLDERS = (() => {
+    const dims = [[520,390],[390,520],[520,340],[460,460],[520,390],[390,520],[500,375]];
+    const list = [];
+    for(let i = 0; i < 14; i++){
+      const [w, h] = dims[i % dims.length];
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      const c = cv.getContext("2d");
+      const pal = PAL[i % PAL.length];
+      const gr = c.createLinearGradient(0, 0, w*(0.3 + hash(i)*0.7), h);
+      gr.addColorStop(0, pal[0]); gr.addColorStop(1, pal[1]);
+      c.fillStyle = gr; c.fillRect(0, 0, w, h);
+      /* мʼякий засвіт */
+      const lx = w*(0.25 + hash(i*3.3)*0.5), ly = h*(0.2 + hash(i*5.1)*0.35);
+      const rg = c.createRadialGradient(lx, ly, 8, lx, ly, Math.max(w, h)*0.55);
+      rg.addColorStop(0, "rgba(255,255,255,.38)"); rg.addColorStop(1, "rgba(255,255,255,0)");
+      c.fillStyle = rg; c.fillRect(0, 0, w, h);
+      /* темний «силует» */
+      c.fillStyle = "rgba(10,10,14,.5)";
+      c.beginPath();
+      c.ellipse(w*(0.3 + hash(i*7.7)*0.4), h*(0.78 + hash(i*2.9)*0.1), w*0.2, h*0.3, 0, Math.PI, TAU);
+      c.fill();
+      list.push({src: cv});
+    }
+    return list;
+  })();
+
+  const srcList = () => PHOTOS.length ? PHOTOS : PLACEHOLDERS;
+  const curCount = () => (P.autoCount && PHOTOS.length) ? PHOTOS.length : P.count;
+
+  /* ================= розкладки ================= */
+  function cardAspect(img){
+    if(P.aspect !== "orig") return parseFloat(P.aspect);
+    const iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
+    return Math.min(1.9, Math.max(0.55, iw/ih));
+  }
+
+  /* спіраль: дуга від крихітної картки до найбільшої, розмір росте експоненційно */
+  function spiralItems(n, W, H){
+    const m = Math.min(W, H);
+    const cx = P.spCX*W, cy = P.spCY*H;
+    const dir = P.spCCW ? -1 : 1;
+    const items = [];
+    for(let i = 0; i < n; i++){
+      const t = n === 1 ? 1 : i/(n - 1);
+      const size = P.sMin*Math.pow(P.sMax/P.sMin, t)*m;
+      const ang = (P.spStart + dir*360*P.spSweep*t)*D2R;
+      const rad = P.spRadius*m*(1 + P.spGrow*t);
+      let x = cx + Math.cos(ang)*rad, y = cy + Math.sin(ang)*rad;
+      x += (h2(i, P.seed) - .5)*2*P.jitterPos*m;
+      y += (h2(i*1.7, P.seed + 9) - .5)*2*P.jitterPos*m;
+      if(n === 1){ x = cx; y = cy; }
+      const rot = (h2(i*3.1, P.seed*7 + 3) - .5)*2*P.jitterRot*D2R;
+      items.push({kind:"flat", i, x, y, w:size, rot, alpha:1});
+    }
+    return items; // порядок = порядок малювання: великі лягають поверх малих
+  }
+
+  /* глобус: спіраль Фібоначчі по сфері + перспективна проєкція.
+     Дотичний режим — афінна апроксимація дотичної площини (справжній 3D-нахил карток). */
+  function globeItems(n, W, H){
+    const m = Math.min(W, H);
+    const D = P.glDist, f = P.glSize*(m/2)*D;
+    const yaw = P.glYaw*D2R, pitch = P.glPitch*D2R;
+    const cyaw = Math.cos(yaw), syaw = Math.sin(yaw);
+    const cpit = Math.cos(pitch), spit = Math.sin(pitch);
+    const GA = Math.PI*(3 - Math.sqrt(5));
+    const items = [];
+    for(let i = 0; i < n; i++){
+      let px, py, pz;
+      if(n === 1){ px = 0; py = 0; pz = -1; }
+      else {
+        const yy = 1 - 2*(i + .5)/n, rr = Math.sqrt(Math.max(0, 1 - yy*yy)), ph = i*GA;
+        px = rr*Math.cos(ph); py = yy; pz = rr*Math.sin(ph);
+      }
+      /* yaw навколо Y, pitch навколо X */
+      let x1 = px*cyaw + pz*syaw, z1 = -px*syaw + pz*cyaw;
+      const x2 = x1, y2 = py*cpit - z1*spit, z2 = py*spit + z1*cpit;
+      const zc = z2 + D;
+      if(zc < 0.3) continue;
+      const k = f/zc;
+      let sx = W/2 + x2*k, sy = H/2 - y2*k;
+      sx += (h2(i, P.seed) - .5)*2*P.jitterPos*m*0.5;
+      sy += (h2(i*1.7, P.seed + 9) - .5)*2*P.jitterPos*m*0.5;
+      const far = (z2 + 1)/2; // 0 — ближні, 1 — дальні
+      const alpha = Math.max(0.06, 1 - P.glFade*far);
+      const jrot = (h2(i*3.1, P.seed*7 + 3) - .5)*2*P.jitterRot*D2R;
+      if(!P.glTangent){
+        items.push({kind:"flat", i, x:sx, y:sy, w:P.glCard*k, rot:jrot, alpha, z:z2});
+        continue;
+      }
+      /* дотичний базис: u — «схід», v — «вниз екрана» */
+      let ux, uy, uz;
+      if(Math.abs(y2) > 0.985){ ux = 1; uy = 0; uz = 0; }
+      else { const l = Math.hypot(z2, x2); ux = -z2/l; uy = 0; uz = x2/l; }
+      let vx = y2*uz - z2*uy, vy = z2*ux - x2*uz, vz = x2*uy - y2*ux;
+      if(jrot){
+        const ca = Math.cos(jrot), sa = Math.sin(jrot);
+        const tx = ux*ca + vx*sa, ty = uy*ca + vy*sa, tz = uz*ca + vz*sa;
+        vx = vx*ca - ux*sa; vy = vy*ca - uy*sa; vz = vz*ca - uz*sa;
+        ux = tx; uy = ty; uz = tz;
+      }
+      /* якобіан проєкції: екранна дельта для світового зсуву w */
+      const proj = (wx, wy, wz) => [k*(wx - x2*wz/zc), -k*(wy - y2*wz/zc)];
+      items.push({kind:"affine", i, sx, sy, Ju:proj(ux, uy, uz), Jv:proj(vx, vy, vz), alpha, z:z2});
+    }
+    items.sort((a, b) => b.z - a.z); // маляр: спершу дальні
+    return items;
+  }
+
+  /* ================= малювання ================= */
+  function drawCover(c, img, w, h){
+    const iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
+    const ta = w/h, ia = iw/ih;
+    let sw = iw, sh = ih, sx0 = 0, sy0 = 0;
+    if(ia > ta){ sw = ih*ta; sx0 = (iw - sw)/2; } else { sh = iw/ta; sy0 = (ih - sh)/2; }
+    c.drawImage(img, sx0, sy0, sw, sh, -w/2, -h/2, w, h);
+  }
+  function cardPath(c, w, h){
+    const r = Math.min(w, h)*P.corner;
+    c.beginPath();
+    if(r > 0 && c.roundRect) c.roundRect(-w/2, -h/2, w, h, r);
+    else c.rect(-w/2, -h/2, w, h);
+  }
+  /* малює картку у ВЖЕ виставленому transform; w,h — у локальних одиницях, screenW — px на екрані (для тіні) */
+  function drawCard(c, img, w, h, screenW, alpha){
+    c.globalAlpha = alpha;
+    if(P.shadow > 0){
+      c.save();
+      c.shadowColor = `rgba(0,0,0,${(0.45*P.shadow*alpha).toFixed(3)})`;
+      c.shadowBlur = screenW*0.16*P.shadow;
+      c.shadowOffsetY = screenW*0.05*P.shadow;
+      cardPath(c, w, h);
+      c.fillStyle = "#000";
+      c.fill();
+      c.restore();
+    }
+    c.save();
+    cardPath(c, w, h);
+    c.clip();
+    drawCover(c, img, w, h);
+    c.restore();
+    if(P.border > 0){
+      cardPath(c, w, h);
+      c.lineWidth = Math.min(w, h)*P.border;
+      c.strokeStyle = P.borderColor;
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+  }
+  function drawCaption(c, W, H){
+    const txt = P.caption.trim();
+    if(!txt) return;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.font = `${P.capWeight} ${Math.round(P.capSize*Math.min(W, H))}px Onest, Inter, -apple-system, "Segoe UI", Arial, sans-serif`;
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillStyle = P.capColor;
+    c.fillText(txt, W/2, H*P.capY);
+  }
+
+  function renderTo(c, W, H, opaque){
+    const list = srcList();
+    const n = curCount();
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, W, H);
+    if(!P.bgTransparent || opaque){ c.fillStyle = P.bgColor; c.fillRect(0, 0, W, H); }
+    if(P.capOn && !P.capTop) drawCaption(c, W, H);
+    const items = P.mode === "spiral" ? spiralItems(n, W, H) : globeItems(n, W, H);
+    for(const it of items){
+      const img = list[it.i % list.length].src;
+      const a = cardAspect(img);
+      if(it.kind === "flat"){
+        const w = it.w, h = w/a;
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.translate(it.x, it.y); c.rotate(it.rot);
+        drawCard(c, img, w, h, w, it.alpha);
+      } else {
+        const w = P.glCard, h = w/a; // світові одиниці (радіус сфери = 1)
+        c.setTransform(it.Ju[0], it.Ju[1], it.Jv[0], it.Jv[1], it.sx, it.sy);
+        drawCard(c, img, w, h, Math.hypot(it.Ju[0], it.Ju[1])*w, it.alpha);
+      }
+    }
+    if(P.capOn && P.capTop) drawCaption(c, W, H);
+    c.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  function render(){
+    if(out.width !== P.W || out.height !== P.H){ out.width = P.W; out.height = P.H; }
+    renderTo(ctx, P.W, P.H, false);
+    $("dims").textContent = `${P.W} × ${P.H}px · ${curCount()} карток · ${PHOTOS.length ? PHOTOS.length + " фото" : "демо"}`;
+  }
+
+  /* ================= exports ================= */
+  function status(m){ $("statusTxt").textContent = m || "Готово"; }
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  function exportImg(type, ext){
+    status("Рендер…");
+    setTimeout(() => {
+      const s = P.exScale;
+      const cv = document.createElement("canvas");
+      cv.width = P.W*s; cv.height = P.H*s;
+      renderTo(cv.getContext("2d"), cv.width, cv.height, type === "image/jpeg");
+      cv.toBlob(b => { if(b) downloadBlob(b, "orbit." + ext); status(""); }, type, P.q);
+    }, 20);
+  }
+  $("exPng").addEventListener("click", () => exportImg("image/png", "png"));
+  $("exJpg").addEventListener("click", () => exportImg("image/jpeg", "jpg"));
+  $("exWebp").addEventListener("click", () => exportImg("image/webp", "webp"));
+
+  /* ---------- SVG: картки — окремі обʼєкти, фото вбудовані data-URI один раз ---------- */
+  const xml = s => s.replace(/[<>&"']/g, ch => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[ch]));
+  const nf = x => +x.toFixed(2), nf4 = x => +x.toFixed(4), nf6 = x => +x.toFixed(6);
+  function srcDataURI(entry){
+    const s = entry.src;
+    const cv = document.createElement("canvas");
+    cv.width = s.width || s.naturalWidth; cv.height = s.height || s.naturalHeight;
+    cv.getContext("2d").drawImage(s, 0, 0);
+    return entry.alpha ? cv.toDataURL("image/png") : cv.toDataURL("image/jpeg", 0.9);
+  }
+  function svgCaption(W, H){
+    const txt = P.caption.trim();
+    if(!txt) return "";
+    return `<text x="${nf(W/2)}" y="${nf(H*P.capY)}" text-anchor="middle" dominant-baseline="middle" ` +
+      `font-family="Onest, Inter, -apple-system, sans-serif" font-weight="${P.capWeight}" ` +
+      `font-size="${Math.round(P.capSize*Math.min(W, H))}" fill="${P.capColor}">${xml(txt)}</text>`;
+  }
+  function buildSVG(){
+    const W = P.W, H = P.H;
+    const list = srcList();
+    const items = P.mode === "spiral" ? spiralItems(curCount(), W, H) : globeItems(curCount(), W, H);
+    const defs = [], cards = [];
+    const embedded = new Map(); // індекс у list → id вбудованого фото
+    items.forEach(it => {
+      const li = it.i % list.length;
+      if(!embedded.has(li)){
+        const s = list[li].src;
+        const iw = s.width || s.naturalWidth, ih = s.height || s.naturalHeight;
+        const uri = srcDataURI(list[li]);
+        defs.push(`<image id="p${li}" width="${iw}" height="${ih}" href="${uri}" xlink:href="${uri}"/>`);
+        embedded.set(li, {iw, ih});
+      }
+    });
+    items.forEach((it, k) => {
+      const li = it.i % list.length, u = embedded.get(li);
+      const a = cardAspect(list[li].src);
+      let w, h, matrix, screenW;
+      if(it.kind === "flat"){
+        w = it.w; h = w/a; screenW = w;
+        const co = Math.cos(it.rot), si = Math.sin(it.rot);
+        matrix = `matrix(${nf4(co)} ${nf4(si)} ${nf4(-si)} ${nf4(co)} ${nf(it.x)} ${nf(it.y)})`;
+      } else {
+        w = P.glCard; h = w/a;
+        screenW = Math.hypot(it.Ju[0], it.Ju[1])*w;
+        matrix = `matrix(${nf4(it.Ju[0])} ${nf4(it.Ju[1])} ${nf4(it.Jv[0])} ${nf4(it.Jv[1])} ${nf(it.sx)} ${nf(it.sy)})`;
+      }
+      const r = Math.min(w, h)*P.corner;
+      const rect = `x="${nf4(-w/2)}" y="${nf4(-h/2)}" width="${nf4(w)}" height="${nf4(h)}"${r > 0 ? ` rx="${nf4(r)}"` : ""}`;
+      defs.push(`<clipPath id="c${k}"><rect ${rect}/></clipPath>`);
+      const cover = Math.max(w/u.iw, h/u.ih);
+      let inner = `<g clip-path="url(#c${k})"><use href="#p${li}" xlink:href="#p${li}" transform="translate(${nf6(-u.iw*cover/2)} ${nf6(-u.ih*cover/2)}) scale(${nf6(cover)})"/></g>`;
+      if(P.border > 0) inner += `<rect ${rect} fill="none" stroke="${P.borderColor}" stroke-width="${nf4(Math.min(w, h)*P.border)}"/>`;
+      let g = `<g transform="${matrix}"${it.alpha < 1 ? ` opacity="${nf(it.alpha)}"` : ""}>${inner}</g>`;
+      if(P.shadow > 0){
+        defs.push(`<filter id="s${k}" x="-60%" y="-60%" width="220%" height="220%">` +
+          `<feDropShadow dx="0" dy="${nf(screenW*0.05*P.shadow)}" stdDeviation="${nf(screenW*0.08*P.shadow)}" flood-color="#000000" flood-opacity="${nf(0.45*P.shadow*it.alpha)}"/></filter>`);
+        g = `<g filter="url(#s${k})">${g}</g>`;
+      }
+      cards.push(g);
+    });
+    return `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">` +
+      (P.bgTransparent ? "" : `<rect width="${W}" height="${H}" fill="${P.bgColor}"/>`) +
+      `<defs>${defs.join("")}</defs>` +
+      (P.capOn && !P.capTop ? svgCaption(W, H) : "") +
+      cards.join("") +
+      (P.capOn && P.capTop ? svgCaption(W, H) : "") +
+      `</svg>`;
+  }
+  $("exSvg").addEventListener("click", () => {
+    status("Рендер…");
+    setTimeout(() => {
+      downloadBlob(new Blob([buildSVG()], {type:"image/svg+xml"}), "orbit.svg");
+      status("");
+    }, 20);
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  function setMode(mode){
+    P.mode = mode;
+    document.querySelectorAll("#modes .preset").forEach(p => p.classList.toggle("active", p.dataset.mode === mode));
+    $("spiralCtrls").style.display = mode === "spiral" ? "block" : "none";
+    $("globeCtrls").style.display = mode === "globe" ? "block" : "none";
+    render();
+  }
+  document.querySelectorAll("#modes .preset").forEach(p => p.addEventListener("click", () => setMode(p.dataset.mode)));
+
+  document.querySelectorAll("#sizes .preset").forEach(p => p.addEventListener("click", () => {
+    document.querySelectorAll("#sizes .preset").forEach(x => x.classList.remove("active"));
+    p.classList.add("active");
+    P.W = parseInt(p.dataset.w, 10); P.H = parseInt(p.dataset.h, 10);
+    $("cw").value = P.W; $("ch").value = P.H;
+    $("vW").textContent = P.W; $("vH").textContent = P.H;
+    render();
+  }));
+  document.querySelectorAll("#scales .preset").forEach(p => p.addEventListener("click", () => {
+    document.querySelectorAll("#scales .preset").forEach(x => x.classList.remove("active"));
+    p.classList.add("active");
+    P.exScale = parseInt(p.dataset.scale, 10);
+  }));
+
+  const f2 = x => x.toFixed(2), pct = x => (x*100).toFixed(1).replace(/\.0$/, "") + "%";
+  function bindRange(id, key, vid, opts){
+    opts = opts || {};
+    const el = $(id), v = vid ? $(vid) : null, fmt = opts.fmt || (x => x);
+    el.value = P[key]; if(v) v.textContent = fmt(P[key]);
+    el.addEventListener("input", () => {
+      P[key] = opts.int ? parseInt(el.value, 10) : parseFloat(el.value);
+      if(v) v.textContent = fmt(P[key]);
+      render();
+    });
+  }
+  bindRange("count", "count", "vCount", {int:true});
+  bindRange("spSweep", "spSweep", "vSpSweep", {fmt:f2});
+  bindRange("spStart", "spStart", "vSpStart", {int:true});
+  bindRange("spRadius", "spRadius", "vSpRadius", {fmt:f2});
+  bindRange("spGrow", "spGrow", "vSpGrow", {fmt:f2});
+  bindRange("sMin", "sMin", "vSMin", {fmt:pct});
+  bindRange("sMax", "sMax", "vSMax", {fmt:pct});
+  bindRange("spCX", "spCX", "vSpCX", {fmt:f2});
+  bindRange("spCY", "spCY", "vSpCY", {fmt:f2});
+  bindRange("glSize", "glSize", "vGlSize", {fmt:f2});
+  bindRange("glCard", "glCard", "vGlCard", {fmt:f2});
+  bindRange("glDist", "glDist", "vGlDist", {fmt:x => x.toFixed(1)});
+  bindRange("glYaw", "glYaw", "vGlYaw", {int:true});
+  bindRange("glPitch", "glPitch", "vGlPitch", {int:true});
+  bindRange("glFade", "glFade", "vGlFade", {fmt:f2});
+  bindRange("jitterRot", "jitterRot", "vJitterRot", {fmt:x => (x % 1 ? x.toFixed(1) : x)});
+  bindRange("jitterPos", "jitterPos", "vJitterPos", {fmt:f2});
+  bindRange("shadow", "shadow", "vShadow", {fmt:f2});
+  bindRange("corner", "corner", "vCorner", {fmt:f2});
+  bindRange("border", "border", "vBorder", {fmt:f2});
+  bindRange("capSize", "capSize", "vCapSize", {fmt:x => x.toFixed(3)});
+  bindRange("capY", "capY", "vCapY", {fmt:f2});
+  bindRange("cw", "W", "vW", {int:true});
+  bindRange("ch", "H", "vH", {int:true});
+  bindRange("q", "q", "vQ", {fmt:f2});
+
+  [["bgColor","bgColor"],["borderColor","borderColor"],["capColor","capColor"]].forEach(([id, key]) =>
+    $(id).addEventListener("input", e => { P[key] = e.target.value; render(); }));
+  [["bgTransparent","bgTransparent"],["spCCW","spCCW"],["glTangent","glTangent"],["capOn","capOn"],["capTop","capTop"],["autoCount","autoCount"]].forEach(([id, key]) =>
+    $(id).addEventListener("change", e => { P[key] = e.target.checked; syncCount(); render(); }));
+  $("caption").addEventListener("input", e => { P.caption = e.target.value; render(); });
+  $("aspect").addEventListener("change", e => { P.aspect = e.target.value; render(); });
+  $("capWeight").addEventListener("change", e => { P.capWeight = e.target.value; render(); });
+  $("reseed").addEventListener("click", () => { P.seed = Math.floor(Math.random()*1e4); render(); });
+
+  function syncCount(){
+    if(P.autoCount && PHOTOS.length){
+      P.count = PHOTOS.length;
+      $("count").value = P.count;
+      $("vCount").textContent = P.count;
+    }
+    $("count").disabled = P.autoCount && PHOTOS.length > 0;
+  }
+
+  function syncUI(){
+    const set = (id, key, vid, fmt) => { $(id).value = P[key]; if(vid) $(vid).textContent = (fmt || (x => x))(P[key]); };
+    set("count", "count", "vCount");
+    set("spSweep", "spSweep", "vSpSweep", f2); set("spStart", "spStart", "vSpStart");
+    set("spRadius", "spRadius", "vSpRadius", f2); set("spGrow", "spGrow", "vSpGrow", f2);
+    set("sMin", "sMin", "vSMin", pct); set("sMax", "sMax", "vSMax", pct);
+    set("spCX", "spCX", "vSpCX", f2); set("spCY", "spCY", "vSpCY", f2);
+    set("glSize", "glSize", "vGlSize", f2); set("glCard", "glCard", "vGlCard", f2);
+    set("glDist", "glDist", "vGlDist", x => x.toFixed(1));
+    set("glYaw", "glYaw", "vGlYaw"); set("glPitch", "glPitch", "vGlPitch");
+    set("glFade", "glFade", "vGlFade", f2);
+    set("jitterRot", "jitterRot", "vJitterRot"); set("jitterPos", "jitterPos", "vJitterPos", f2);
+    set("shadow", "shadow", "vShadow", f2); set("corner", "corner", "vCorner", f2); set("border", "border", "vBorder", f2);
+    set("capSize", "capSize", "vCapSize", x => x.toFixed(3)); set("capY", "capY", "vCapY", f2);
+    set("cw", "W", "vW"); set("ch", "H", "vH"); set("q", "q", "vQ", f2);
+    $("bgColor").value = P.bgColor; $("borderColor").value = P.borderColor; $("capColor").value = P.capColor;
+    $("caption").value = P.caption; $("aspect").value = P.aspect; $("capWeight").value = P.capWeight;
+    $("bgTransparent").checked = P.bgTransparent; $("spCCW").checked = P.spCCW;
+    $("glTangent").checked = P.glTangent; $("capOn").checked = P.capOn; $("capTop").checked = P.capTop;
+    $("autoCount").checked = P.autoCount;
+    document.querySelectorAll("#modes .preset").forEach(p => p.classList.toggle("active", p.dataset.mode === P.mode));
+    document.querySelectorAll("#scales .preset").forEach(p => p.classList.toggle("active", parseInt(p.dataset.scale, 10) === P.exScale));
+    $("spiralCtrls").style.display = P.mode === "spiral" ? "block" : "none";
+    $("globeCtrls").style.display = P.mode === "globe" ? "block" : "none";
+    syncCount();
+  }
+  $("reset").addEventListener("click", () => {
+    Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
+    syncUI(); render();
+  });
+
+  /* ================= boot ================= */
+  syncUI(); render();
+  /* дорендер після завантаження вебшрифта — напис по центру стає Onest */
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

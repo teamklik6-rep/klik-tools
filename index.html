@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klik Tools — Creative Studio Toolkit</title>
-<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade. Everything runs locally in your browser." />
+<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit. Everything runs locally in your browser." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23bbff32'/%3E%3Cpath d='M10 7v18M10 16l9-9M10 16l9 9' stroke='%23060612' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -207,6 +207,27 @@
   .prev-cascade i:nth-child(4n){animation-delay:-5s}
   .prev-cascade i:nth-child(5n){animation-duration:14s;animation-delay:-1.5s}
   @keyframes cascfall{to{background-position:0 418px}}
+  /* preview art: dotmatrix */
+  .prev-matrix{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;
+    background:
+      radial-gradient(ellipse 40% 14% at 22% 72%,#ffffff66 0%,transparent 70%),
+      radial-gradient(ellipse 34% 12% at 78% 30%,#ffffff55 0%,transparent 70%),
+      linear-gradient(180deg,#16345f 0%,#4f7ab0 55%,#a9c6e2 88%,#dfe9f3 100%)}
+  .prev-matrix svg{width:58%;fill:#fff;shape-rendering:crispEdges;animation:birdbob 3s ease-in-out infinite alternate}
+  @keyframes birdbob{to{transform:translateY(-8px)}}
+  /* preview art: orbit */
+  .prev-orbit{position:absolute;inset:0;background:#e9e9e6;overflow:hidden}
+  .prev-orbit i{position:absolute;border-radius:2px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+  .prev-orbit i:nth-child(1){left:16%;top:72%;width:7px;height:5px;background:#20324a}
+  .prev-orbit i:nth-child(2){left:11%;top:58%;width:11px;height:8px;background:#c95f28;transform:rotate(-6deg)}
+  .prev-orbit i:nth-child(3){left:12%;top:41%;width:17px;height:12px;background:#a7b289;transform:rotate(4deg)}
+  .prev-orbit i:nth-child(4){left:19%;top:23%;width:25px;height:18px;background:#39546b;transform:rotate(-5deg)}
+  .prev-orbit i:nth-child(5){left:33%;top:10%;width:36px;height:26px;background:#d9d0a9;transform:rotate(3deg)}
+  .prev-orbit i:nth-child(6){left:53%;top:8%;width:50px;height:36px;background:#c24726;transform:rotate(-4deg)}
+  .prev-orbit i:nth-child(7){left:66%;top:24%;width:66px;height:47px;background:#20324a;transform:rotate(5deg)}
+  .prev-orbit i:nth-child(8){left:58%;top:47%;width:86px;height:62px;background:#c95f28;transform:rotate(-3deg)}
+  .prev-orbit i:nth-child(9){left:34%;top:56%;width:104px;height:76px;background:#8fa9bd;transform:rotate(2deg)}
+  .prev-orbit b{position:absolute;left:38%;top:44%;font-size:13px;font-weight:800;color:#fff;letter-spacing:.01em;text-shadow:0 2px 10px rgba(0,0,0,.2)}
 
   /* ---------------- footnote strip ---------------- */
   .strip{
@@ -268,6 +289,8 @@
     <div class="tab" data-tool="particles">Particles</div>
     <div class="tab" data-tool="shaders">Shaders</div>
     <div class="tab" data-tool="cascade">Cascade</div>
+    <div class="tab" data-tool="dotmatrix">DotMatrix</div>
+    <div class="tab" data-tool="orbit">Orbit</div>
   </nav>
 
   <div class="head-right">
@@ -289,7 +312,7 @@
     <div class="glow"></div>
     <div class="tagline"><span class="pulse"></span> <span data-i18n="tagline">In-house studio tools</span></div>
     <h1 data-i18n-html="heroTitle">Creative tools by <span class="green">Klik</span> — right in your browser.</h1>
-    <p class="lede" data-i18n="lede">Twelve studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders and gradient cascades. No installs, no server — everything runs locally.</p>
+    <p class="lede" data-i18n="lede">Fourteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes and 3D photo-card layouts. No installs, no server — everything runs locally.</p>
   </div>
 
   <div class="cards">
@@ -439,6 +462,37 @@
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
     </div>
+
+    <!-- DotMatrix -->
+    <div class="card" data-tool="dotmatrix">
+      <div class="preview">
+        <div class="prev-matrix">
+          <svg viewBox="0 0 28 12" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="2" width="2" height="1"/><rect x="7" y="3" width="2" height="1"/><rect x="8" y="4" width="2" height="1"/><rect x="9" y="5" width="2" height="1"/><rect x="10" y="6" width="2" height="1"/>
+            <rect x="20" y="2" width="2" height="1"/><rect x="19" y="3" width="2" height="1"/><rect x="18" y="4" width="2" height="1"/><rect x="17" y="5" width="2" height="1"/><rect x="16" y="6" width="2" height="1"/>
+            <rect x="10" y="7" width="9" height="1"/><rect x="19" y="7" width="1" height="1"/>
+            <rect x="11" y="8" width="6" height="1"/><rect x="8" y="8" width="2" height="1"/>
+          </svg>
+        </div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">13</span> DotMatrix Studio</h3>
+        <p data-i18n="dotmatrixDesc">The Milk & Peppers pixel-silhouette effect: Mosaic 72×128 → Threshold → 15×15 PIXEL matte. Eagle, butterfly, whale, rocket, any text or your own mask — over a flat sky with clouds, grid lines, a vertical caption and a 24 fps timecode.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+
+    <!-- Orbit -->
+    <div class="card" data-tool="orbit">
+      <div class="preview">
+        <div class="prev-orbit"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b>Move your…</b></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">14</span> Orbit Studio</h3>
+        <p data-i18n="orbitDesc">Photo cards in 3D layouts: upload any number of photos and they flow along a growing spiral — or sit on the corners of an imaginary 3D globe. Works with 1 card or 200, transparent background, PNG / SVG / JPG / WebP export.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
   </div>
 
   <div class="strip">
@@ -466,7 +520,7 @@
       title: "Klik Tools — Creative Studio Toolkit",
       tagline: "In-house studio tools",
       heroTitle: 'Creative tools by <span class="green">Klik</span> — right in your browser.',
-      lede: "Twelve studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders and gradient cascades. No installs, no server — everything runs locally.",
+      lede: "Fourteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes and 3D photo-card layouts. No installs, no server — everything runs locally.",
       lumaDesc: "CellMap · PixelSynth · ASCII. Turns photos and videos into luminance-driven grids: clip tiles, color zones or classic ASCII art with export.",
       sphereDesc: "A 3D glowing-sphere generator on WebGL: noise, glow, orbiting particles, presets and MP4 recording — all in real time.",
       xrayDesc: "Photo → x-ray: Canny contour detection, thin 1px lines, Wireframe / Blueprint / Neon styles and export to PNG or vector SVG.",
@@ -479,6 +533,8 @@
       particlesDesc: "Glowing rain and snow generator: 6 particle types, 3 auto-flicker modes, mirror and background layers, star glow, rave mode and god rays. 14 presets, seamless loops, alpha WebM.",
       fluxDesc: "Liquid gradient backgrounds: color blobs and stripes, wave-warp distortion, mirror symmetry and Colorama remap. Aura posters and seamless loops, 12 presets, PNG / SVG / MP4 / WebM export.",
       cascadeDesc: "Gradient cascades and waves: strips sampling a looping gradient with quantized terrace offsets — cascade, wave, stairs, arc patterns, row blocks, drift and breathing. 12 presets, seamless MP4 loops.",
+      dotmatrixDesc: "The Milk & Peppers pixel-silhouette effect: Mosaic 72×128 → Threshold → 15×15 PIXEL matte. Eagle, butterfly, whale, rocket, any text or your own mask — over a flat sky with clouds, grid lines, a vertical caption and a 24 fps timecode.",
+      orbitDesc: "Photo cards in 3D layouts: upload any number of photos and they flow along a growing spiral — or sit on the corners of an imaginary 3D globe. Works with 1 card or 200, transparent background, PNG / SVG / JPG / WebP export.",
       open: "Open studio",
       strip1: "Private — files never leave your browser",
       strip2: "No installs, no dependencies",
@@ -489,7 +545,7 @@
       title: "Klik Tools — внутренние студии",
       tagline: "Внутренние инструменты студии",
       heroTitle: 'Креативные тулы <span class="green">Klik</span> — прямо в браузере.',
-      lede: "Двенадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры и градиентные каскады. Без установок и сервера — всё локально.",
+      lede: "Четырнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты и 3D-раскладки фотокарточек. Без установок и сервера — всё локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото и видео → сетки по яркости, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) с палитрами, неоновые капсулы, стек glow/glitch пост-эффектов.",
       sphereDesc: "3D генератор световых сфер на WebGL: шум, свечение, орбитальные частицы, пресеты и запись в MP4 — всё в реальном времени.",
       xrayDesc: "Фото → рентген: детекция контуров Canny, тонкие 1px-линии, стили Wireframe / Blueprint / Neon и экспорт в PNG или вектор SVG.",
@@ -502,6 +558,8 @@
       particlesDesc: "Генератор светящегося дождя и снега: 6 типов частиц, 3 авто-фликера, зеркальный и фоновый слои, star glow, rave mode и god rays. 14 пресетов, бесшовные лупы, alpha WebM.",
       fluxDesc: "Жидкие градиентные фоны: цветовые пятна и полосы, wave-warp искажение, зеркальная симметрия и Colorama. Aura-постеры и бесшовные лупы, 12 пресетов, экспорт PNG / SVG / MP4 / WebM.",
       cascadeDesc: "Градиентные каскады и волны: полосы сэмплируют цикличный градиент с квантованными сдвигами-террасами — каскад, волна, лестница, арка, блоки-ряды, дрейф и дыхание. 12 пресетов, бесшовные MP4-лупы.",
+      dotmatrixDesc: "Эффект пиксельного силуэта Milk & Peppers: Mosaic 72×128 → Threshold → PIXEL-матте 15×15. Орёл, бабочка, кит, ракета, любой текст или своя маска — на ровном небе с облаками, сеткой линий, вертикальной подписью и таймкодом 24 fps.",
+      orbitDesc: "Фотокарточки в 3D-раскладках: загрузи сколько угодно фото — они лягут по растущей спирали или по углам воображаемого 3D-глобуса. Работает и с 1 карточкой, и с 200, прозрачный фон, экспорт PNG / SVG / JPG / WebP.",
       open: "Открыть студию",
       strip1: "Приватно — файлы не покидают браузер",
       strip2: "Без установок и зависимостей",
@@ -512,7 +570,7 @@
       title: "Klik Tools — внутрішні студії",
       tagline: "Внутрішні інструменти студії",
       heroTitle: 'Креативні тули <span class="green">Klik</span> — прямо у браузері.',
-      lede: "Дванадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери і градієнтні каскади. Без інсталяцій, без сервера — все локально.",
+      lede: "Чотирнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети і 3D-розкладки фото-карток. Без інсталяцій, без сервера — все локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото й відео → сітки за яскравістю, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) з палітрами, неонові капсули, стек glow/glitch пост-ефектів.",
       sphereDesc: "3D генератор світлових сфер на WebGL: шум, ґлоу, орбітальні частинки, пресети та запис у MP4 — все в реальному часі.",
       xrayDesc: "Фото → рентген: детекція контурів Canny, тонкі 1px-лінії, стилі Wireframe / Blueprint / Neon і експорт у PNG або вектор SVG.",
@@ -525,6 +583,8 @@
       particlesDesc: "Генератор сяючого дощу і снігу: 6 типів частинок, 3 авто-флікери, дзеркальний і фоновий шари, star glow, rave mode і god rays. 14 пресетів, безшовні лупи, alpha WebM.",
       fluxDesc: "Рідкі градієнтні фони: кольорові плями та смуги, wave-warp викривлення, дзеркальна симетрія та Colorama. Aura-постери й безшовні лупи, 12 пресетів, експорт PNG / SVG / MP4 / WebM.",
       cascadeDesc: "Градієнтні каскади та хвилі: смуги семплять циклічний градієнт із квантованими зсувами-терасами — каскад, хвиля, сходи, арка, блоки-ряди, дрейф і дихання. 12 пресетів, безшовні MP4-лупи.",
+      dotmatrixDesc: "Ефект піксельного силуету Milk & Peppers: Mosaic 72×128 → Threshold → PIXEL-матте 15×15. Орел, метелик, кит, ракета, будь-який текст чи своя маска — на рівному небі з хмарами, сіткою ліній, вертикальним підписом і таймкодом 24 fps.",
+      orbitDesc: "Фото-картки у 3D-розкладках: завантаж скільки завгодно фото — вони ляжуть по наростаючій спіралі або по кутах уявного 3D-глобуса. Працює і з 1 карткою, і з 200, прозорий фон, експорт PNG / SVG / JPG / WebP.",
       open: "Відкрити студію",
       strip1: "Приватно — файли не покидають браузер",
       strip2: "Без інсталяцій та залежностей",
@@ -569,6 +629,8 @@
     particles:{ src: "tools/particle-studio.html", title: "Particle Studio" },
     shaders:  { src: "tools/shader-studio.html",   title: "Shader Studio" },
     cascade:  { src: "tools/cascade-studio.html",  title: "Cascade Studio" },
+    dotmatrix:{ src: "tools/matrix-studio.html",   title: "DotMatrix Studio" },
+    orbit:    { src: "tools/orbit-studio.html",    title: "Orbit Studio" },
   };
 
   const toolview = document.getElementById("toolview");
