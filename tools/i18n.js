@@ -811,7 +811,40 @@
 
     /* === Orbit Studio === */
     "Orbit Studio — спіраль і глобус із фото-карток": ["Orbit Studio — a spiral and a globe of photo cards", "Orbit Studio — спираль и глобус из фотокарточек"],
-    "фото-картки → спіраль · 3D-глобус": ["photo cards → spiral · 3D globe", "фотокарточки → спираль · 3D-глобус"],
+    "спіраль · кільце · глобус · карусель · розліт · фліп": ["spiral · ring · globe · carousel · scatter · flip", "спираль · кольцо · глобус · карусель · разлёт · флип"],
+    "Фліп": ["Flip", "Флип"],
+    "Висота карток": ["Card height", "Высота карточек"],
+    "Кут статики (°)": ["Static angle (°)", "Угол статики (°)"],
+    "Хвиля (зсув фаз)": ["Wave (phase offset)", "Волна (сдвиг фаз)"],
+    "Стрічка карток, кожна крутиться навколо власної осі з чесним 3D-звуженням. На звороті — наступне фото. Одна картка = великий фліп на весь кадр, як у референсі.": [
+      "A strip of cards, each spinning around its own axis with true 3D foreshortening. The back shows the next photo. One card = a big full-frame flip, like in the reference.",
+      "Лента карточек, каждая крутится вокруг собственной оси с честным 3D-сужением. На обороте — следующее фото. Одна карточка = большой флип на весь кадр, как в референсе."],
+    "Карусель": ["Carousel", "Карусель"],
+    "Без руху": ["Static", "Без движения"],
+    "Обертання": ["Spin", "Вращение"],
+    "Тасування": ["Shuffle", "Тасовка"],
+    "Гойдання": ["Sway", "Покачивание"],
+    "Дрейф": ["Drift", "Дрейф"],
+    "Глибина": ["Depth", "Глубина"],
+    "Розкид у площині": ["Spread (plane)", "Разброс в плоскости"],
+    "Різнобій розмірів": ["Size variety", "Разнобой размеров"],
+    "Орієнтація карток": ["Card orientation", "Ориентация карточек"],
+    "Радіально": ["Radial", "Радиально"],
+    "Дотично": ["Tangent", "По касательной"],
+    "Прямо": ["Upright", "Прямо"],
+    "Відео (безшовний луп)": ["Video (seamless loop)", "Видео (бесшовный луп)"],
+    "Луп безшовний: тривалість циклу — слайдер «Тривалість» у вкладці «Експорт». Кнопка ⏸ на превʼю заморожує кадр для статичного експорту.": [
+      "The loop is seamless: cycle length is the “Duration” slider in the “Export” tab. The ⏸ button on the preview freezes a frame for static export.",
+      "Луп бесшовный: длительность цикла — слайдер «Длительность» во вкладке «Экспорт». Кнопка ⏸ на превью замораживает кадр для статичного экспорта."],
+    "«Пелюстки» по колу як у референсі. Анімація «Тасування» — розетка обертається, збирається в колоду і розгортається знову.": [
+      "“Petals” around a circle like in the reference. The “Shuffle” animation spins the rosette, gathers it into a deck and fans it out again.",
+      "«Лепестки» по кругу как в референсе. Анимация «Тасовка» — розетка вращается, собирается в колоду и раскрывается снова."],
+    "Картки розкидані у 3D-просторі. «Проліт» — камера летить крізь хмару карток, дальні випливають назустріч; луп безшовний.": [
+      "Cards are scattered in 3D space. “Fly-through” sends the camera through the card cloud, far cards float in to meet you; the loop is seamless.",
+      "Карточки разбросаны в 3D-пространстве. «Пролёт» — камера летит сквозь облако карточек, дальние выплывают навстречу; луп бесшовный."],
+    "Запис стартує з початку циклу і триває рівно один луп — MP4 кодується локально (WebCodecs), нічого не вивантажується.": [
+      "Recording starts at the beginning of the cycle and lasts exactly one loop — MP4 is encoded locally (WebCodecs), nothing is uploaded.",
+      "Запись стартует с начала цикла и длится ровно один луп — MP4 кодируется локально (WebCodecs), ничего не загружается."],
     "Фото": ["Photos", "Фото"],
     "Розкладка": ["Layout", "Раскладка"],
     "Фотографії": ["Photos", "Фотографии"],
@@ -846,9 +879,9 @@
     "Нахил (°)": ["Tilt (°)", "Наклон (°)"],
     "Згасання дальніх": ["Far-side fade", "Затухание дальних"],
     "Картки дотично до сфери": ["Cards tangent to the sphere", "Карточки по касательной к сфере"],
-    "Картки сидять по уявних кутах глобуса (спіраль Фібоначчі) і проєктуються у 3D. Вимкни «дотично» — і вони повернуться обличчям до камери.": [
-      "Cards sit at the imaginary corners of the globe (a Fibonacci spiral) and are projected in 3D. Turn “tangent” off and they face the camera instead.",
-      "Карточки сидят по воображаемым углам глобуса (спираль Фибоначчи) и проецируются в 3D. Выключи «по касательной» — и они повернутся лицом к камере."],
+    "Глобус — спіраль Фібоначчі по сфері, карусель — те саме кільце по екватору. «Обертання» крутить сферу на повний оберт за луп.": [
+      "The globe is a Fibonacci spiral on a sphere; the carousel is the same ring along the equator. “Spin” turns the sphere a full revolution per loop.",
+      "Глобус — спираль Фибоначчи по сфере, карусель — то же кольцо по экватору. «Вращение» крутит сферу на полный оборот за луп."],
     "Хаос": ["Chaos", "Хаос"],
     "Розкид повороту (°)": ["Rotation jitter (°)", "Разброс поворота (°)"],
     "Розкид позиції": ["Position jitter", "Разброс позиции"],
@@ -876,10 +909,10 @@
     "Формат файлу": ["File format", "Формат файла"],
     "Якість (JPG / WebP)": ["Quality (JPG / WebP)", "Качество (JPG / WebP)"],
     "Прозорий фон (PNG / SVG / WebP)": ["Transparent background (PNG / SVG / WebP)", "Прозрачный фон (PNG / SVG / WebP)"],
-    "Все рендериться локально у браузері. Прозорість зберігають PNG, SVG і WebP; JPG завжди з непрозорим фоном. SVG — вектор із вбудованими фото: картки лишаються окремими обʼєктами для Figma чи Illustrator.": [
-      "Everything renders locally in your browser. PNG, SVG and WebP keep transparency; JPG always gets an opaque background. SVG is a vector with embedded photos: the cards stay separate objects for Figma or Illustrator.",
-      "Всё рендерится локально в браузере. Прозрачность сохраняют PNG, SVG и WebP; JPG всегда с непрозрачным фоном. SVG — вектор со встроенными фото: карточки остаются отдельными объектами для Figma или Illustrator."],
-    "один файл · спіраль і 3D-глобус із фото-карток · від 1 до 200 карток · експорт PNG / SVG / JPG / WebP · все локально": ["single file · a spiral and a 3D globe of photo cards · from 1 to 200 cards · PNG / SVG / JPG / WebP export · all local", "один файл · спираль и 3D-глобус из фотокарточек · от 1 до 200 карточек · экспорт PNG / SVG / JPG / WebP · всё локально"],
+    "Статика знімає поточний кадр анімації — постав на паузу в потрібний момент. Прозорість зберігають PNG, SVG і WebP; JPG завжди з непрозорим фоном. SVG — вектор із вбудованими фото: картки лишаються окремими обʼєктами для Figma чи Illustrator.": [
+      "Stills capture the current animation frame — pause at the right moment. PNG, SVG and WebP keep transparency; JPG always gets an opaque background. SVG is a vector with embedded photos: the cards stay separate objects for Figma or Illustrator.",
+      "Статика снимает текущий кадр анимации — поставь на паузу в нужный момент. Прозрачность сохраняют PNG, SVG и WebP; JPG всегда с непрозрачным фоном. SVG — вектор со встроенными фото: карточки остаются отдельными объектами для Figma или Illustrator."],
+    "один файл · спіраль · кільце · глобус · карусель · розліт · фліп · анімаційні лупи · експорт PNG / SVG / JPG / WebP / MP4 / WebM · все локально": ["single file · spiral · ring · globe · carousel · scatter · flip · animated loops · PNG / SVG / JPG / WebP / MP4 / WebM export · all local", "один файл · спираль · кольцо · глобус · карусель · разлёт · флип · анимационные лупы · экспорт PNG / SVG / JPG / WebP / MP4 / WebM · всё локально"],
 
     /* === FX panel (postfx.js) === */
     "FX — пост-обробка": ["FX — post-processing", "FX — пост-обработка"],

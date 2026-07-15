@@ -34,7 +34,7 @@
           <ellipse cx="13" cy="12" rx="10.5" ry="4.6" transform="rotate(-18 13 12)" opacity=".5"/>
         </svg>
       </div>
-      <div><h1>Orbit Studio</h1><p>фото-картки → спіраль · 3D-глобус</p></div>
+      <div><h1>Orbit Studio</h1><p>спіраль · кільце · глобус · карусель · розліт · фліп</p></div>
     </div>
   </header>
 
@@ -73,10 +73,19 @@
       <div data-pane="layout">
         <div class="group">
           <h2>Режим</h2>
-          <div class="presets c2" id="modes">
+          <div class="presets c3" id="modes">
             <div class="preset active" data-mode="spiral">Спіраль</div>
+            <div class="preset" data-mode="ring">Кільце</div>
             <div class="preset" data-mode="globe">Глобус</div>
+            <div class="preset" data-mode="carousel">Карусель</div>
+            <div class="preset" data-mode="field">Розліт</div>
+            <div class="preset" data-mode="flip">Фліп</div>
           </div>
+        </div>
+        <div class="group">
+          <h2>Анімація</h2>
+          <div class="presets c3" id="anims"></div>
+          <div class="note">Луп безшовний: тривалість циклу — слайдер «Тривалість» у вкладці «Експорт». Кнопка ⏸ на превʼю заморожує кадр для статичного експорту.</div>
         </div>
 
         <div id="spiralCtrls">
@@ -104,6 +113,27 @@
           </div>
         </div>
 
+        <div id="ringCtrls" style="display:none">
+          <div class="group">
+            <h2>Кільце</h2>
+            <div class="row"><label class="lbl">Радіус</label><span class="val" id="vRingRadius">0.26</span></div>
+            <input type="range" id="ringRadius" min="0.03" max="0.5" step="0.01" value="0.26">
+            <div class="row mt"><label class="lbl">Розмір карток</label><span class="val" id="vRingCard">0.17</span></div>
+            <input type="range" id="ringCard" min="0.04" max="0.45" step="0.01" value="0.17">
+            <div class="row mt"><label class="lbl">Стартовий кут (°)</label><span class="val" id="vRingStart">-90</span></div>
+            <input type="range" id="ringStart" min="-180" max="180" step="1" value="-90">
+            <div class="row mt"><label class="lbl">Різнобій розмірів</label><span class="val" id="vRingVar">0.12</span></div>
+            <input type="range" id="ringVar" min="0" max="1" step="0.05" value="0.12">
+            <div class="row mt"><label class="lbl">Орієнтація карток</label></div>
+            <div class="presets c3" id="ringOrients">
+              <div class="preset active" data-orient="radial">Радіально</div>
+              <div class="preset" data-orient="tangent">Дотично</div>
+              <div class="preset" data-orient="up">Прямо</div>
+            </div>
+            <div class="note">«Пелюстки» по колу як у референсі. Анімація «Тасування» — розетка обертається, збирається в колоду і розгортається знову.</div>
+          </div>
+        </div>
+
         <div id="globeCtrls" style="display:none">
           <div class="group">
             <h2>Глобус</h2>
@@ -121,7 +151,41 @@
             <input type="range" id="glFade" min="0" max="1" step="0.05" value="0.5">
             <div class="switch-row"><span class="lbl">Картки дотично до сфери</span>
               <label class="switch"><input type="checkbox" id="glTangent" checked><span class="track"></span></label></div>
-            <div class="note">Картки сидять по уявних кутах глобуса (спіраль Фібоначчі) і проєктуються у 3D. Вимкни «дотично» — і вони повернуться обличчям до камери.</div>
+            <div class="note">Глобус — спіраль Фібоначчі по сфері, карусель — те саме кільце по екватору. «Обертання» крутить сферу на повний оберт за луп.</div>
+          </div>
+        </div>
+
+        <div id="fieldCtrls" style="display:none">
+          <div class="group">
+            <h2>Розліт</h2>
+            <div class="row"><label class="lbl">Розкид у площині</label><span class="val" id="vFieldSpread">0.55</span></div>
+            <input type="range" id="fieldSpread" min="0.1" max="1.5" step="0.05" value="0.55">
+            <div class="row mt"><label class="lbl">Глибина</label><span class="val" id="vFieldDepth">6.0</span></div>
+            <input type="range" id="fieldDepth" min="2" max="14" step="0.5" value="6">
+            <div class="row mt"><label class="lbl">Розмір карток</label><span class="val" id="vFieldCard">0.80</span></div>
+            <input type="range" id="fieldCard" min="0.1" max="2" step="0.05" value="0.8">
+            <div class="row mt"><label class="lbl">Перспектива</label><span class="val" id="vFieldPersp">1.15</span></div>
+            <input type="range" id="fieldPersp" min="0.5" max="2.5" step="0.05" value="1.15">
+            <div class="row mt"><label class="lbl">Різнобій розмірів</label><span class="val" id="vFieldVar">0.50</span></div>
+            <input type="range" id="fieldVar" min="0" max="1" step="0.05" value="0.5">
+            <div class="note">Картки розкидані у 3D-просторі. «Проліт» — камера летить крізь хмару карток, дальні випливають назустріч; луп безшовний.</div>
+          </div>
+        </div>
+
+        <div id="flipCtrls" style="display:none">
+          <div class="group">
+            <h2>Фліп</h2>
+            <div class="row"><label class="lbl">Висота карток</label><span class="val" id="vFlipH">0.70</span></div>
+            <input type="range" id="flipH" min="0.2" max="1" step="0.01" value="0.7">
+            <div class="row mt"><label class="lbl">Проміжок</label><span class="val" id="vFlipGap">0.08</span></div>
+            <input type="range" id="flipGap" min="0" max="0.5" step="0.01" value="0.08">
+            <div class="row mt"><label class="lbl">Кут статики (°)</label><span class="val" id="vFlipAngle">35</span></div>
+            <input type="range" id="flipAngle" min="0" max="80" step="1" value="35">
+            <div class="row mt"><label class="lbl">Хвиля (зсув фаз)</label><span class="val" id="vFlipWave">0.60</span></div>
+            <input type="range" id="flipWave" min="0" max="2" step="0.05" value="0.6">
+            <div class="row mt"><label class="lbl">Перспектива</label><span class="val" id="vFlipPersp">1.30</span></div>
+            <input type="range" id="flipPersp" min="0.6" max="3" step="0.05" value="1.3">
+            <div class="note">Стрічка карток, кожна крутиться навколо власної осі з чесним 3D-звуженням. На звороті — наступне фото. Одна картка = великий фліп на весь кадр, як у референсі.</div>
           </div>
         </div>
 
@@ -208,7 +272,7 @@
           <input type="range" id="ch" min="640" max="4096" step="16" value="1400">
         </div>
         <div class="group">
-          <h2>Формат файлу</h2>
+          <h2>Статика</h2>
           <div class="presets c2" id="scales">
             <div class="preset active" data-scale="1">×1</div>
             <div class="preset" data-scale="2">×2</div>
@@ -221,7 +285,19 @@
             <button class="btn" id="exJpg">JPG</button>
             <button class="btn" id="exWebp">WebP</button>
           </div>
-          <div class="note">Все рендериться локально у браузері. Прозорість зберігають PNG, SVG і WebP; JPG завжди з непрозорим фоном. SVG — вектор із вбудованими фото: картки лишаються окремими обʼєктами для Figma чи Illustrator.</div>
+          <div class="note">Статика знімає поточний кадр анімації — постав на паузу в потрібний момент. Прозорість зберігають PNG, SVG і WebP; JPG завжди з непрозорим фоном. SVG — вектор із вбудованими фото: картки лишаються окремими обʼєктами для Figma чи Illustrator.</div>
+        </div>
+        <div class="group">
+          <h2>Відео (безшовний луп)</h2>
+          <div class="row"><label class="lbl">Тривалість (с)</label><span class="val" id="vDur">8</span></div>
+          <input type="range" id="dur" min="2" max="30" step="1" value="8">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">16</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="16">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (30 fps)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">Запис стартує з початку циклу і триває рівно один луп — MP4 кодується локально (WebCodecs), нічого не вивантажується.</div>
         </div>
         <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
       </div>
@@ -231,32 +307,52 @@
       <div class="card stage" id="stage">
         <canvas id="out"></canvas>
         <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
           <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
           <span class="spacer"></span><span class="dims" id="dims"></span>
         </div>
       </div>
     </section>
   </main>
-  <footer>один файл · спіраль і 3D-глобус із фото-карток · від 1 до 200 карток · експорт PNG / SVG / JPG / WebP · все локально</footer>
+  <footer>один файл · спіраль · кільце · глобус · карусель · розліт · фліп · анімаційні лупи · експорт PNG / SVG / JPG / WebP / MP4 / WebM · все локально</footer>
 </div>
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
+<script src="mp4-muxer.js"></script>
 <script>
 (() => {
   "use strict";
 
   /* ================= params ================= */
+  const FPS = 30;
   const P = {
     mode:"spiral", count:26, autoCount:true,
+    anim:{spiral:"static", ring:"shuffle", globe:"spin", carousel:"spin", field:"fly", flip:"flip"},
     spSweep:0.85, spStart:126, spRadius:0.33, spGrow:0.10, sMin:0.006, sMax:0.42,
     spCX:0.5, spCY:0.47, spCCW:false,
+    ringRadius:0.26, ringCard:0.17, ringStart:-90, ringVar:0.12, ringOrient:"radial",
     glSize:0.78, glCard:0.42, glDist:2.6, glYaw:18, glPitch:-12, glFade:0.5, glTangent:true,
+    fieldSpread:0.55, fieldDepth:6, fieldCard:0.8, fieldPersp:1.15, fieldVar:0.5,
+    flipH:0.7, flipGap:0.08, flipAngle:35, flipWave:0.6, flipPersp:1.3,
     jitterRot:6, jitterPos:0.03, seed:1,
     bgColor:"#e9e9e6", bgTransparent:true,
     aspect:"orig", shadow:0.35, corner:0, border:0, borderColor:"#ffffff",
     capOn:false, caption:"Move your cursor", capSize:0.075, capY:0.5, capColor:"#ffffff", capWeight:"700", capTop:false,
     W:1600, H:1400, exScale:1, q:0.92,
+    dur:8, bitrate:16,
   };
   const DEFAULTS = JSON.parse(JSON.stringify(P));
+  /* анімаційні пресети кожного режиму */
+  const ANIMS = {
+    spiral:  [["static","Без руху"],["spin","Обертання"],["breathe","Дихання"]],
+    ring:    [["static","Без руху"],["spin","Обертання"],["shuffle","Тасування"]],
+    globe:   [["static","Без руху"],["spin","Обертання"],["sway","Гойдання"]],
+    carousel:[["static","Без руху"],["spin","Обертання"],["sway","Гойдання"]],
+    field:   [["static","Без руху"],["fly","Проліт"],["drift","Дрейф"]],
+    flip:    [["static","Без руху"],["flip","Фліп"],["sway","Гойдання"]],
+  };
 
   const $ = id => document.getElementById(id);
   const TAU = Math.PI*2, D2R = Math.PI/180;
@@ -266,9 +362,11 @@
   /* детермінований хеш — розкид стабільний між кадрами та експортами */
   function hash(x){ const s = Math.sin(x*127.1 + 311.7)*43758.5453; return s - Math.floor(s); }
   const h2 = (a,b) => hash(a*7.13 + b*57.7);
+  const ease = x => x*x*(3 - 2*x);
+  const clamp01 = x => Math.max(0, Math.min(1, x));
 
   /* ================= фото ================= */
-  const PHOTOS = []; // {src: canvas|img, url}
+  const PHOTOS = []; // {src: canvas|img, url, alpha}
 
   function addFiles(files){
     const imgs = [...files].filter(f => f.type.startsWith("image/"));
@@ -287,7 +385,7 @@
         }
         /* alpha=true → у SVG вбудовуємо як PNG, щоб не втратити прозорість */
         PHOTOS.push({src, url, alpha: f.type !== "image/jpeg"});
-        syncCount(); renderThumbs(); render();
+        syncCount(); renderThumbs(); needRender = true;
       };
       im.src = url;
     });
@@ -295,7 +393,7 @@
   function removePhoto(i){
     URL.revokeObjectURL(PHOTOS[i].url);
     PHOTOS.splice(i, 1);
-    syncCount(); renderThumbs(); render();
+    syncCount(); renderThumbs(); needRender = true;
   }
   function renderThumbs(){
     const t = $("thumbs");
@@ -315,7 +413,7 @@
   $("clearBtn").addEventListener("click", () => {
     PHOTOS.forEach(p => URL.revokeObjectURL(p.url));
     PHOTOS.length = 0;
-    syncCount(); renderThumbs(); render();
+    syncCount(); renderThumbs(); needRender = true;
   });
   $("shuffleBtn").addEventListener("click", () => {
     for(let i = PHOTOS.length - 1; i > 0; i--){
@@ -323,7 +421,7 @@
       [PHOTOS[i], PHOTOS[j]] = [PHOTOS[j], PHOTOS[i]];
     }
     P.seed = Math.floor(Math.random()*1e4);
-    renderThumbs(); render();
+    renderThumbs(); needRender = true;
   });
 
   const stage = $("stage");
@@ -365,49 +463,95 @@
 
   const srcList = () => PHOTOS.length ? PHOTOS : PLACEHOLDERS;
   const curCount = () => (P.autoCount && PHOTOS.length) ? PHOTOS.length : P.count;
+  const curAnim = () => P.anim[P.mode];
 
-  /* ================= розкладки ================= */
+  /* ================= розкладки (u — фаза лупа 0..1) ================= */
   function cardAspect(img){
     if(P.aspect !== "orig") return parseFloat(P.aspect);
     const iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
     return Math.min(1.9, Math.max(0.55, iw/ih));
   }
+  function jitterXY(i, m){
+    return [(h2(i, P.seed) - .5)*2*P.jitterPos*m, (h2(i*1.7, P.seed + 9) - .5)*2*P.jitterPos*m];
+  }
+  const jitterRot = i => (h2(i*3.1, P.seed*7 + 3) - .5)*2*P.jitterRot*D2R;
 
-  /* спіраль: дуга від крихітної картки до найбільшої, розмір росте експоненційно */
-  function spiralItems(n, W, H){
+  /* спіраль: дуга від крихітної картки до найбільшої */
+  function spiralItems(n, W, H, u){
     const m = Math.min(W, H);
     const cx = P.spCX*W, cy = P.spCY*H;
     const dir = P.spCCW ? -1 : 1;
+    const anim = curAnim();
+    const spin = anim === "spin" ? 360*u : 0;
+    const br = anim === "breathe" ? 1 + 0.07*Math.sin(TAU*u) : 1;
     const items = [];
     for(let i = 0; i < n; i++){
       const t = n === 1 ? 1 : i/(n - 1);
-      const size = P.sMin*Math.pow(P.sMax/P.sMin, t)*m;
-      const ang = (P.spStart + dir*360*P.spSweep*t)*D2R;
-      const rad = P.spRadius*m*(1 + P.spGrow*t);
-      let x = cx + Math.cos(ang)*rad, y = cy + Math.sin(ang)*rad;
-      x += (h2(i, P.seed) - .5)*2*P.jitterPos*m;
-      y += (h2(i*1.7, P.seed + 9) - .5)*2*P.jitterPos*m;
+      const size = P.sMin*Math.pow(P.sMax/P.sMin, t)*m*(anim === "breathe" ? 1 + 0.05*Math.sin(TAU*u + t*2) : 1);
+      const ang = (P.spStart + spin + dir*360*P.spSweep*t)*D2R;
+      const rad = P.spRadius*m*(1 + P.spGrow*t)*br;
+      const [jx, jy] = jitterXY(i, m);
+      let x = cx + Math.cos(ang)*rad + jx, y = cy + Math.sin(ang)*rad + jy;
       if(n === 1){ x = cx; y = cy; }
-      const rot = (h2(i*3.1, P.seed*7 + 3) - .5)*2*P.jitterRot*D2R;
-      items.push({kind:"flat", i, x, y, w:size, rot, alpha:1});
+      items.push({kind:"flat", i, x, y, w:size, rot:jitterRot(i), alpha:1});
     }
     return items; // порядок = порядок малювання: великі лягають поверх малих
   }
 
-  /* глобус: спіраль Фібоначчі по сфері + перспективна проєкція.
-     Дотичний режим — афінна апроксимація дотичної площини (справжній 3D-нахил карток). */
-  function globeItems(n, W, H){
+  /* кільце-«пелюстки» + тасування: розетка → колода → розетка */
+  function shuffleK(u){
+    if(u < 0.36) return 0;
+    if(u < 0.5) return ease((u - 0.36)/0.14);
+    if(u < 0.86) return 1;
+    return 1 - ease((u - 0.86)/0.14);
+  }
+  function ringItems(n, W, H, u){
+    const m = Math.min(W, H), cx = W/2, cy = H/2;
+    const R = P.ringRadius*m;
+    const anim = curAnim();
+    const spin = anim === "static" ? 0 : 360*u;
+    const s = anim === "shuffle" ? shuffleK(u) : 0;
+    const items = [];
+    for(let i = 0; i < n; i++){
+      const ang = (P.ringStart + i*360/n + spin)*D2R;
+      const size = P.ringCard*m*(1 + (h2(i*2.9, P.seed + 5) - .5)*2*P.ringVar*0.6);
+      const [jx, jy] = jitterXY(i, m);
+      let x = cx + Math.cos(ang)*R + jx, y = cy + Math.sin(ang)*R + jy;
+      let rot = (P.ringOrient === "radial" ? ang + Math.PI/2 : P.ringOrient === "tangent" ? ang + Math.PI : 0) + jitterRot(i);
+      if(s > 0){
+        /* колода: акуратний діагональний каскад по центру */
+        rot = ((rot + Math.PI) % TAU + TAU) % TAU - Math.PI;
+        const sx2 = cx + (i - (n - 1)/2)*m*0.004, sy2 = cy + (i - (n - 1)/2)*m*0.006;
+        const srot = (h2(i*4.7, P.seed + 2) - .5)*0.14;
+        x += (sx2 - x)*s; y += (sy2 - y)*s; rot += (srot - rot)*s;
+      }
+      if(n === 1){ x = cx; y = cy; }
+      items.push({kind:"flat", i, x, y, w:size, rot, alpha:1});
+    }
+    return items;
+  }
+
+  /* глобус (Фібоначчі) та карусель (екватор): перспектива + дотична площина */
+  function globeItems(n, W, H, u){
     const m = Math.min(W, H);
     const D = P.glDist, f = P.glSize*(m/2)*D;
-    const yaw = P.glYaw*D2R, pitch = P.glPitch*D2R;
+    const anim = curAnim();
+    let yawDeg = P.glYaw, pitchDeg = P.glPitch;
+    if(anim === "spin") yawDeg += 360*u;
+    else if(anim === "sway"){ yawDeg += 30*Math.sin(TAU*u); pitchDeg += 14*Math.sin(TAU*2*u); }
+    const yaw = yawDeg*D2R, pitch = pitchDeg*D2R;
     const cyaw = Math.cos(yaw), syaw = Math.sin(yaw);
     const cpit = Math.cos(pitch), spit = Math.sin(pitch);
     const GA = Math.PI*(3 - Math.sqrt(5));
+    const ring = P.mode === "carousel";
     const items = [];
     for(let i = 0; i < n; i++){
       let px, py, pz;
-      if(n === 1){ px = 0; py = 0; pz = -1; }
-      else {
+      if(n === 1 && !ring){ px = 0; py = 0; pz = -1; }
+      else if(ring){
+        const a = i/n*TAU;
+        px = Math.sin(a); py = 0; pz = -Math.cos(a);
+      } else {
         const yy = 1 - 2*(i + .5)/n, rr = Math.sqrt(Math.max(0, 1 - yy*yy)), ph = i*GA;
         px = rr*Math.cos(ph); py = yy; pz = rr*Math.sin(ph);
       }
@@ -418,11 +562,11 @@
       if(zc < 0.3) continue;
       const k = f/zc;
       let sx = W/2 + x2*k, sy = H/2 - y2*k;
-      sx += (h2(i, P.seed) - .5)*2*P.jitterPos*m*0.5;
-      sy += (h2(i*1.7, P.seed + 9) - .5)*2*P.jitterPos*m*0.5;
+      const [jx, jy] = jitterXY(i, m);
+      sx += jx*0.5; sy += jy*0.5;
       const far = (z2 + 1)/2; // 0 — ближні, 1 — дальні
       const alpha = Math.max(0.06, 1 - P.glFade*far);
-      const jrot = (h2(i*3.1, P.seed*7 + 3) - .5)*2*P.jitterRot*D2R;
+      const jrot = jitterRot(i);
       if(!P.glTangent){
         items.push({kind:"flat", i, x:sx, y:sy, w:P.glCard*k, rot:jrot, alpha, z:z2});
         continue;
@@ -444,6 +588,81 @@
     }
     items.sort((a, b) => b.z - a.z); // маляр: спершу дальні
     return items;
+  }
+
+  /* розліт: хмара карток у 3D, «проліт» жене камеру крізь неї (безшовний wrap по глибині) */
+  function fieldItems(n, W, H, u){
+    const m = Math.min(W, H);
+    const f = 0.5*m*P.fieldPersp;
+    const near = 0.65, depth = P.fieldDepth;
+    const anim = curAnim();
+    const halfX = P.fieldSpread*(W/f)*1.7, halfY = P.fieldSpread*(H/f)*1.7;
+    const items = [];
+    for(let i = 0; i < n; i++){
+      let x = (h2(i, P.seed + 1) - .5)*2*halfX;
+      let y = (h2(i*1.7, P.seed + 9) - .5)*2*halfY;
+      const z0 = near + hash(i*3.3 + P.seed)*depth;
+      let z = z0;
+      if(anim === "fly") z = ((z0 - near - u*depth) % depth + depth) % depth + near;
+      else if(anim === "drift"){ x += Math.sin(TAU*u + i*2.4)*halfX*0.07; y += Math.cos(TAU*u + i*1.7)*halfY*0.07; }
+      if(n === 1){ x = 0; y = 0; z = near + depth*0.35; }
+      const k = f/z;
+      const size = P.fieldCard*(1 + (h2(i*2.9, P.seed + 5) - .5)*2*P.fieldVar*0.55);
+      /* мʼяка поява з глибини і розчинення біля камери */
+      const alpha = clamp01((near + depth - z)/(depth*0.18)) * clamp01((z - near)/0.7);
+      if(alpha <= 0.01) continue;
+      items.push({kind:"flat", i, x: W/2 + x*k, y: H/2 + y*k, w:size*k*0.5, rot:jitterRot(i), alpha, z});
+    }
+    items.sort((a, b) => b.z - a.z); // дальні під ближніми
+    return items;
+  }
+
+  /* фліп-стрічка: картки в ряд, кожна крутиться навколо власної вертикальної осі.
+     Зворот показує інше фото; понад 90° геометрія дзеркалиться (π−θ), тож шов на ребрі непомітний. */
+  function flipItems(n, W, H, u){
+    const m = Math.min(W, H);
+    const list = srcList(), L = list.length;
+    const anim = curAnim();
+    let hCard = P.flipH*H;
+    let g = P.flipGap*hCard;
+    const widths = [];
+    let total = -g;
+    for(let i = 0; i < n; i++){
+      const w = hCard*cardAspect(list[i % L].src);
+      widths.push(w); total += w + g;
+    }
+    /* якщо ряд ширший за полотно — стискаємо все пропорційно (легкий блід за краї лишаємо) */
+    const fit = Math.min(1, W*1.06/total);
+    if(fit < 1){
+      hCard *= fit; g *= fit; total *= fit;
+      for(let i = 0; i < n; i++) widths[i] *= fit;
+    }
+    const backOff = Math.max(1, Math.floor(L/2));
+    const items = [];
+    let cx = W/2 - total/2;
+    for(let i = 0; i < n; i++){
+      let th;
+      const phase = i*P.flipWave*TAU/Math.max(1, n);
+      if(anim === "flip") th = TAU*u + phase;
+      else if(anim === "sway") th = P.flipAngle*D2R*Math.sin(TAU*u + phase);
+      else th = (i % 2 ? -1 : 1)*P.flipAngle*D2R;
+      const cos = Math.cos(th);
+      items.push({
+        kind:"flip", i, i2:(i + backOff) % L, face: cos >= 0 ? i % L : (i + backOff) % L,
+        x: cx + widths[i]/2, y: H/2, w: widths[i], h: hCard, th, f: P.flipPersp*m,
+        cosAbs: Math.abs(cos), alpha:1,
+      });
+      cx += widths[i] + g;
+    }
+    return items;
+  }
+
+  function layoutItems(n, W, H, u){
+    if(P.mode === "spiral") return spiralItems(n, W, H, u);
+    if(P.mode === "ring")   return ringItems(n, W, H, u);
+    if(P.mode === "field")  return fieldItems(n, W, H, u);
+    if(P.mode === "flip")   return flipItems(n, W, H, u);
+    return globeItems(n, W, H, u); // globe + carousel
   }
 
   /* ================= малювання ================= */
@@ -486,6 +705,45 @@
     }
     c.globalAlpha = 1;
   }
+  /* фліп-картка: заокруглена cover-текстура в offscreen → вертикальні смуги з перспективою.
+     Кожна смуга масштабується k=f/(f+z) — чесний keystone, як у референсі Flipping Cards. */
+  const flipScratch = document.createElement("canvas");
+  function drawFlipCard(c, front, back, x, y, w, h, th, f, alpha){
+    let cos = Math.cos(th), sin = Math.sin(th);
+    let img = front;
+    if(cos < 0){ img = back; cos = -cos; } // видно зворот: геометрія π−θ, текстура — інше фото
+    if(cos < 0.012) return;                // ребро — картки не видно
+    const S = flipScratch;
+    const tw = Math.max(64, Math.min(1024, Math.round(w)));
+    const thh = Math.max(64, Math.round(tw*h/w));
+    if(S.width !== tw || S.height !== thh){ S.width = tw; S.height = thh; }
+    const sc = S.getContext("2d");
+    sc.setTransform(1, 0, 0, 1, 0, 0);
+    sc.clearRect(0, 0, tw, thh);
+    const r = Math.min(tw, thh)*P.corner;
+    const path = () => { sc.beginPath(); if(r > 0 && sc.roundRect) sc.roundRect(0, 0, tw, thh, r); else sc.rect(0, 0, tw, thh); };
+    sc.save();
+    path(); sc.clip();
+    const iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
+    const k = Math.max(tw/iw, thh/ih);
+    sc.drawImage(img, (tw - iw*k)/2, (thh - ih*k)/2, iw*k, ih*k);
+    sc.restore();
+    if(P.border > 0){ path(); sc.lineWidth = Math.min(tw, thh)*P.border; sc.strokeStyle = P.borderColor; sc.stroke(); }
+    c.save();
+    c.translate(x, y);
+    c.globalAlpha = alpha;
+    const N = Math.max(24, Math.min(80, Math.round(w/10))), minDen = f*0.12;
+    for(let i = 0; i < N; i++){
+      const lx0 = (i/N - 0.5)*w, lx1 = ((i + 1)/N - 0.5)*w;
+      const k0 = f/Math.max(minDen, f + lx0*sin), k1 = f/Math.max(minDen, f + lx1*sin);
+      const X0 = lx0*cos*k0, X1 = lx1*cos*k1;
+      const km = (k0 + k1)/2;
+      c.drawImage(S, i*tw/N, 0, tw/N, thh, X0, -h/2*km, (X1 - X0) + 0.6, h*km);
+    }
+    c.restore();
+    c.globalAlpha = 1;
+  }
+
   function drawCaption(c, W, H){
     const txt = P.caption.trim();
     if(!txt) return;
@@ -496,18 +754,21 @@
     c.fillText(txt, W/2, H*P.capY);
   }
 
-  function renderTo(c, W, H, opaque){
+  function renderTo(c, W, H, opaque, u){
     const list = srcList();
     const n = curCount();
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, W, H);
     if(!P.bgTransparent || opaque){ c.fillStyle = P.bgColor; c.fillRect(0, 0, W, H); }
     if(P.capOn && !P.capTop) drawCaption(c, W, H);
-    const items = P.mode === "spiral" ? spiralItems(n, W, H) : globeItems(n, W, H);
+    const items = layoutItems(n, W, H, u);
     for(const it of items){
       const img = list[it.i % list.length].src;
       const a = cardAspect(img);
-      if(it.kind === "flat"){
+      if(it.kind === "flip"){
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        drawFlipCard(c, list[it.i % list.length].src, list[it.i2].src, it.x, it.y, it.w, it.h, it.th, it.f, it.alpha);
+      } else if(it.kind === "flat"){
         const w = it.w, h = w/a;
         c.setTransform(1, 0, 0, 1, 0, 0);
         c.translate(it.x, it.y); c.rotate(it.rot);
@@ -522,14 +783,39 @@
     c.setTransform(1, 0, 0, 1, 0, 0);
   }
 
-  function render(){
+  /* ================= цикл 30 fps ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, t0 = now(), tPause = 0;
+  let lastFrame = -1, needRender = true, curU = 0;
+  let rec = null, webmRec = null;
+
+  function renderFrame(){
     if(out.width !== P.W || out.height !== P.H){ out.width = P.W; out.height = P.H; }
-    renderTo(ctx, P.W, P.H, false);
+    renderTo(ctx, P.W, P.H, false, curU);
     $("dims").textContent = `${P.W} × ${P.H}px · ${curCount()} карток · ${PHOTOS.length ? PHOTOS.length + " фото" : "демо"}`;
   }
+  function tick(){
+    requestAnimationFrame(tick);
+    const t = playing ? now() - t0 : tPause;
+    const frame = Math.floor(t*FPS);
+    const animated = curAnim() !== "static";
+    if((frame !== lastFrame && (animated || rec || webmRec)) || needRender){
+      lastFrame = frame; needRender = false;
+      curU = ((frame/FPS)/P.dur) % 1;
+      renderFrame();
+      if(rec) recFrame();
+    }
+  }
+  $("playBtn").addEventListener("click", () => {
+    if(playing){ tPause = now() - t0; } else { t0 = now() - tPause; }
+    playing = !playing;
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+    needRender = true;
+  });
 
-  /* ================= exports ================= */
-  function status(m){ $("statusTxt").textContent = m || "Готово"; }
+  /* ================= exports: статика ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
   function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
   function exportImg(type, ext){
     status("Рендер…");
@@ -537,7 +823,7 @@
       const s = P.exScale;
       const cv = document.createElement("canvas");
       cv.width = P.W*s; cv.height = P.H*s;
-      renderTo(cv.getContext("2d"), cv.width, cv.height, type === "image/jpeg");
+      renderTo(cv.getContext("2d"), cv.width, cv.height, type === "image/jpeg", curU);
       cv.toBlob(b => { if(b) downloadBlob(b, "orbit." + ext); status(""); }, type, P.q);
     }, 20);
   }
@@ -565,11 +851,11 @@
   function buildSVG(){
     const W = P.W, H = P.H;
     const list = srcList();
-    const items = P.mode === "spiral" ? spiralItems(curCount(), W, H) : globeItems(curCount(), W, H);
+    const items = layoutItems(curCount(), W, H, curU);
     const defs = [], cards = [];
-    const embedded = new Map(); // індекс у list → id вбудованого фото
+    const embedded = new Map(); // індекс у list → розміри вбудованого фото
     items.forEach(it => {
-      const li = it.i % list.length;
+      const li = it.face !== undefined ? it.face : it.i % list.length;
       if(!embedded.has(li)){
         const s = list[li].src;
         const iw = s.width || s.naturalWidth, ih = s.height || s.naturalHeight;
@@ -579,10 +865,15 @@
       }
     });
     items.forEach((it, k) => {
-      const li = it.i % list.length, u = embedded.get(li);
+      const li = it.face !== undefined ? it.face : it.i % list.length;
+      const u = embedded.get(li);
       const a = cardAspect(list[li].src);
       let w, h, matrix, screenW;
-      if(it.kind === "flat"){
+      if(it.kind === "flip"){
+        if(it.cosAbs < 0.012) return; // ребро
+        w = it.w; h = it.h; screenW = it.w*it.cosAbs;
+        matrix = `matrix(${nf4(it.cosAbs)} 0 0 1 ${nf(it.x)} ${nf(it.y)})`;
+      } else if(it.kind === "flat"){
         w = it.w; h = w/a; screenW = w;
         const co = Math.cos(it.rot), si = Math.sin(it.rot);
         matrix = `matrix(${nf4(co)} ${nf4(si)} ${nf4(-si)} ${nf4(co)} ${nf(it.x)} ${nf(it.y)})`;
@@ -622,6 +913,59 @@
     }, 20);
   });
 
+  /* ================= exports: відео-лупи ================= */
+  function restartLoop(){
+    t0 = now(); tPause = 0; lastFrame = -1;
+    if(!playing) $("playBtn").click();
+  }
+  function recFrame(){
+    if(rec.err){ stopMp4(false); return; }
+    const fr = new VideoFrame(out, { timestamp: rec.frames*1e6/FPS, duration: 1e6/FPS });
+    rec.enc.encode(fr, { keyFrame: rec.frames % (FPS*2) === 0 }); fr.close();
+    rec.frames++;
+    if(rec.frames % 10 === 0) status(`Рендер ${Math.round(rec.frames/rec.total*100)}%`, true);
+    if(rec.frames >= rec.total) stopMp4(true);
+  }
+  async function stopMp4(ok){
+    const r = rec; rec = null;
+    $("mp4Label").textContent = "MP4 (30 fps)";
+    try{
+      if(ok && !r.err){
+        status("Кодування…", true);
+        await r.enc.flush(); r.muxer.finalize();
+        downloadBlob(new Blob([r.muxer.target.buffer], {type:"video/mp4"}), "orbit.mp4");
+      }
+      r.enc.close();
+    }catch(e){}
+    if(r.err) alert("Помилка кодування MP4: " + (r.err.message || r.err));
+    status("");
+  }
+  $("exMp4").addEventListener("click", () => {
+    if(rec){ stopMp4(false); return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    restartLoop();
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:P.W, height:P.H }, fastStart:"in-memory" });
+    const r = { muxer, frames:0, total: P.dur*FPS, err:null };
+    r.enc = new VideoEncoder({ output:(c,m) => muxer.addVideoChunk(c,m), error:e => { r.err = e; } });
+    r.enc.configure({ codec: P.W*P.H > 1500000 ? "avc1.640033" : "avc1.640028", width:P.W, height:P.H, bitrate:P.bitrate*1e6, framerate:FPS });
+    rec = r;
+    $("mp4Label").textContent = "■ Скасувати";
+    status("Запис…", true);
+  });
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    restartLoop();
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    try{ webmRec = new MediaRecorder(out.captureStream(FPS), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+    webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop = () => { if(chunks.length) downloadBlob(new Blob(chunks, {type:"video/webm"}), "orbit.webm"); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    setTimeout(() => { if(webmRec) webmRec.stop(); }, P.dur*1000);
+  });
+
   /* ================= UI ================= */
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
@@ -629,14 +973,40 @@
     t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
   }));
 
+  function renderAnimChips(){
+    const box = $("anims");
+    box.innerHTML = "";
+    ANIMS[P.mode].forEach(([key, label]) => {
+      const d = document.createElement("div");
+      d.className = "preset" + (P.anim[P.mode] === key ? " active" : "");
+      d.textContent = label;
+      d.addEventListener("click", () => {
+        P.anim[P.mode] = key;
+        renderAnimChips();
+        restartLoop();
+        needRender = true;
+      });
+      box.appendChild(d);
+    });
+  }
   function setMode(mode){
     P.mode = mode;
     document.querySelectorAll("#modes .preset").forEach(p => p.classList.toggle("active", p.dataset.mode === mode));
     $("spiralCtrls").style.display = mode === "spiral" ? "block" : "none";
-    $("globeCtrls").style.display = mode === "globe" ? "block" : "none";
-    render();
+    $("ringCtrls").style.display = mode === "ring" ? "block" : "none";
+    $("globeCtrls").style.display = (mode === "globe" || mode === "carousel") ? "block" : "none";
+    $("fieldCtrls").style.display = mode === "field" ? "block" : "none";
+    $("flipCtrls").style.display = mode === "flip" ? "block" : "none";
+    renderAnimChips();
+    needRender = true;
   }
   document.querySelectorAll("#modes .preset").forEach(p => p.addEventListener("click", () => setMode(p.dataset.mode)));
+  document.querySelectorAll("#ringOrients .preset").forEach(p => p.addEventListener("click", () => {
+    document.querySelectorAll("#ringOrients .preset").forEach(x => x.classList.remove("active"));
+    p.classList.add("active");
+    P.ringOrient = p.dataset.orient;
+    needRender = true;
+  }));
 
   document.querySelectorAll("#sizes .preset").forEach(p => p.addEventListener("click", () => {
     document.querySelectorAll("#sizes .preset").forEach(x => x.classList.remove("active"));
@@ -644,7 +1014,7 @@
     P.W = parseInt(p.dataset.w, 10); P.H = parseInt(p.dataset.h, 10);
     $("cw").value = P.W; $("ch").value = P.H;
     $("vW").textContent = P.W; $("vH").textContent = P.H;
-    render();
+    needRender = true;
   }));
   document.querySelectorAll("#scales .preset").forEach(p => p.addEventListener("click", () => {
     document.querySelectorAll("#scales .preset").forEach(x => x.classList.remove("active"));
@@ -652,7 +1022,7 @@
     P.exScale = parseInt(p.dataset.scale, 10);
   }));
 
-  const f2 = x => x.toFixed(2), pct = x => (x*100).toFixed(1).replace(/\.0$/, "") + "%";
+  const f2 = x => x.toFixed(2), f1 = x => x.toFixed(1), pct = x => (x*100).toFixed(1).replace(/\.0$/, "") + "%";
   function bindRange(id, key, vid, opts){
     opts = opts || {};
     const el = $(id), v = vid ? $(vid) : null, fmt = opts.fmt || (x => x);
@@ -660,7 +1030,7 @@
     el.addEventListener("input", () => {
       P[key] = opts.int ? parseInt(el.value, 10) : parseFloat(el.value);
       if(v) v.textContent = fmt(P[key]);
-      render();
+      needRender = true;
     });
   }
   bindRange("count", "count", "vCount", {int:true});
@@ -672,12 +1042,26 @@
   bindRange("sMax", "sMax", "vSMax", {fmt:pct});
   bindRange("spCX", "spCX", "vSpCX", {fmt:f2});
   bindRange("spCY", "spCY", "vSpCY", {fmt:f2});
+  bindRange("ringRadius", "ringRadius", "vRingRadius", {fmt:f2});
+  bindRange("ringCard", "ringCard", "vRingCard", {fmt:f2});
+  bindRange("ringStart", "ringStart", "vRingStart", {int:true});
+  bindRange("ringVar", "ringVar", "vRingVar", {fmt:f2});
   bindRange("glSize", "glSize", "vGlSize", {fmt:f2});
   bindRange("glCard", "glCard", "vGlCard", {fmt:f2});
-  bindRange("glDist", "glDist", "vGlDist", {fmt:x => x.toFixed(1)});
+  bindRange("glDist", "glDist", "vGlDist", {fmt:f1});
   bindRange("glYaw", "glYaw", "vGlYaw", {int:true});
   bindRange("glPitch", "glPitch", "vGlPitch", {int:true});
   bindRange("glFade", "glFade", "vGlFade", {fmt:f2});
+  bindRange("fieldSpread", "fieldSpread", "vFieldSpread", {fmt:f2});
+  bindRange("fieldDepth", "fieldDepth", "vFieldDepth", {fmt:f1});
+  bindRange("fieldCard", "fieldCard", "vFieldCard", {fmt:f2});
+  bindRange("fieldPersp", "fieldPersp", "vFieldPersp", {fmt:f2});
+  bindRange("fieldVar", "fieldVar", "vFieldVar", {fmt:f2});
+  bindRange("flipH", "flipH", "vFlipH", {fmt:f2});
+  bindRange("flipGap", "flipGap", "vFlipGap", {fmt:f2});
+  bindRange("flipAngle", "flipAngle", "vFlipAngle", {int:true});
+  bindRange("flipWave", "flipWave", "vFlipWave", {fmt:f2});
+  bindRange("flipPersp", "flipPersp", "vFlipPersp", {fmt:f2});
   bindRange("jitterRot", "jitterRot", "vJitterRot", {fmt:x => (x % 1 ? x.toFixed(1) : x)});
   bindRange("jitterPos", "jitterPos", "vJitterPos", {fmt:f2});
   bindRange("shadow", "shadow", "vShadow", {fmt:f2});
@@ -688,15 +1072,17 @@
   bindRange("cw", "W", "vW", {int:true});
   bindRange("ch", "H", "vH", {int:true});
   bindRange("q", "q", "vQ", {fmt:f2});
+  bindRange("dur", "dur", "vDur", {int:true});
+  bindRange("bitrate", "bitrate", "vBitrate", {int:true});
 
   [["bgColor","bgColor"],["borderColor","borderColor"],["capColor","capColor"]].forEach(([id, key]) =>
-    $(id).addEventListener("input", e => { P[key] = e.target.value; render(); }));
+    $(id).addEventListener("input", e => { P[key] = e.target.value; needRender = true; }));
   [["bgTransparent","bgTransparent"],["spCCW","spCCW"],["glTangent","glTangent"],["capOn","capOn"],["capTop","capTop"],["autoCount","autoCount"]].forEach(([id, key]) =>
-    $(id).addEventListener("change", e => { P[key] = e.target.checked; syncCount(); render(); }));
-  $("caption").addEventListener("input", e => { P.caption = e.target.value; render(); });
-  $("aspect").addEventListener("change", e => { P.aspect = e.target.value; render(); });
-  $("capWeight").addEventListener("change", e => { P.capWeight = e.target.value; render(); });
-  $("reseed").addEventListener("click", () => { P.seed = Math.floor(Math.random()*1e4); render(); });
+    $(id).addEventListener("change", e => { P[key] = e.target.checked; syncCount(); needRender = true; }));
+  $("caption").addEventListener("input", e => { P.caption = e.target.value; needRender = true; });
+  $("aspect").addEventListener("change", e => { P.aspect = e.target.value; needRender = true; });
+  $("capWeight").addEventListener("change", e => { P.capWeight = e.target.value; needRender = true; });
+  $("reseed").addEventListener("click", () => { P.seed = Math.floor(Math.random()*1e4); needRender = true; });
 
   function syncCount(){
     if(P.autoCount && PHOTOS.length){
@@ -714,34 +1100,42 @@
     set("spRadius", "spRadius", "vSpRadius", f2); set("spGrow", "spGrow", "vSpGrow", f2);
     set("sMin", "sMin", "vSMin", pct); set("sMax", "sMax", "vSMax", pct);
     set("spCX", "spCX", "vSpCX", f2); set("spCY", "spCY", "vSpCY", f2);
+    set("ringRadius", "ringRadius", "vRingRadius", f2); set("ringCard", "ringCard", "vRingCard", f2);
+    set("ringStart", "ringStart", "vRingStart"); set("ringVar", "ringVar", "vRingVar", f2);
     set("glSize", "glSize", "vGlSize", f2); set("glCard", "glCard", "vGlCard", f2);
-    set("glDist", "glDist", "vGlDist", x => x.toFixed(1));
+    set("glDist", "glDist", "vGlDist", f1);
     set("glYaw", "glYaw", "vGlYaw"); set("glPitch", "glPitch", "vGlPitch");
     set("glFade", "glFade", "vGlFade", f2);
+    set("fieldSpread", "fieldSpread", "vFieldSpread", f2); set("fieldDepth", "fieldDepth", "vFieldDepth", f1);
+    set("fieldCard", "fieldCard", "vFieldCard", f2); set("fieldPersp", "fieldPersp", "vFieldPersp", f2);
+    set("fieldVar", "fieldVar", "vFieldVar", f2);
+    set("flipH", "flipH", "vFlipH", f2); set("flipGap", "flipGap", "vFlipGap", f2);
+    set("flipAngle", "flipAngle", "vFlipAngle"); set("flipWave", "flipWave", "vFlipWave", f2);
+    set("flipPersp", "flipPersp", "vFlipPersp", f2);
     set("jitterRot", "jitterRot", "vJitterRot"); set("jitterPos", "jitterPos", "vJitterPos", f2);
     set("shadow", "shadow", "vShadow", f2); set("corner", "corner", "vCorner", f2); set("border", "border", "vBorder", f2);
     set("capSize", "capSize", "vCapSize", x => x.toFixed(3)); set("capY", "capY", "vCapY", f2);
     set("cw", "W", "vW"); set("ch", "H", "vH"); set("q", "q", "vQ", f2);
+    set("dur", "dur", "vDur"); set("bitrate", "bitrate", "vBitrate");
     $("bgColor").value = P.bgColor; $("borderColor").value = P.borderColor; $("capColor").value = P.capColor;
     $("caption").value = P.caption; $("aspect").value = P.aspect; $("capWeight").value = P.capWeight;
     $("bgTransparent").checked = P.bgTransparent; $("spCCW").checked = P.spCCW;
     $("glTangent").checked = P.glTangent; $("capOn").checked = P.capOn; $("capTop").checked = P.capTop;
     $("autoCount").checked = P.autoCount;
-    document.querySelectorAll("#modes .preset").forEach(p => p.classList.toggle("active", p.dataset.mode === P.mode));
     document.querySelectorAll("#scales .preset").forEach(p => p.classList.toggle("active", parseInt(p.dataset.scale, 10) === P.exScale));
-    $("spiralCtrls").style.display = P.mode === "spiral" ? "block" : "none";
-    $("globeCtrls").style.display = P.mode === "globe" ? "block" : "none";
+    document.querySelectorAll("#ringOrients .preset").forEach(p => p.classList.toggle("active", p.dataset.orient === P.ringOrient));
+    setMode(P.mode);
     syncCount();
   }
   $("reset").addEventListener("click", () => {
     Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
-    syncUI(); render();
+    syncUI(); needRender = true;
   });
 
   /* ================= boot ================= */
-  syncUI(); render();
+  syncUI(); tick();
   /* дорендер після завантаження вебшрифта — напис по центру стає Onest */
-  if(document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { needRender = true; });
 })();
 </script>
 <script src="postfx.js"></script>
