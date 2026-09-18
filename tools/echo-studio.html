@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Echo Studio — текст-відлуння: Inner Glow → Echo → Colorama</title>
+<link rel="stylesheet" href="studio.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Inter:wght@900&family=Onest:wght@900&family=Rubik:wght@900&family=Unbounded:wght@900&display=swap" rel="stylesheet">
+<style>
+  #out{background:#000}
+  input[type=text]{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:15px;font-weight:700;font-family:inherit;outline:none;box-sizing:border-box}
+  .preset .pal{margin-top:6px}
+  #fonts .preset{font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+          <ellipse cx="12" cy="12.8" rx="9.6" ry="8.8" opacity=".35"/>
+          <ellipse cx="12" cy="13.3" rx="7" ry="6.4" opacity=".6"/>
+          <ellipse cx="12" cy="13.8" rx="4.4" ry="4" opacity=".85"/>
+          <ellipse cx="12" cy="14.2" rx="1.9" ry="1.7" fill="white" stroke="none"/>
+        </svg>
+      </div>
+      <div><h1>Echo Studio</h1><p>inner glow → echo → colorama → radial blur</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="text">Текст</div>
+        <div class="tab" data-tab="echo">Відлуння</div>
+        <div class="tab" data-tab="color">Колір</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ TEXT ============ -->
+      <div data-pane="text" class="active">
+        <div class="group">
+          <h2>Пресети</h2>
+          <div class="presets c3" id="styles"></div>
+        </div>
+        <div class="group">
+          <h2>Текст</h2>
+          <input type="text" id="text" value="18" maxlength="12" placeholder="Цифри чи слово…">
+          <div class="note">Кожна літера — окремий шар зі своїм відлунням, як «дублікат шару + інший текст» у туторі. Найкраще працюють 1–4 жирні символи.</div>
+        </div>
+        <div class="group">
+          <h2>Шрифт</h2>
+          <div class="presets c3" id="fonts">
+            <div class="preset active" data-font="Onest" style="font-family:Onest;font-weight:900">Onest</div>
+            <div class="preset" data-font="Rubik" style="font-family:Rubik;font-weight:900">Rubik</div>
+            <div class="preset" data-font="Unbounded" style="font-family:Unbounded;font-weight:900">Unbounded</div>
+            <div class="preset" data-font="Inter" style="font-family:Inter;font-weight:900">Inter</div>
+            <div class="preset" data-font="Archivo Black" style="font-family:'Archivo Black'">Archivo</div>
+            <div class="preset" data-font="Anton" style="font-family:Anton">Anton</div>
+          </div>
+          <div class="row mt"><label class="lbl">Висота літер</label><span class="val" id="vSize">0.62</span></div>
+          <input type="range" id="size" min="0.15" max="0.9" step="0.01" value="0.62">
+          <div class="row mt"><label class="lbl">Трекінг</label><span class="val" id="vTracking">0.00</span></div>
+          <input type="range" id="tracking" min="-0.2" max="0.4" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Зсув по Y</label><span class="val" id="vOffY">0.00</span></div>
+          <input type="range" id="offY" min="-0.4" max="0.4" step="0.01" value="0">
+        </div>
+        <div class="group">
+          <h2>Inner Glow</h2>
+          <div class="row"><label class="lbl">Розмір ґлоу</label><span class="val" id="vGlow">0.075</span></div>
+          <input type="range" id="glow" min="0.01" max="0.3" step="0.002" value="0.075">
+          <div class="row mt"><label class="lbl">Спад</label><span class="val" id="vFalloff">1.00</span></div>
+          <input type="range" id="falloff" min="0.3" max="3" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Яскравість краю</label><span class="val" id="vEdge">0.97</span></div>
+          <input type="range" id="edge" min="0.3" max="1" step="0.01" value="0.97">
+          <div class="row mt"><label class="lbl">Заливка всередині</label><span class="val" id="vCore">0.00</span></div>
+          <input type="range" id="core" min="0" max="0.6" step="0.01" value="0">
+          <div class="note">Як у референсі: біла літера з білим Inner Glow поверх чорної заливки — край світиться, всередину темнішає. Саме цей градієнт потім фарбує Colorama.</div>
+        </div>
+      </div>
+
+      <!-- ============ ECHO ============ -->
+      <div data-pane="echo">
+        <div class="group">
+          <h2>Echo</h2>
+          <div class="row"><label class="lbl">Кількість відлунь</label><span class="val" id="vCount">10</span></div>
+          <input type="range" id="count" min="2" max="60" step="1" value="10">
+          <div class="row mt"><label class="lbl">Найменша копія</label><span class="val" id="vSMin">0.14</span></div>
+          <input type="range" id="sMin" min="0" max="0.9" step="0.01" value="0.14">
+          <div class="row mt"><label class="lbl">Крива кроку</label><span class="val" id="vGamma">1.30</span></div>
+          <input type="range" id="gamma" min="0.3" max="3" step="0.05" value="1.3">
+          <div class="row mt"><label class="lbl">Decay</label><span class="val" id="vDecay">1.00</span></div>
+          <input type="range" id="decay" min="0.8" max="1" step="0.005" value="1">
+          <div class="row mt"><label class="lbl">Echo Operator</label></div>
+          <div class="presets c2" id="ops">
+            <div class="preset active" data-op="back">Composite In Back</div>
+            <div class="preset" data-op="add">Add</div>
+            <div class="preset" data-op="max">Maximum</div>
+            <div class="preset" data-op="screen">Screen</div>
+          </div>
+          <div class="note">Composite In Back — кожне менше відлуння лягає поверх більшого, непрозора чорна середина перекриває попереднє — звідси «кільця». Add дає пересвічений білий центр, як на кадрі до зміни оператора.</div>
+        </div>
+        <div class="group">
+          <h2>Anchor Point</h2>
+          <div class="presets c4" id="anchors">
+            <div class="preset" data-ax="0.5" data-ay="0.5">Центр</div>
+            <div class="preset active" data-ax="0.5" data-ay="0.6">Низ-ц.</div>
+            <div class="preset" data-ax="0" data-ay="1">↙</div>
+            <div class="preset" data-ax="1" data-ay="1">↘</div>
+          </div>
+          <div class="row mt"><label class="lbl">Anchor X</label><span class="val" id="vAx">0.50</span></div>
+          <input type="range" id="ax" min="-0.5" max="1.5" step="0.01" value="0.5">
+          <div class="row mt"><label class="lbl">Anchor Y</label><span class="val" id="vAy">0.60</span></div>
+          <input type="range" id="ay" min="-0.5" max="1.5" step="0.01" value="0.6">
+          <div class="row mt"><label class="lbl">Дрейф X</label><span class="val" id="vDriftX">0.00</span></div>
+          <input type="range" id="driftX" min="-0.8" max="0.8" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Дрейф Y</label><span class="val" id="vDriftY">0.00</span></div>
+          <input type="range" id="driftY" min="-0.8" max="0.8" step="0.01" value="0">
+          <div class="switch-row"><span class="lbl">Одна точка на все слово</span>
+            <label class="switch"><input type="checkbox" id="wordAnchor"><span class="track"></span></label></div>
+          <div class="note">Відлуння масштабуються до anchor point. Кут (↙) чи дрейф дає «сходинки», як у «1» та «25» з референсу.</div>
+        </div>
+        <div class="group">
+          <h2>Анімація</h2>
+          <div class="presets c3" id="anims">
+            <div class="preset active" data-anim="flow">Назовні</div>
+            <div class="preset" data-anim="inward">Всередину</div>
+            <div class="preset" data-anim="breathe">Дихання</div>
+            <div class="preset" data-anim="ae">AE 1:1</div>
+            <div class="preset" data-anim="static">Статика</div>
+          </div>
+          <div class="row mt"><label class="lbl">Кроків за луп</label><span class="val" id="vSteps">6</span></div>
+          <input type="range" id="steps" min="1" max="30" step="1" value="6">
+          <div class="row mt"><label class="lbl">Echo Time (с)</label><span class="val" id="vEchoT">0.120</span></div>
+          <input type="range" id="echoT" min="0.02" max="0.5" step="0.005" value="0.12">
+          <div class="note">«Назовні / Всередину» — безшовний луп: кільця течуть між найменшою і найбільшою копією. «AE 1:1» — чесна симуляція: Scale 0→100% з easy ease за вікно N × Echo Time, Echo бере кадри з минулого, потім кадр тримається.</div>
+        </div>
+      </div>
+
+      <!-- ============ COLOR ============ -->
+      <div data-pane="color">
+        <div class="group">
+          <h2>Colorama · Output Cycle</h2>
+          <div class="presets c2" id="palettes"></div>
+          <div class="colors c3" id="customColors" style="margin-top:10px">
+            <div class="color-field"><span>Темний</span><div class="color-wrap"><input type="color" id="c1" value="#b3180a"></div></div>
+            <div class="color-field"><span>Середній</span><div class="color-wrap"><input type="color" id="c2" value="#f7862a"></div></div>
+            <div class="color-field"><span>Світлий</span><div class="color-wrap"><input type="color" id="c3" value="#fff0cf"></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Cycle Repetitions</label><span class="val" id="vReps">1.00</span></div>
+          <input type="range" id="reps" min="0.5" max="4" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Phase Shift</label><span class="val" id="vPhase">0.00</span></div>
+          <input type="range" id="phase" min="0" max="1" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Колір-цикл (обертів за луп)</label><span class="val" id="vCycle">0</span></div>
+          <input type="range" id="cycle" min="-4" max="4" step="1" value="0">
+          <div class="note">Яскравість → колір по кругу Colorama. Чорний фон лишається чорним, край кожного кільця — кремовий, всередину — помаранч і глибокий червоний.</div>
+        </div>
+        <div class="group">
+          <h2>CC Radial Fast Blur</h2>
+          <div class="row"><label class="lbl">Amount</label><span class="val" id="vBlur">50</span></div>
+          <input type="range" id="blur" min="0" max="100" step="1" value="50">
+          <div class="row mt"><label class="lbl">Мікс ґлоу</label><span class="val" id="vBlurMix">0.35</span></div>
+          <input type="range" id="blurMix" min="0" max="1.5" step="0.05" value="0.35">
+        </div>
+        <div class="group">
+          <h2>Фон</h2>
+          <div class="colors">
+            <div class="color-field"><span>Колір фону</span><div class="color-wrap"><input type="color" id="bg" value="#000000"></div></div>
+          </div>
+          <div class="switch-row"><span class="lbl">Прозорий фон</span>
+            <label class="switch"><input type="checkbox" id="transparent"><span class="track"></span></label></div>
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Формат</h2>
+          <div class="presets c4" id="aspects">
+            <div class="preset" data-aspect="1:1">1:1</div>
+            <div class="preset active" data-aspect="4:5">4:5</div>
+            <div class="preset" data-aspect="9:16">9:16</div>
+            <div class="preset" data-aspect="16:9">16:9</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid"><button class="btn primary" id="exPng">PNG</button><button class="btn" id="exJpg">JPG</button></div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">Тривалість лупа (с)</label><span class="val" id="vDur">6</span></div>
+          <input type="range" id="dur" min="2" max="20" step="1" value="6">
+          <div class="row mt"><label class="lbl">Повторів у файлі</label><span class="val" id="vLoops">1</span></div>
+          <input type="range" id="loops" min="1" max="5" step="1" value="1">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">16</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="16">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (30 fps)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово (WebCodecs) — луп замикається ідеально, нічого не вивантажується. WebM пишеться з живого превʼю.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · Text + Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur · все локально</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const FPS = 30;
+  const P = {
+    text:"18", font:"Onest", size:0.62, tracking:0, offY:0,
+    glow:0.075, falloff:1, edge:0.97, core:0,
+    count:10, sMin:0.14, gamma:1.3, decay:1, op:"back",
+    ax:0.5, ay:0.6, driftX:0, driftY:0, wordAnchor:false,
+    anim:"flow", steps:6, echoT:0.12,
+    palette:"fire", c1:"#b3180a", c2:"#f7862a", c3:"#fff0cf", reps:1, phase:0, cycle:0,
+    blur:50, blurMix:0.35, bg:"#000000", transparent:false,
+    aspect:"4:5", dur:6, loops:1, bitrate:16,
+  };
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  /* Colorama output cycle: яскравість 0..1 → колір */
+  const PALETTES = {
+    fire:   { name:"Fire · 18",  stops:[[0,"#000000"],[0.12,"#2a0400"],[0.28,"#8c1206"],[0.44,"#e23312"],[0.6,"#f7782a"],[0.76,"#fdbd55"],[0.9,"#fff0cc"],[1,"#fffaf0"]] },
+    ice:    { name:"Ice · 25",   stops:[[0,"#000000"],[0.15,"#020a33"],[0.35,"#0b2fb5"],[0.55,"#2f66ff"],[0.75,"#8fb4ff"],[0.9,"#e2ecff"],[1,"#ffffff"]] },
+    acid:   { name:"Klik Acid",  stops:[[0,"#000000"],[0.18,"#0c2600"],[0.4,"#3f8f00"],[0.6,"#9be21a"],[0.8,"#e6ff7a"],[1,"#fbffe8"]] },
+    violet: { name:"Violet",     stops:[[0,"#000000"],[0.18,"#1a0033"],[0.38,"#6a12d6"],[0.58,"#c23cf0"],[0.78,"#ff8fd6"],[1,"#fff0fa"]] },
+    thermal:{ name:"Thermal",    stops:[[0,"#000000"],[0.2,"#1b0a6e"],[0.38,"#8a0f9e"],[0.55,"#e8203a"],[0.72,"#ff8a00"],[0.88,"#ffe14a"],[1,"#ffffff"]] },
+    prism:  { name:"Prism",      stops:[[0,"#000000"],[0.15,"#3b00ff"],[0.3,"#00b7ff"],[0.45,"#00ff9c"],[0.6,"#e6ff00"],[0.75,"#ff8a00"],[0.9,"#ff2d55"],[1,"#ffffff"]] },
+    mono:   { name:"Mono",       stops:[[0,"#000000"],[1,"#ffffff"]] },
+    custom: { name:"Свої кольори", stops:null },
+  };
+
+  const STYLES = [
+    { name:"18 · Fire",  p:{ text:"18", font:"Onest", palette:"fire", count:10, sMin:0.14, gamma:1.3, ax:0.5, ay:0.6, driftX:0, driftY:0, glow:0.075, falloff:1, op:"back", blur:50, blurMix:0.35, reps:1, phase:0, cycle:0, anim:"flow", wordAnchor:false } },
+    { name:"25 · Ice",   p:{ text:"25", font:"Rubik", palette:"ice", count:16, sMin:0.2, gamma:1.1, ax:0.5, ay:0.55, driftX:-0.32, driftY:0.12, glow:0.045, falloff:1.1, op:"back", blur:40, blurMix:0.3, reps:1, phase:0, cycle:0, anim:"flow", wordAnchor:false } },
+    { name:"KLIK · Acid",p:{ text:"KLIK", font:"Unbounded", palette:"acid", count:12, sMin:0.22, gamma:1, ax:0.5, ay:0.55, driftX:0, driftY:0, glow:0.06, falloff:1.2, op:"back", blur:45, blurMix:0.3, reps:1, phase:0, cycle:0, anim:"flow", wordAnchor:true } },
+    { name:"Violet",     p:{ text:"08", font:"Archivo Black", palette:"violet", count:22, sMin:0.1, gamma:1.4, ax:0.5, ay:0.5, driftX:0, driftY:0, glow:0.035, falloff:0.9, op:"back", blur:60, blurMix:0.45, reps:1, phase:0, cycle:0, anim:"breathe", wordAnchor:false } },
+    { name:"Prism loop", p:{ text:"GO", font:"Anton", palette:"prism", count:18, sMin:0.12, gamma:1, ax:0.5, ay:0.7, driftX:0, driftY:0, glow:0.06, falloff:1, op:"back", blur:35, blurMix:0.3, reps:1.5, phase:0, cycle:1, anim:"flow", wordAnchor:false } },
+    { name:"Add · Mono", p:{ text:"8", font:"Onest", palette:"mono", count:15, sMin:0.2, gamma:1, ax:0.5, ay:0.6, driftX:0, driftY:0, glow:0.08, falloff:1.4, op:"add", decay:0.94, blur:30, blurMix:0.4, reps:1, phase:0, cycle:0, anim:"flow", wordAnchor:false } },
+  ];
+
+  const $ = id => document.getElementById(id);
+  const out = $("out");
+  const ctx = out.getContext("2d");
+  const lum = document.createElement("canvas");          // сірий шар: echo-копії з inner glow
+  const lctx = lum.getContext("2d", { willReadFrequently:true });
+  const col = document.createElement("canvas");          // після Colorama
+  const cctx = col.getContext("2d");
+  const glowC = document.createElement("canvas");        // radial fast blur (пів-роздільності)
+  const gctx = glowC.getContext("2d");
+  let W = 1080, H = 1350;
+
+  /* ================= розмір ================= */
+  const ASPECTS = { "1:1":[1080,1080], "4:5":[1080,1350], "9:16":[1080,1920], "16:9":[1920,1080] };
+  function resize(){
+    [W, H] = ASPECTS[P.aspect] || ASPECTS["4:5"];
+    for(const c of [out, lum, col]){ c.width = W; c.height = H; }
+    glowC.width = W >> 1; glowC.height = H >> 1;
+    $("dims").textContent = `${W}×${H}`;
+  }
+
+  /* ================= EDT (Felzenszwalb) ================= */
+  function edt(inside, w, h){
+    const INF = 1e20, n = Math.max(w, h);
+    const f = new Float64Array(n), d = new Float64Array(n), z = new Float64Array(n + 1), v = new Int32Array(n);
+    const g = new Float64Array(w*h);
+    for(let i = 0; i < w*h; i++) g[i] = inside[i] ? INF : 0;
+    function dt1(len){
+      let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+      for(let q = 1; q < len; q++){
+        let s = ((f[q] + q*q) - (f[v[k]] + v[k]*v[k])) / (2*q - 2*v[k]);
+        while(s <= z[k]){ k--; s = ((f[q] + q*q) - (f[v[k]] + v[k]*v[k])) / (2*q - 2*v[k]); }
+        k++; v[k] = q; z[k] = s; z[k+1] = INF;
+      }
+      k = 0;
+      for(let q = 0; q < len; q++){ while(z[k+1] < q) k++; d[q] = (q - v[k])*(q - v[k]) + f[v[k]]; }
+    }
+    for(let x = 0; x < w; x++){
+      for(let y = 0; y < h; y++) f[y] = g[y*w + x];
+      dt1(h);
+      for(let y = 0; y < h; y++) g[y*w + x] = d[y];
+    }
+    for(let y = 0; y < h; y++){
+      const o = y*w;
+      for(let x = 0; x < w; x++) f[x] = g[o + x];
+      dt1(w);
+      for(let x = 0; x < w; x++) g[o + x] = Math.sqrt(d[x]);
+    }
+    return g;
+  }
+
+  /* ================= гліфи → спрайти з inner glow ================= */
+  let glyphs = [];   // {cv, x, y, w, h}  — позиція спрайта на повному масштабі (s = 1)
+  let word = null;   // bbox усього слова
+  const fontStr = px => `900 ${px}px "${P.font}", Onest, Inter, sans-serif`;
+
+  function buildGlyphs(){
+    const m = document.createElement("canvas").getContext("2d");
+    m.font = fontStr(200);
+    const cap = m.measureText("H").actualBoundingBoxAscent / 200 || 0.72;
+    let px = P.size*H / cap;
+    const chars = [...(P.text || "")];
+    const layout = size => {
+      m.font = fontStr(size);
+      let x = 0; const items = [];
+      for(const ch of chars){
+        const mt = m.measureText(ch);
+        if(ch.trim()) items.push({ ch, pen:x, l:mt.actualBoundingBoxLeft, r:mt.actualBoundingBoxRight, a:mt.actualBoundingBoxAscent, d:mt.actualBoundingBoxDescent });
+        x += mt.width + P.tracking*size;
+      }
+      return { items, width: x - P.tracking*size };
+    };
+    let L = layout(px);
+    if(L.width > W*0.9){ px *= W*0.9 / L.width; L = layout(px); }
+
+    const ox = (W - L.width)/2, base = H/2 + cap*px/2 + P.offY*H;
+    const glowPx = Math.max(1, P.glow*cap*px);
+    glyphs = [];
+    for(const it of L.items){
+      const pad = 3;
+      const gx = Math.floor(ox + it.pen - it.l) - pad, gy = Math.floor(base - it.a) - pad;
+      const gw = Math.ceil(it.l + it.r) + pad*2 + 1, gh = Math.ceil(it.a + it.d) + pad*2 + 1;
+      if(gw < 4 || gh < 4) continue;
+      const cv = document.createElement("canvas"); cv.width = gw; cv.height = gh;
+      const c = cv.getContext("2d", { willReadFrequently:true });
+      c.font = fontStr(px); c.fillStyle = "#fff"; c.textBaseline = "alphabetic";
+      c.fillText(it.ch, ox + it.pen - gx, base - gy);
+      const img = c.getImageData(0, 0, gw, gh), dd = img.data;
+      const inside = new Uint8Array(gw*gh);
+      for(let i = 0; i < gw*gh; i++) inside[i] = dd[i*4 + 3] > 127 ? 1 : 0;
+      const dist = edt(inside, gw, gh);
+      for(let i = 0; i < gw*gh; i++){
+        const a = dd[i*4 + 3];
+        if(!a) continue;
+        const t = Math.max(0, 1 - Math.max(0, dist[i] - 0.5)/glowPx);
+        const l = Math.max(P.core, P.edge*Math.pow(t, P.falloff));
+        const g = Math.round(Math.min(1, l)*255);
+        dd[i*4] = dd[i*4 + 1] = dd[i*4 + 2] = g;
+      }
+      c.putImageData(img, 0, 0);
+      glyphs.push({ cv, x:gx, y:gy, w:gw, h:gh, ix:gx + pad, iy:gy + pad, iw:gw - pad*2, ih:gh - pad*2 });
+    }
+    if(glyphs.length){
+      const x0 = Math.min(...glyphs.map(g => g.ix)), y0 = Math.min(...glyphs.map(g => g.iy));
+      const x1 = Math.max(...glyphs.map(g => g.ix + g.iw)), y1 = Math.max(...glyphs.map(g => g.iy + g.ih));
+      word = { ix:x0, iy:y0, iw:x1 - x0, ih:y1 - y0 };
+    } else word = null;
+    needRender = true;
+    if(!busy) renderFrame(playing ? now() - t0 : tPause);
+  }
+
+  let buildTimer = 0;
+  function rebuild(){
+    clearTimeout(buildTimer);
+    buildTimer = setTimeout(async () => {
+      try{ await document.fonts.load(fontStr(100), P.text || "8"); }catch(e){}
+      buildGlyphs();
+    }, 30);
+  }
+
+  /* ================= Colorama LUT ================= */
+  const LUT = new Uint8Array(256*3);
+  const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  function paletteStops(){
+    if(P.palette === "custom") return [[0,"#000000"],[0.34,P.c1],[0.68,P.c2],[1,P.c3]];
+    return PALETTES[P.palette].stops;
+  }
+  function sampleStops(stops, t){
+    let i = 1; while(i < stops.length - 1 && stops[i][0] < t) i++;
+    const [p0, a] = stops[i-1], [p1, b] = stops[i];
+    const k = p1 > p0 ? Math.min(1, Math.max(0, (t - p0)/(p1 - p0))) : 0;
+    const A = hex(a), B = hex(b);
+    return [A[0] + (B[0]-A[0])*k, A[1] + (B[1]-A[1])*k, A[2] + (B[2]-A[2])*k];
+  }
+  let lutKey = "";
+  function buildLUT(phase){
+    const stops = paletteStops();
+    const key = JSON.stringify(stops) + "|" + P.reps + "|" + phase.toFixed(4);
+    if(key === lutKey) return; lutKey = key;
+    const wrap = P.reps !== 1 || phase !== 0;    // Output Cycle — коло; при 1× без зсуву білий лишається білим
+    for(let i = 0; i < 256; i++){
+      let t = i/255*P.reps + phase;
+      t = wrap ? t - Math.floor(t) : Math.min(1, t);
+      const c = sampleStops(stops, t);
+      LUT[i*3] = c[0]; LUT[i*3 + 1] = c[1]; LUT[i*3 + 2] = c[2];
+    }
+  }
+
+  /* ================= echo-копії ================= */
+  const ease = x => x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;   // easy ease
+  const frac = x => x - Math.floor(x);
+  const scaleAt = (u, gamma) => P.sMin + (1 - P.sMin)*Math.pow(Math.min(1, Math.max(0, u)), gamma);
+
+  /* список масштабів від нижньої копії до верхньої */
+  function echoScales(t){
+    const N = Math.max(2, P.count), T = P.dur;
+    const ph = frac(t/T);
+    if(P.anim === "ae"){
+      /* Scale 0→100% за першу половину лупа, Echo бере кадри з минулого: time − k·EchoTime.
+         Composite In Back: поточний кадр (найбільший) — знизу, старіші менші — поверх. */
+      /* ріст триває рівно вікно Echo (N·EchoTime), далі кадр тримається — як обрізаний work area у туторі */
+      const A = Math.min(T*0.9, N*P.echoT), tt = Math.min(ph*T, A), list = [];
+      for(let k = 0; k < N; k++){
+        const tk = tt - k*P.echoT;
+        if(tk <= 0) break;
+        const s = ease(Math.min(1, tk/A));
+        if(s > 0.002) list.push({ s, k });
+      }
+      return list;
+    }
+    let g = P.gamma;
+    if(P.anim === "breathe") g = P.gamma*Math.pow(2, 0.7*Math.sin(ph*Math.PI*2));
+    const list = [{ s:1, k:0 }];
+    if(P.anim === "flow" || P.anim === "inward"){
+      const phi = frac((P.anim === "flow" ? 1 : -1)*P.steps*ph);
+      for(let j = N - 2; j >= 0; j--) list.push({ s:scaleAt((j + phi)/(N - 1), g), k:N - 1 - j - phi });
+    } else {
+      for(let j = N - 2; j >= 1; j--) list.push({ s:scaleAt(j/(N - 1), g), k:N - 1 - j });
+    }
+    list.push({ s:scaleAt(0, g), k:N - 1 });
+    return list;
+  }
+
+  function drawEchoes(t){
+    lctx.setTransform(1, 0, 0, 1, 0, 0);
+    lctx.globalCompositeOperation = "source-over"; lctx.filter = "none";
+    lctx.clearRect(0, 0, W, H);
+    if(!glyphs.length) return;
+    if(P.op !== "back"){ lctx.fillStyle = "#000"; lctx.fillRect(0, 0, W, H); }
+    lctx.globalCompositeOperation = { back:"source-over", add:"lighter", max:"lighten", screen:"screen" }[P.op];
+    lctx.imageSmoothingQuality = "high";
+    const list = echoScales(t);
+    for(const e of list){
+      const inten = Math.pow(P.decay, e.k);
+      lctx.filter = inten < 0.999 ? `brightness(${inten})` : "none";
+      for(const g of glyphs){
+        const box = P.wordAnchor && word ? word : g;
+        const axp = box.ix + P.ax*box.iw, ayp = box.iy + P.ay*box.ih;
+        const dx = P.driftX*(1 - e.s)*box.ih, dy = P.driftY*(1 - e.s)*box.ih;
+        const x = axp + (g.x - axp)*e.s + dx, y = ayp + (g.y - ayp)*e.s + dy;
+        lctx.drawImage(g.cv, x, y, g.w*e.s, g.h*e.s);
+      }
+    }
+    lctx.filter = "none"; lctx.globalCompositeOperation = "source-over";
+  }
+
+  /* ================= кадр ================= */
+  let imgBuf = null;
+  function renderFrame(t){
+    const ph = frac(t/P.dur);
+    buildLUT(frac(P.phase + P.cycle*ph));
+    drawEchoes(t);
+
+    /* Colorama: яскравість → колір, альфа лишається */
+    const id = lctx.getImageData(0, 0, W, H), d = id.data;
+    for(let i = 0, n = d.length; i < n; i += 4){
+      if(!d[i+3]) continue;
+      const l = d[i]*3;
+      d[i] = LUT[l]; d[i+1] = LUT[l+1]; d[i+2] = LUT[l+2];
+    }
+    cctx.putImageData(id, 0, 0);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+    ctx.clearRect(0, 0, W, H);
+    if(!P.transparent){ ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H); }
+    ctx.drawImage(col, 0, 0);
+
+    /* CC Radial Fast Blur (Zoom: Standard) — зум-розмиття від центру, додається світлом */
+    if(P.blur > 0 && P.blurMix > 0){
+      const gw = glowC.width, gh = glowC.height, cx = gw/2, cy = gh/2;
+      gctx.setTransform(1, 0, 0, 1, 0, 0);
+      gctx.globalCompositeOperation = "source-over"; gctx.globalAlpha = 1;
+      gctx.clearRect(0, 0, gw, gh);
+      gctx.globalCompositeOperation = "lighter";
+      const steps = 16, reach = P.blur/100*0.45;
+      let wsum = 0; for(let i = 0; i < steps; i++) wsum += 1 - i/steps;
+      for(let i = 0; i < steps; i++){
+        const k = 1 + reach*(i + 1)/steps;
+        gctx.globalAlpha = (1 - i/steps)/wsum;
+        gctx.drawImage(col, cx - cx*k, cy - cy*k, gw*k, gh*k);
+      }
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = Math.min(1, P.blurMix);
+      ctx.drawImage(glowC, 0, 0, W, H);
+      if(P.blurMix > 1){ ctx.globalAlpha = P.blurMix - 1; ctx.drawImage(glowC, 0, 0, W, H); }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    }
+  }
+
+  /* ================= цикл ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, t0 = now(), tPause = 0, needRender = true, lastT = -1;
+  let busy = false;
+  function tick(){
+    requestAnimationFrame(tick);
+    if(busy) return;
+    const t = playing ? now() - t0 : tPause;
+    const animated = P.anim !== "static" || P.cycle !== 0;
+    if(needRender || (playing && animated && Math.abs(t - lastT) > 0.5/FPS)){
+      needRender = false; lastT = t;
+      renderFrame(t);
+    }
+  }
+  $("playBtn").addEventListener("click", () => {
+    if(playing){ tPause = now() - t0; } else { t0 = now() - tPause; }
+    playing = !playing;
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+    needRender = true;
+  });
+
+  /* ================= exports ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  const fname = ext => `echo-${(P.text || "text").replace(/[^\wЀ-ӿ-]+/g, "") || "text"}.${ext}`;
+
+  $("exPng").addEventListener("click", () => out.toBlob(b => { if(b) downloadBlob(b, fname("png")); }, "image/png"));
+  $("exJpg").addEventListener("click", () => {
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d"); x.fillStyle = P.bg; x.fillRect(0, 0, W, H); x.drawImage(out, 0, 0);
+    c.toBlob(b => { if(b) downloadBlob(b, fname("jpg")); }, "image/jpeg", 0.95);
+  });
+
+  let mp4Abort = false;
+  $("exMp4").addEventListener("click", async () => {
+    if(busy){ mp4Abort = true; return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    busy = true; mp4Abort = false;
+    $("mp4Label").textContent = "■ Скасувати";
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:W, height:H }, fastStart:"in-memory" });
+    let err = null;
+    const enc = new VideoEncoder({ output:(c, m) => muxer.addVideoChunk(c, m), error:e => { err = e; } });
+    enc.configure({ codec: W*H > 1500000 ? "avc1.640033" : "avc1.640028", width:W, height:H, bitrate:P.bitrate*1e6, framerate:FPS });
+    const total = Math.round(P.dur*FPS)*P.loops;
+    const tr = P.transparent; P.transparent = false;       // H.264 без альфи
+    try{
+      for(let i = 0; i < total && !err && !mp4Abort; i++){
+        renderFrame(i/FPS);
+        const fr = new VideoFrame(out, { timestamp: Math.round(i*1e6/FPS), duration: Math.round(1e6/FPS) });
+        enc.encode(fr, { keyFrame: i % (FPS*2) === 0 }); fr.close();
+        if(enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 0));
+        if(i % 6 === 0){ status(`Рендер ${Math.round(i/total*100)}%`, true); await new Promise(r => setTimeout(r, 0)); }
+      }
+      if(!err && !mp4Abort){
+        status("Кодування…", true);
+        await enc.flush(); muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer], { type:"video/mp4" }), fname("mp4"));
+      }
+      enc.close();
+    }catch(e){ err = err || e; }
+    P.transparent = tr;
+    if(err) alert("Помилка кодування MP4: " + (err.message || err));
+    busy = false; needRender = true;
+    $("mp4Label").textContent = "MP4 (30 fps)"; status("");
+  });
+
+  let webmRec = null;
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    if(!playing) $("playBtn").click();
+    t0 = now();                                               // запис стартує з початку лупа
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    try{ webmRec = new MediaRecorder(out.captureStream(FPS), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+    webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop = () => { if(chunks.length) downloadBlob(new Blob(chunks, { type:"video/webm" }), fname("webm")); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    setTimeout(() => { if(webmRec) webmRec.stop(); }, P.dur*P.loops*1000);
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  /* палітри з превʼю-смужкою */
+  const palBox = $("palettes");
+  for(const [key, p] of Object.entries(PALETTES)){
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.pal = key;
+    el.innerHTML = `<div>${p.name}</div><div class="pal"></div>`;
+    palBox.appendChild(el);
+  }
+  function paintPalSwatches(){
+    palBox.querySelectorAll(".preset").forEach(el => {
+      const st = el.dataset.pal === "custom" ? [[0,"#000000"],[0.34,P.c1],[0.68,P.c2],[1,P.c3]] : PALETTES[el.dataset.pal].stops;
+      el.querySelector(".pal").style.background = `linear-gradient(90deg,${st.map(s => `${s[1]} ${s[0]*100}%`).join(",")})`;
+    });
+  }
+  palBox.addEventListener("click", e => {
+    const el = e.target.closest(".preset"); if(!el) return;
+    P.palette = el.dataset.pal; syncUI(); needRender = true;
+  });
+
+  const stBox = $("styles");
+  STYLES.forEach((s, i) => {
+    const el = document.createElement("div");
+    el.className = "preset"; el.textContent = s.name; el.dataset.i = i;
+    el.addEventListener("click", () => {
+      Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)), { aspect:P.aspect, dur:P.dur, loops:P.loops, bitrate:P.bitrate }, s.p);
+      stBox.querySelectorAll(".preset").forEach(x => x.classList.toggle("active", x === el));
+      syncUI(); rebuild();
+    });
+    stBox.appendChild(el);
+  });
+
+  function bindPresets(sel, key, attr, after){
+    document.querySelectorAll(sel + " .preset").forEach(p => p.addEventListener("click", () => {
+      document.querySelectorAll(sel + " .preset").forEach(x => x.classList.remove("active"));
+      p.classList.add("active"); P[key] = p.dataset[attr];
+      if(after) after(); needRender = true;
+    }));
+  }
+  bindPresets("#fonts", "font", "font", rebuild);
+  bindPresets("#ops", "op", "op");
+  bindPresets("#anims", "anim", "anim", () => { t0 = now(); });
+  bindPresets("#aspects", "aspect", "aspect", () => { resize(); rebuild(); });
+  document.querySelectorAll("#anchors .preset").forEach(p => p.addEventListener("click", () => {
+    P.ax = parseFloat(p.dataset.ax); P.ay = parseFloat(p.dataset.ay); syncUI(); needRender = true;
+  }));
+
+  const f2 = x => x.toFixed(2), f3 = x => x.toFixed(3);
+  const RANGES = [
+    ["size","vSize",f2,true], ["tracking","vTracking",f2,true], ["offY","vOffY",f2,true],
+    ["glow","vGlow",f3,true], ["falloff","vFalloff",f2,true], ["edge","vEdge",f2,true], ["core","vCore",f2,true],
+    ["count","vCount",null], ["sMin","vSMin",f2], ["gamma","vGamma",f2], ["decay","vDecay",f3],
+    ["ax","vAx",f2], ["ay","vAy",f2], ["driftX","vDriftX",f2], ["driftY","vDriftY",f2],
+    ["steps","vSteps",null], ["echoT","vEchoT",f3],
+    ["reps","vReps",f2], ["phase","vPhase",f2], ["cycle","vCycle",null],
+    ["blur","vBlur",null], ["blurMix","vBlurMix",f2],
+    ["dur","vDur",null], ["loops","vLoops",null], ["bitrate","vBitrate",null],
+  ];
+  for(const [id, vid, fmt, heavy] of RANGES){
+    $(id).addEventListener("input", e => {
+      P[id] = parseFloat(e.target.value);
+      $(vid).textContent = fmt ? fmt(P[id]) : P[id];
+      if(id === "ax" || id === "ay") markAnchors();
+      if(heavy) rebuild(); else needRender = true;
+    });
+  }
+  $("text").addEventListener("input", e => { P.text = e.target.value; rebuild(); });
+  ["c1","c2","c3"].forEach(id => $(id).addEventListener("input", e => { P[id] = e.target.value; P.palette = "custom"; syncUI(); needRender = true; }));
+  $("bg").addEventListener("input", e => { P.bg = e.target.value; needRender = true; });
+  $("transparent").addEventListener("change", e => { P.transparent = e.target.checked; needRender = true; });
+  $("wordAnchor").addEventListener("change", e => { P.wordAnchor = e.target.checked; needRender = true; });
+
+  function markAnchors(){
+    document.querySelectorAll("#anchors .preset").forEach(x =>
+      x.classList.toggle("active", Math.abs(parseFloat(x.dataset.ax) - P.ax) < 1e-3 && Math.abs(parseFloat(x.dataset.ay) - P.ay) < 1e-3));
+  }
+  function syncUI(){
+    for(const [id, vid, fmt] of RANGES){ $(id).value = P[id]; $(vid).textContent = fmt ? fmt(P[id]) : P[id]; }
+    $("text").value = P.text;
+    ["c1","c2","c3","bg"].forEach(id => $(id).value = P[id]);
+    $("transparent").checked = P.transparent; $("wordAnchor").checked = P.wordAnchor;
+    const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x.dataset[attr] === val));
+    mark("#fonts", "font", P.font); mark("#ops", "op", P.op); mark("#anims", "anim", P.anim);
+    mark("#aspects", "aspect", P.aspect); mark("#palettes", "pal", P.palette);
+    markAnchors(); paintPalSwatches(); lutKey = "";
+  }
+  $("reset").addEventListener("click", () => {
+    Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
+    stBox.querySelectorAll(".preset").forEach((x, i) => x.classList.toggle("active", i === 0));
+    syncUI(); resize(); rebuild();
+  });
+
+  /* ================= boot ================= */
+  stBox.firstChild.classList.add("active");
+  resize(); syncUI(); rebuild();
+  if(document.fonts) document.fonts.ready.then(rebuild);
+  tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

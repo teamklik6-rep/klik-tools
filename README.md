@@ -1,6 +1,6 @@
 # Klik Tools
 
-Внутрішні креативні інструменти [Klik Studio](https://www.klikstudio.co/) — дванадцять студій в одному інтерфейсі. Все статичне, вся обробка відбувається локально у браузері, сервер не потрібен.
+Внутрішні креативні інструменти [Klik Studio](https://www.klikstudio.co/) — пʼятнадцять студій в одному інтерфейсі. Все статичне, вся обробка відбувається локально у браузері, сервер не потрібен.
 
 ## Інструменти
 
@@ -18,6 +18,9 @@
 | 10 | **Particle Studio** | Сніг/дощ (як Particle Playground): 6 типів, 3 флікери, дзеркало/фон-шар, star glow, rave, god rays |
 | 11 | **Shader Studio** | 20 живих WebGL-шейдерів (як Paper Shaders): mesh gradient, neuro noise, metaballs, voronoi, warp, god rays, liquid metal… |
 | 12 | **Cascade Studio** | Градієнтні каскади/хвилі (за Pinterest-референсами): смуги семплять циклічний градієнт із квантованими зсувами-терасами — каскад, хвиля, сходи, арка, ряди-блоки, дрейф, дихання; 12 пресетів, безшовні MP4-лупи |
+| 13 | **DotMatrix Studio** | Піксельний силует (як Milk & Peppers): Mosaic → Threshold → PIXEL-матте 15×15, пресети-силуети, текст або своя маска, таймкод 24 fps |
+| 14 | **Orbit Studio** | Фото-картки у 3D-розкладках: спіраль, кільце, глобус, карусель, розліт, фліп; безшовні лупи, експорт PNG / SVG / JPG / WebP / MP4 |
+| 15 | **Echo Studio** | Текст-відлуння (за туторіалом AE): Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur; вкладені кільця з будь-яких цифр/слова, anchor і дрейф-сходинки, 8 градієнт-мап, безшовні лупи, PNG / JPG / MP4 / WebM |
 
 ## Універсальна FX-панель
 
@@ -44,6 +47,9 @@ tools/
   particle-studio.html  ← Particles
   shader-studio.html    ← Shaders (WebGL2)
   cascade-studio.html   ← Cascade (WebGL2)
+  matrix-studio.html    ← DotMatrix
+  orbit-studio.html     ← Orbit
+  echo-studio.html      ← Echo
   studio.css            ← спільний скелет нових студій
   mp4-muxer.js          ← спільний MP4-муксер
   postfx.js             ← універсальна плаваюча FX-панель (усі студії)
