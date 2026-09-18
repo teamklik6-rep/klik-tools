@@ -14,6 +14,7 @@
     border-radius:8px;padding:8px 10px;font-size:15px;font-weight:700;font-family:inherit;outline:none;box-sizing:border-box}
   .preset .pal{margin-top:6px}
   #fonts .preset{font-size:13px}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
 </style>
 </head>
 <body>
@@ -48,6 +49,30 @@
           <div class="presets c3" id="styles"></div>
         </div>
         <div class="group">
+          <h2>Джерело</h2>
+          <div class="presets c2" id="sources">
+            <div class="preset active" data-src="text">Текст</div>
+            <div class="preset" data-src="shape">Фігура</div>
+          </div>
+        </div>
+        <div class="group" id="shapeGroup" style="display:none">
+          <h2>Фігура</h2>
+          <div class="presets c3" id="shapes">
+            <div class="preset" data-shape="file">Свій файл</div>
+            <div class="preset active" data-shape="star">Зірка</div>
+            <div class="preset" data-shape="heart">Серце</div>
+            <div class="preset" data-shape="bolt">Блискавка</div>
+            <div class="preset" data-shape="circle">Коло</div>
+            <div class="preset" data-shape="klik">K</div>
+          </div>
+          <div class="btns-grid" style="margin-top:10px"><button class="btn primary full" id="shapeLoad">Завантажити фігуру</button></div>
+          <div class="switch-row"><span class="lbl">Інвертувати</span>
+            <label class="switch"><input type="checkbox" id="invert"><span class="track"></span></label></div>
+          <div class="row mt"><label class="lbl">Поріг</label><span class="val" id="vThresh">128</span></div>
+          <input type="range" id="thresh" min="1" max="254" step="1" value="128">
+          <div class="note">PNG з прозорістю, SVG або будь-яка чорно-біла картинка (логотип, іконка, силует). Фон визначається автоматично; якщо фігура вийшла «навиворіт» — «Інвертувати». Файл можна перетягнути прямо на превʼю або вставити ⌘V.</div>
+        </div>
+        <div class="group" id="textGroup">
           <h2>Текст</h2>
           <input type="text" id="text" value="18" maxlength="12" placeholder="Цифри чи слово…">
           <div class="note">Кожна літера — окремий шар зі своїм відлунням, як «дублікат шару + інший текст» у туторі. Найкраще працюють 1–4 жирні символи.</div>
@@ -62,7 +87,7 @@
             <div class="preset" data-font="Archivo Black" style="font-family:'Archivo Black'">Archivo</div>
             <div class="preset" data-font="Anton" style="font-family:Anton">Anton</div>
           </div>
-          <div class="row mt"><label class="lbl">Висота літер</label><span class="val" id="vSize">0.62</span></div>
+          <div class="row mt"><label class="lbl">Розмір</label><span class="val" id="vSize">0.62</span></div>
           <input type="range" id="size" min="0.15" max="0.9" step="0.01" value="0.62">
           <div class="row mt"><label class="lbl">Трекінг</label><span class="val" id="vTracking">0.00</span></div>
           <input type="range" id="tracking" min="-0.2" max="0.4" step="0.01" value="0">
@@ -212,6 +237,7 @@
     <section class="workspace">
       <div class="card stage" id="stage">
         <canvas id="out"></canvas>
+        <input type="file" id="shapeFile" accept="image/*,.svg" hidden>
         <div class="stage-bar">
           <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
             <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
@@ -233,6 +259,7 @@
   /* ================= params ================= */
   const FPS = 30;
   const P = {
+    source:"text", shape:"star", invert:false, thresh:128,
     text:"18", font:"Onest", size:0.62, tracking:0, offY:0,
     glow:0.075, falloff:1, edge:0.97, core:0,
     count:10, sMin:0.14, gamma:1.3, decay:1, op:"back",
@@ -320,7 +347,84 @@
   let word = null;   // bbox усього слова
   const fontStr = px => `900 ${px}px "${P.font}", Onest, Inter, sans-serif`;
 
+  /* альфа-маска → сірий спрайт: білий Inner Glow від краю всередину, чорна середина */
+  function glowify(c, gw, gh, glowPx){
+    const img = c.getImageData(0, 0, gw, gh), dd = img.data;
+    const inside = new Uint8Array(gw*gh);
+    for(let i = 0; i < gw*gh; i++) inside[i] = dd[i*4 + 3] > 127 ? 1 : 0;
+    const dist = edt(inside, gw, gh);
+    for(let i = 0; i < gw*gh; i++){
+      const a = dd[i*4 + 3];
+      if(!a) continue;
+      const t = Math.max(0, 1 - Math.max(0, dist[i] - 0.5)/glowPx);
+      const l = Math.max(P.core, P.edge*Math.pow(t, P.falloff));
+      const g = Math.round(Math.min(1, l)*255);
+      dd[i*4] = dd[i*4 + 1] = dd[i*4 + 2] = g;
+    }
+    c.putImageData(img, 0, 0);
+  }
+
+  /* ---------- фігури ---------- */
+  const SHAPES = {
+    star:  "M50 4 L61.8 37.6 L97.6 38.2 L69 59.8 L79.4 94 L50 73.6 L20.6 94 L31 59.8 L2.4 38.2 L38.2 37.6 Z",
+    heart: "M50 92 C50 92 6 64 6 34 C6 17 19 6 32 6 C41 6 47 11 50 18 C53 11 59 6 68 6 C81 6 94 17 94 34 C94 64 50 92 50 92 Z",
+    bolt:  "M60 2 L14 58 L45 58 L36 98 L86 38 L55 38 Z",
+    circle:"M50 4 A46 46 0 1 1 49.99 4 Z",
+    klik:  "M8 4 H34 V38 L64 4 H94 L58 44 L96 96 H64 L40 62 L34 68 V96 H8 Z",
+  };
+  let userImg = null;   // завантажена фігура (Image)
+  function shapeSource(){
+    if(P.shape === "file" && userImg) return { el:userImg, w:userImg.naturalWidth || userImg.width || 1000, h:userImg.naturalHeight || userImg.height || 1000, file:true };
+    const c = document.createElement("canvas"); c.width = c.height = 1000;
+    const x = c.getContext("2d"); x.scale(10, 10); x.fillStyle = "#fff";
+    x.fill(new Path2D(SHAPES[P.shape] || SHAPES.star));
+    return { el:c, w:1000, h:1000, file:false };
+  }
+  function buildShape(){
+    const src = shapeSource();
+    const pad = 3;
+    let sh = P.size*H*1.15, sw = sh*src.w/src.h;
+    if(sw > W*0.9){ sw = W*0.9; sh = sw*src.h/src.w; }
+    const gw = Math.ceil(sw) + pad*2, gh = Math.ceil(sh) + pad*2;
+    const gx = Math.floor((W - sw)/2) - pad, gy = Math.floor((H - sh)/2 + P.offY*H) - pad;
+    const cv = document.createElement("canvas"); cv.width = gw; cv.height = gh;
+    const c = cv.getContext("2d", { willReadFrequently:true });
+    c.imageSmoothingQuality = "high";
+    c.drawImage(src.el, pad, pad, sw, sh);
+    /* маска: альфа, якщо в картинці є прозорість; інакше яскравість із автовизначенням фону */
+    const img = c.getImageData(0, 0, gw, gh), d = img.data, n = gw*gh;
+    let transp = 0, opaque = 0;
+    for(let y = pad; y < gh - pad; y += 2) for(let x = pad; x < gw - pad; x += 2){
+      const a = d[(y*gw + x)*4 + 3]; if(a < 128) transp++; else opaque++;
+    }
+    const useAlpha = transp > (transp + opaque)*0.01;
+    let invert = P.invert;
+    if(!useAlpha){
+      let edgeSum = 0, edgeN = 0;                                  // світлий край → фон білий → інвертуємо
+      for(let x = pad; x < gw - pad; x++){ for(const y of [pad, gh - pad - 1]){ const i = (y*gw + x)*4; edgeSum += d[i] + d[i+1] + d[i+2]; edgeN += 3; } }
+      if(edgeSum/edgeN > 127) invert = !invert;
+    }
+    for(let i = 0; i < n; i++){
+      const o = i*4;
+      let v = useAlpha ? d[o+3] : (d[o]*0.299 + d[o+1]*0.587 + d[o+2]*0.114)*(d[o+3]/255);
+      if(!useAlpha && d[o+3] < 8) v = invert ? 255 : 0;
+      if(invert) v = 255 - v;
+      if(!useAlpha){ const t = P.thresh; v = Math.max(0, Math.min(255, (v - t)*6 + 128)); }  // м'який поріг, згладжений край
+      d[o] = d[o+1] = d[o+2] = 255; d[o+3] = v;
+    }
+    /* рамка pad — завжди «зовні», щоб EDT мав край */
+    for(let y = 0; y < gh; y++) for(let x = 0; x < gw; x++)
+      if(x < pad || y < pad || x >= gw - pad || y >= gh - pad) d[(y*gw + x)*4 + 3] = 0;
+    c.putImageData(img, 0, 0);
+    glowify(c, gw, gh, Math.max(1, P.glow*sh*0.9));
+    glyphs = [{ cv, x:gx, y:gy, w:gw, h:gh, ix:gx + pad, iy:gy + pad, iw:gw - pad*2, ih:gh - pad*2 }];
+    word = { ix:gx + pad, iy:gy + pad, iw:gw - pad*2, ih:gh - pad*2 };
+    needRender = true;
+    if(!busy) renderFrame(playing ? now() - t0 : tPause);
+  }
+
   function buildGlyphs(){
+    if(P.source === "shape"){ buildShape(); return; }
     const m = document.createElement("canvas").getContext("2d");
     m.font = fontStr(200);
     const cap = m.measureText("H").actualBoundingBoxAscent / 200 || 0.72;
@@ -351,19 +455,7 @@
       const c = cv.getContext("2d", { willReadFrequently:true });
       c.font = fontStr(px); c.fillStyle = "#fff"; c.textBaseline = "alphabetic";
       c.fillText(it.ch, ox + it.pen - gx, base - gy);
-      const img = c.getImageData(0, 0, gw, gh), dd = img.data;
-      const inside = new Uint8Array(gw*gh);
-      for(let i = 0; i < gw*gh; i++) inside[i] = dd[i*4 + 3] > 127 ? 1 : 0;
-      const dist = edt(inside, gw, gh);
-      for(let i = 0; i < gw*gh; i++){
-        const a = dd[i*4 + 3];
-        if(!a) continue;
-        const t = Math.max(0, 1 - Math.max(0, dist[i] - 0.5)/glowPx);
-        const l = Math.max(P.core, P.edge*Math.pow(t, P.falloff));
-        const g = Math.round(Math.min(1, l)*255);
-        dd[i*4] = dd[i*4 + 1] = dd[i*4 + 2] = g;
-      }
-      c.putImageData(img, 0, 0);
+      glowify(c, gw, gh, glowPx);
       glyphs.push({ cv, x:gx, y:gy, w:gw, h:gh, ix:gx + pad, iy:gy + pad, iw:gw - pad*2, ih:gh - pad*2 });
     }
     if(glyphs.length){
@@ -379,7 +471,7 @@
   function rebuild(){
     clearTimeout(buildTimer);
     buildTimer = setTimeout(async () => {
-      try{ await document.fonts.load(fontStr(100), P.text || "8"); }catch(e){}
+      if(P.source !== "shape"){ try{ await document.fonts.load(fontStr(100), P.text || "8"); }catch(e){} }
       buildGlyphs();
     }, 30);
   }
@@ -539,7 +631,7 @@
   /* ================= exports ================= */
   function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
   function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
-  const fname = ext => `echo-${(P.text || "text").replace(/[^\wЀ-ӿ-]+/g, "") || "text"}.${ext}`;
+  const fname = ext => `echo-${(P.source === "shape" ? P.shape : P.text || "text").replace(/[^\wЀ-ӿ-]+/g, "") || "text"}.${ext}`;
 
   $("exPng").addEventListener("click", () => out.toBlob(b => { if(b) downloadBlob(b, fname("png")); }, "image/png"));
   $("exJpg").addEventListener("click", () => {
@@ -597,6 +689,29 @@
     setTimeout(() => { if(webmRec) webmRec.stop(); }, P.dur*P.loops*1000);
   });
 
+  /* ================= своя фігура ================= */
+  function loadShapeFile(file){
+    if(!file || !/^image\//.test(file.type) && !/\.svg$/i.test(file.name || "")) return;
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      if(!im.naturalWidth){ im.width = 1000; im.height = 1000; }   // SVG без розмірів
+      userImg = im; P.source = "shape"; P.shape = "file"; syncUI(); rebuild(); status("");
+    };
+    im.onerror = () => alert("Не вдалося відкрити файл як зображення.");
+    im.src = url;
+  }
+  $("shapeLoad").addEventListener("click", () => $("shapeFile").click());
+  $("shapeFile").addEventListener("change", e => { loadShapeFile(e.target.files[0]); e.target.value = ""; });
+  const stage = $("stage");
+  ["dragenter","dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if(f) loadShapeFile(f); });
+  window.addEventListener("paste", e => {
+    const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith("image/"));
+    if(it){ e.preventDefault(); loadShapeFile(it.getAsFile()); }
+  });
+
   /* ================= UI ================= */
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
@@ -628,7 +743,7 @@
     const el = document.createElement("div");
     el.className = "preset"; el.textContent = s.name; el.dataset.i = i;
     el.addEventListener("click", () => {
-      Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)), { aspect:P.aspect, dur:P.dur, loops:P.loops, bitrate:P.bitrate }, s.p);
+      Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)), { aspect:P.aspect, dur:P.dur, loops:P.loops, bitrate:P.bitrate, source:P.source, shape:P.shape, invert:P.invert, thresh:P.thresh }, s.p);
       stBox.querySelectorAll(".preset").forEach(x => x.classList.toggle("active", x === el));
       syncUI(); rebuild();
     });
@@ -643,6 +758,12 @@
     }));
   }
   bindPresets("#fonts", "font", "font", rebuild);
+  bindPresets("#sources", "source", "src", () => { syncUI(); rebuild(); });
+  document.querySelectorAll("#shapes .preset").forEach(p => p.addEventListener("click", () => {
+    if(p.dataset.shape === "file" && !userImg){ $("shapeFile").click(); return; }
+    P.shape = p.dataset.shape; syncUI(); rebuild();
+  }));
+  $("invert").addEventListener("change", e => { P.invert = e.target.checked; rebuild(); });
   bindPresets("#ops", "op", "op");
   bindPresets("#anims", "anim", "anim", () => { t0 = now(); });
   bindPresets("#aspects", "aspect", "aspect", () => { resize(); rebuild(); });
@@ -654,7 +775,7 @@
   const RANGES = [
     ["size","vSize",f2,true], ["tracking","vTracking",f2,true], ["offY","vOffY",f2,true],
     ["glow","vGlow",f3,true], ["falloff","vFalloff",f2,true], ["edge","vEdge",f2,true], ["core","vCore",f2,true],
-    ["count","vCount",null], ["sMin","vSMin",f2], ["gamma","vGamma",f2], ["decay","vDecay",f3],
+    ["thresh","vThresh",null,true], ["count","vCount",null], ["sMin","vSMin",f2], ["gamma","vGamma",f2], ["decay","vDecay",f3],
     ["ax","vAx",f2], ["ay","vAy",f2], ["driftX","vDriftX",f2], ["driftY","vDriftY",f2],
     ["steps","vSteps",null], ["echoT","vEchoT",f3],
     ["reps","vReps",f2], ["phase","vPhase",f2], ["cycle","vCycle",null],
@@ -685,7 +806,10 @@
     ["c1","c2","c3","bg"].forEach(id => $(id).value = P[id]);
     $("transparent").checked = P.transparent; $("wordAnchor").checked = P.wordAnchor;
     const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x.dataset[attr] === val));
-    mark("#fonts", "font", P.font); mark("#ops", "op", P.op); mark("#anims", "anim", P.anim);
+    mark("#fonts", "font", P.font); mark("#sources", "src", P.source); mark("#shapes", "shape", P.shape);
+    $("invert").checked = P.invert;
+    $("shapeGroup").style.display = P.source === "shape" ? "block" : "none";
+    $("textGroup").style.display = P.source === "shape" ? "none" : "block"; mark("#ops", "op", P.op); mark("#anims", "anim", P.anim);
     mark("#aspects", "aspect", P.aspect); mark("#palettes", "pal", P.palette);
     markAnchors(); paintPalSwatches(); lutKey = "";
   }
