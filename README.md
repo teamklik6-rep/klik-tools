@@ -1,6 +1,6 @@
 # Klik Tools
 
-Внутрішні креативні інструменти [Klik Studio](https://www.klikstudio.co/) — пʼятнадцять студій в одному інтерфейсі. Все статичне, вся обробка відбувається локально у браузері, сервер не потрібен.
+Внутрішні креативні інструменти [Klik Studio](https://www.klikstudio.co/) — сімнадцять студій в одному інтерфейсі. Все статичне, вся обробка відбувається локально у браузері, сервер не потрібен.
 
 ## Інструменти
 
@@ -21,6 +21,8 @@
 | 13 | **DotMatrix Studio** | Піксельний силует (як Milk & Peppers): Mosaic → Threshold → PIXEL-матте 15×15, пресети-силуети, текст або своя маска, таймкод 24 fps |
 | 14 | **Orbit Studio** | Фото-картки у 3D-розкладках: спіраль, кільце, глобус, карусель, розліт, фліп; безшовні лупи, експорт PNG / SVG / JPG / WebP / MP4 |
 | 15 | **Echo Studio** | Текст-відлуння (за туторіалом AE): Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur; вкладені кільця з будь-яких цифр/слова або своєї фігури (PNG з альфою, SVG, ч/б логотип; вбудовані зірка/серце/блискавка/коло/K), anchor і дрейф-сходинки, 8 градієнт-мап, безшовні лупи, PNG / JPG / MP4 / WebM |
+| 16 | **Sweep Studio** | Текст-ревіл (за туторіалом AE «три ефекти»): CC Light Sweep (Direction/Shape/Width/Sweep/Edge, Add/Composite/Cutout) → adjustment layer CC Radial Fast Blur (Standard/Brightest/Darkest, анімований центр) → Colorama з колом Output Cycle, яке можна тягати (фіолет → помаранч → крем і назад у чорний); текст, шрифти або своя фігура/логотип, «hero»-масштаб більший за кадр, безшовні лупи «темрява → ревіл → темрява», WebGL2, PNG / JPG / MP4 / WebM |
+| 17 | **Morph Studio** | Градієнт-морф (за туторіалом AE): відео / фото / камера → Levels → Colorama (чорний → синій → білий → сірий → чорний, вигорілий фон стає чорним) → Mosaic 1300 × 30 + Sharp Colors; вбудована процедурна 3D-голова для демо, 8 палітр, + / − кольори на колі, пульсація й дрейф смуг, покадровий MP4 із завантаженого відео, WebM з камери |
 
 ## Універсальна FX-панель
 
@@ -50,6 +52,8 @@ tools/
   matrix-studio.html    ← DotMatrix
   orbit-studio.html     ← Orbit
   echo-studio.html      ← Echo
+  sweep-studio.html     ← Sweep (WebGL2)
+  morph-studio.html     ← Morph (WebGL2)
   studio.css            ← спільний скелет нових студій
   mp4-muxer.js          ← спільний MP4-муксер
   postfx.js             ← універсальна плаваюча FX-панель (усі студії)

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Morph Studio — градієнт-морф: Levels → Colorama → Mosaic</title>
+<link rel="stylesheet" href="studio.css">
+<style>
+  #out{background:#000}
+  .tabs{grid-template-columns:repeat(5,1fr)}
+  .preset .pal{margin-top:6px}
+  #wheel{display:block;width:170px;height:170px;margin:4px auto 2px;cursor:pointer;touch-action:none}
+  #stopColors{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+  #stopColors .color-wrap{justify-content:center}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+  .glmsg{color:hsl(var(--muted-foreground));font-size:13px;text-align:center;max-width:340px}
+  .srcname{font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:8px;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6">
+          <rect x="4" y="4" width="16" height="3.2" rx=".6" fill="white" stroke="none" opacity=".35"/>
+          <rect x="6" y="8.4" width="12" height="3.2" rx=".6" fill="white" stroke="none" opacity=".7"/>
+          <rect x="5" y="12.8" width="14" height="3.2" rx=".6" fill="white" stroke="none"/>
+          <rect x="7" y="17.2" width="10" height="3.2" rx=".6" fill="white" stroke="none" opacity=".55"/>
+        </svg>
+      </div>
+      <div><h1>Morph Studio</h1><p>levels → colorama → mosaic</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="src">Джерело</div>
+        <div class="tab" data-tab="levels">Levels</div>
+        <div class="tab" data-tab="color">Колір</div>
+        <div class="tab" data-tab="mosaic">Mosaic</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ SOURCE ============ -->
+      <div data-pane="src" class="active">
+        <div class="group">
+          <h2>Пресети</h2>
+          <div class="presets c2" id="styles"></div>
+        </div>
+        <div class="group">
+          <h2>Джерело</h2>
+          <div class="presets c4" id="sources">
+            <div class="preset active" data-src="demo">Демо</div>
+            <div class="preset" data-src="video">Відео</div>
+            <div class="preset" data-src="image">Фото</div>
+            <div class="preset" data-src="camera">Камера</div>
+          </div>
+          <div class="srcname" id="srcName"></div>
+          <div class="note">Як у туторі: відео, де ти повільно повертаєш голову на світлому однотонному фоні. Після Levels фон вигорає в білий, а Colorama замикає білий назад у чорний — фон зникає сам. Файл можна перетягнути прямо на превʼю.</div>
+        </div>
+        <div class="group">
+          <h2>Кадрування</h2>
+          <div class="row"><label class="lbl">Масштаб</label><span class="val" id="vZoom">1.00</span></div>
+          <input type="range" id="zoom" min="0.5" max="3" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Зсув X</label><span class="val" id="vOffX">0.00</span></div>
+          <input type="range" id="offX" min="-0.6" max="0.6" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Зсув Y</label><span class="val" id="vOffY">0.00</span></div>
+          <input type="range" id="offY" min="-0.6" max="0.6" step="0.01" value="0">
+          <div class="switch-row"><span class="lbl">Дзеркало</span>
+            <label class="switch"><input type="checkbox" id="mirror"><span class="track"></span></label></div>
+        </div>
+        <div class="group" id="demoGroup">
+          <h2>Демо-голова</h2>
+          <div class="row"><label class="lbl">Поворот голови</label><span class="val" id="vYaw">1.00</span></div>
+          <input type="range" id="yaw" min="0" max="1.5" step="0.01" value="1">
+          <div class="note">Процедурна 3D-голова на білій стіні замість твого відео — щоб одразу бачити ефект. Тривалість повороту = тривалість лупа в «Експорті».</div>
+        </div>
+      </div>
+
+      <!-- ============ LEVELS ============ -->
+      <div data-pane="levels">
+        <div class="group">
+          <h2>Levels · RGB</h2>
+          <div class="row"><label class="lbl">Input Black</label><span class="val" id="vIb">0.071</span></div>
+          <input type="range" id="ib" min="0" max="0.9" step="0.001" value="0.0706">
+          <div class="row mt"><label class="lbl">Input White</label><span class="val" id="vIw">0.616</span></div>
+          <input type="range" id="iw" min="0.05" max="1" step="0.001" value="0.6157">
+          <div class="row mt"><label class="lbl">Gamma</label><span class="val" id="vGamma">1.00</span></div>
+          <input type="range" id="gamma" min="0.2" max="3" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Output Black</label><span class="val" id="vOb">0.00</span></div>
+          <input type="range" id="ob" min="0" max="1" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Output White</label><span class="val" id="vOw">1.00</span></div>
+          <input type="range" id="ow" min="0" max="1" step="0.01" value="1">
+          <div class="note">У туторі: Input Black 2313 і Input White 20174.8 зі шкали 32768 — це 0.071 і 0.616. Контраст росте, світла стіна вигорає до 1.0. Якщо обличчя теж провалюється в чорний — підніми Input White.</div>
+        </div>
+      </div>
+
+      <!-- ============ COLOR ============ -->
+      <div data-pane="color">
+        <div class="group">
+          <h2>Colorama · Output Cycle</h2>
+          <div class="presets c2" id="palettes"></div>
+          <canvas id="wheel" width="340" height="340" title="Тягни трикутники — як в Output Cycle"></canvas>
+          <div id="stopColors"></div>
+          <div class="btns-grid" style="margin-top:10px">
+            <button class="btn" id="stopAdd">+ колір</button>
+            <button class="btn" id="stopDel">− колір</button>
+          </div>
+          <div class="switch-row"><span class="lbl">Білий → назад у чорний</span>
+            <label class="switch"><input type="checkbox" id="wrap" checked><span class="track"></span></label></div>
+          <div class="note">Коло з тутора: чорний → синій → білий і через сірий знову в чорний. Темне (волосся) стає синім, світле обличчя — білим і сірим, а вигорілий фон — чорним.</div>
+        </div>
+        <div class="group">
+          <h2>Input Phase</h2>
+          <div class="row"><label class="lbl">Cycle Repetitions</label><span class="val" id="vReps">1.00</span></div>
+          <input type="range" id="reps" min="0.5" max="4" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Phase Shift</label><span class="val" id="vPhase">0.00</span></div>
+          <input type="range" id="phase" min="0" max="1" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Колір-цикл (обертів за луп)</label><span class="val" id="vCycle">0</span></div>
+          <input type="range" id="cycle" min="-4" max="4" step="1" value="0">
+          <div class="row mt"><label class="lbl">Blend With Original</label><span class="val" id="vBlend">0.00</span></div>
+          <input type="range" id="blend" min="0" max="1" step="0.01" value="0">
+        </div>
+      </div>
+
+      <!-- ============ MOSAIC ============ -->
+      <div data-pane="mosaic">
+        <div class="group">
+          <h2>Mosaic</h2>
+          <div class="presets c3" id="grids">
+            <div class="preset" data-hb="10" data-vb="10">10 × 10</div>
+            <div class="preset active" data-hb="1300" data-vb="30">1300 × 30</div>
+            <div class="preset" data-hb="1300" data-vb="12">1300 × 12</div>
+            <div class="preset" data-hb="1300" data-vb="90">1300 × 90</div>
+            <div class="preset" data-hb="40" data-vb="1300">40 × 1300</div>
+            <div class="preset" data-hb="64" data-vb="64">64 × 64</div>
+          </div>
+          <div class="row mt"><label class="lbl">Horizontal Blocks</label><span class="val" id="vHb">1300</span></div>
+          <input type="range" id="hbS" min="0" max="1000" step="1" value="944">
+          <div class="row mt"><label class="lbl">Vertical Blocks</label><span class="val" id="vVb">30</span></div>
+          <input type="range" id="vbS" min="0" max="1000" step="1" value="447">
+          <div class="switch-row"><span class="lbl">Sharp Colors</span>
+            <label class="switch"><input type="checkbox" id="sharp" checked><span class="track"></span></label></div>
+          <div class="note">Багато блоків по горизонталі й мало по вертикалі — кожна смуга бере колір з центрального рядка і розтягує його вниз, звідси «градієнтні» смуги. Sharp Colors — колір центрального пікселя блока замість середнього.</div>
+        </div>
+        <div class="group">
+          <h2>Анімація смуг</h2>
+          <div class="row"><label class="lbl">Пульсація рядків</label><span class="val" id="vPulse">0.00</span></div>
+          <input type="range" id="pulse" min="0" max="1.5" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Дрейф сітки</label><span class="val" id="vDrift">0</span></div>
+          <input type="range" id="drift" min="-4" max="4" step="1" value="0">
+          <div class="note">Пульсація змінює кількість рядків за луп (×2 / ÷2), дрейф зсуває сітку вниз чи вгору на ціле число рядків за луп — обидва варіанти безшовні.</div>
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Формат</h2>
+          <div class="presets c3" id="aspects">
+            <div class="preset" data-aspect="src">Як джерело</div>
+            <div class="preset active" data-aspect="1:1">1:1</div>
+            <div class="preset" data-aspect="4:5">4:5</div>
+            <div class="preset" data-aspect="9:16">9:16</div>
+            <div class="preset" data-aspect="16:9">16:9</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid"><button class="btn primary" id="exPng">PNG</button><button class="btn" id="exJpg">JPG</button></div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">Тривалість лупа (с)</label><span class="val" id="vDur">6</span></div>
+          <input type="range" id="dur" min="2" max="20" step="0.5" value="6">
+          <div class="row mt"><label class="lbl">Повторів у файлі</label><span class="val" id="vLoops">1</span></div>
+          <input type="range" id="loops" min="1" max="5" step="1" value="1">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">20</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="20">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (30 fps)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово (WebCodecs): завантажене відео проходить кадр за кадром (до 2 хв, без звуку), демо й фото — луп заданої тривалості. З камери — лише WebM із живого превʼю.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <input type="file" id="fileVideo" accept="video/*" hidden>
+        <input type="file" id="fileImage" accept="image/*" hidden>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · Footage → Levels → Colorama → Mosaic (Sharp Colors) · WebGL2 · все локально</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const FPS = 30;
+  const P = {
+    src:"demo", zoom:1, offX:0, offY:0, mirror:false, yaw:1,
+    ib:0.0706, iw:0.6157, gamma:1, ob:0, ow:1,
+    stops:[[0,"#000000"],[0.25,"#183bf7"],[0.5,"#ffffff"]], wrap:true, reps:1, phase:0, cycle:0, blend:0,
+    hb:1300, vb:30, sharp:true, pulse:0, drift:0,
+    aspect:"1:1", dur:6, loops:1, bitrate:20,
+  };
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  /* Output Cycle: 0 = верх кола, за годинниковою; після останнього кольору — назад у перший */
+  const PALETTES = {
+    blue:    { name:"Blue · AE",      stops:[[0,"#000000"],[0.25,"#183bf7"],[0.5,"#ffffff"]] },
+    magenta: { name:"Magenta · Red",  stops:[[0,"#000000"],[0.14,"#8a1420"],[0.3,"#ff1ee6"],[0.5,"#ffffff"]] },
+    acid:    { name:"Klik Acid",      stops:[[0,"#000000"],[0.25,"#bbff32"],[0.5,"#ffffff"]] },
+    ember:   { name:"Ember",          stops:[[0,"#000000"],[0.15,"#5a0a00"],[0.3,"#ff5a00"],[0.5,"#fff4e0"]] },
+    cyan:    { name:"Cyan",           stops:[[0,"#000000"],[0.25,"#00c8ff"],[0.5,"#ffffff"]] },
+    violet:  { name:"Violet",         stops:[[0,"#000000"],[0.2,"#3d0a9c"],[0.35,"#a24dff"],[0.5,"#ffffff"]] },
+    thermal: { name:"Thermal",        stops:[[0,"#000000"],[0.12,"#2a0a8a"],[0.24,"#d4145a"],[0.36,"#ffae00"],[0.5,"#ffffff"]] },
+    mono:    { name:"Mono",           stops:[[0,"#000000"],[0.5,"#ffffff"]] },
+  };
+  const STYLES = [
+    { name:"AE · 1300×30",  p:{ hb:1300, vb:30, sharp:true, stops:PALETTES.blue.stops } },
+    { name:"Блоки 10×10",   p:{ hb:10, vb:10, sharp:true, stops:PALETTES.blue.stops } },
+    { name:"Magenta",       p:{ hb:1300, vb:30, sharp:true, stops:PALETTES.magenta.stops } },
+    { name:"Широкі смуги",  p:{ hb:1300, vb:12, sharp:true, stops:PALETTES.cyan.stops } },
+    { name:"Скан 1300×90",  p:{ hb:1300, vb:90, sharp:true, stops:PALETTES.thermal.stops } },
+    { name:"Вертикаль",     p:{ hb:40, vb:1300, sharp:true, stops:PALETTES.violet.stops } },
+    { name:"Пульс · Acid",  p:{ hb:1300, vb:24, sharp:true, pulse:0.8, stops:PALETTES.acid.stops } },
+    { name:"Дрейф · Ember", p:{ hb:1300, vb:40, sharp:true, drift:2, stops:PALETTES.ember.stops } },
+  ];
+  const KEEP = ["src","zoom","offX","offY","mirror","yaw","aspect","dur","loops","bitrate"];
+
+  const $ = id => document.getElementById(id);
+  const out = $("out");
+  let W = 1080, H = 1080;
+  const ASPECTS = { "1:1":[1080,1080], "4:5":[1080,1350], "9:16":[1080,1920], "16:9":[1920,1080] };
+
+  /* ================= WebGL2 ================= */
+  const gl = out.getContext("webgl2", { preserveDrawingBuffer:true, antialias:false, alpha:false, premultipliedAlpha:false });
+  if(!gl){
+    $("stage").innerHTML = '<div class="glmsg">Цей браузер не підтримує WebGL2 — відкрийте студію в актуальному Chrome, Edge, Firefox або Safari.</div>';
+    return;
+  }
+  const VS = `#version 300 es
+  layout(location=0) in vec2 p;
+  void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
+
+  /* демо: процедурна голова (SDF raymarch) на світлій стіні */
+  const FS_DEMO = `#version 300 es
+  precision highp float;
+  uniform vec2 uRes;
+  uniform float uYaw;
+  out vec4 o;
+  float sdEll(vec3 p, vec3 r){ float k0 = length(p/r), k1 = length(p/(r*r)); return k0*(k0 - 1.0)/k1; }
+  float sdCap(vec3 p, vec3 a, vec3 b, float r){ vec3 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba)/dot(ba, ba), 0.0, 1.0); return length(pa - ba*h) - r; }
+  float smin(float a, float b, float k){ float h = clamp(0.5 + 0.5*(b - a)/k, 0.0, 1.0); return mix(b, a, h) - k*h*(1.0 - h); }
+  float smax(float a, float b, float k){ return -smin(-a, -b, k); }
+  mat3 rotY(float a){ float c = cos(a), s = sin(a); return mat3(c, 0.0, -s, 0.0, 1.0, 0.0, s, 0.0, c); }
+  vec2 map(vec3 p){
+    vec3 pt = rotY(uYaw*0.22)*p;
+    float torso = sdEll(pt - vec3(0.0, -1.0, -0.06), vec3(0.9, 0.42, 0.36));
+    vec3 q = rotY(uYaw)*p;
+    q = vec3(q.x, q.y + 0.03*q.z, q.z);
+    vec3 qa = vec3(abs(q.x), q.y, q.z);
+    float d = smin(sdEll(q - vec3(0.0, 0.33, 0.0), vec3(0.33, 0.43, 0.39)), sdEll(q - vec3(0.0, 0.09, 0.07), vec3(0.25, 0.26, 0.29)), 0.12);
+    d = smin(d, sdCap(q, vec3(0.0, 0.31, 0.35), vec3(0.0, 0.16, 0.45), 0.052), 0.05);
+    d = smax(d, -(length(qa - vec3(0.125, 0.33, 0.39)) - 0.07), 0.05);
+    d = smin(d, sdEll(qa - vec3(0.12, 0.405, 0.33), vec3(0.11, 0.035, 0.06)), 0.05);
+    d = smin(d, sdEll(q - vec3(0.0, 0.07, 0.33), vec3(0.085, 0.032, 0.05)), 0.03);
+    d = smin(d, sdEll(qa - vec3(0.335, 0.27, -0.03), vec3(0.05, 0.1, 0.065)), 0.03);
+    d = smin(d, sdCap(q, vec3(0.0, 0.05, -0.04), vec3(0.0, -0.6, -0.05), 0.17), 0.08);
+    float hair = sdEll(q - vec3(0.0, 0.43, -0.05), vec3(0.37, 0.41, 0.43));
+    float a = atan(q.x, q.z);
+    hair += 0.012*sin(a*22.0 + q.y*9.0)*smoothstep(0.2, 0.6, q.y);
+    hair = smax(hair, (0.36 + 0.42*q.z) - q.y, 0.05);
+    float m = 0.0;
+    if(hair < d){ d = hair; m = 1.0; }
+    if(torso < d){ d = smin(d, torso, 0.06); m = 2.0; }
+    return vec2(d, m);
+  }
+  vec3 nrm(vec3 p){
+    vec2 e = vec2(0.0015, -0.0015);
+    return normalize(e.xyy*map(p + e.xyy).x + e.yyx*map(p + e.yyx).x + e.yxy*map(p + e.yxy).x + e.xxx*map(p + e.xxx).x);
+  }
+  void main(){
+    vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/min(uRes.x, uRes.y);
+    vec3 ro = vec3(0.0, 0.0, 3.3), rd = normalize(vec3(uv, -1.75));
+    float wall = 0.93 - 0.18*dot(uv, uv);
+    vec3 col = vec3(wall);
+    float t = 1.6; bool hit = false; float mat = 0.0;
+    for(int i = 0; i < 110; i++){
+      vec3 p = ro + rd*t;
+      vec2 h = map(p);
+      if(h.x < 0.0008){ hit = true; mat = h.y; break; }
+      t += h.x*0.9;
+      if(t > 5.0) break;
+    }
+    if(hit){
+      vec3 p = ro + rd*t, n = nrm(p);
+      vec3 L = normalize(vec3(-0.55, 0.55, 0.65)), F = normalize(vec3(0.7, 0.1, 0.5));
+      float ao = 0.0;
+      for(int k = 1; k <= 4; k++){ float h = 0.03*float(k); ao += (h - map(p + n*h).x)/h; }
+      ao = clamp(1.0 - 0.18*ao, 0.0, 1.0);
+      float dif = max(dot(n, L), 0.0), fil = max(dot(n, F), 0.0), rim = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);
+      float alb = mat == 1.0 ? 0.24 + 0.09*sin(atan(p.x, p.z)*40.0 + p.y*25.0) : (mat == 2.0 ? 0.5 : 0.42);
+      float lit = alb*(0.2 + 0.85*dif + 0.25*fil)*ao + 0.05*rim;
+      col = vec3(lit);
+    }
+    o = vec4(col, 1.0);
+  }`;
+
+  /* кадрування → Levels → Colorama */
+  const FS_GRADE = `#version 300 es
+  precision highp float;
+  uniform sampler2D uSrc, uLut;
+  uniform vec2 uRes, uSrcSize, uOff;
+  uniform float uScale, uIb, uIw, uGamma, uOb, uOw, uReps, uPhase, uBlend;
+  uniform int uMirror, uCyc;
+  out vec4 o;
+  void main(){
+    vec2 p = gl_FragCoord.xy - 0.5*uRes - uOff;
+    if(uMirror == 1) p.x = -p.x;
+    vec2 sp = p/uScale + 0.5*uSrcSize;
+    vec3 c = (sp.x < 0.0 || sp.y < 0.0 || sp.x > uSrcSize.x || sp.y > uSrcSize.y) ? vec3(1.0) : texture(uSrc, sp/uSrcSize).rgb;
+    vec3 v = clamp((c - uIb)/max(uIw - uIb, 1e-4), 0.0, 1.0);
+    v = pow(v, vec3(1.0/uGamma));
+    v = uOb + v*(uOw - uOb);
+    float l = clamp(dot(v, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+    float t = l*uReps + uPhase;
+    t = uCyc == 1 ? fract(t) : clamp(t, 0.0, 1.0);
+    vec3 col = texture(uLut, vec2((t*1023.0 + 0.5)/1024.0, 0.5)).rgb;
+    o = vec4(mix(col, v, uBlend), 1.0);
+  }`;
+
+  /* Mosaic: сітка рахується від верхнього лівого кута, як в AE */
+  const FS_MOSAIC = `#version 300 es
+  precision highp float;
+  uniform sampler2D uSrc;
+  uniform vec2 uRes;
+  uniform float uHB, uVB, uShift;
+  uniform int uSharp;
+  out vec4 o;
+  void main(){
+    vec2 bs = uRes/vec2(uHB, uVB);
+    vec2 pd = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y - uShift*bs.y);
+    vec2 b = floor(pd/bs);
+    vec3 col = vec3(0.0);
+    if(uSharp == 1){
+      vec2 cd = (b + 0.5)*bs + vec2(0.0, uShift*bs.y);
+      vec2 cg = clamp(vec2(cd.x, uRes.y - cd.y), vec2(0.0), uRes - 1.0);
+      col = texelFetch(uSrc, ivec2(cg), 0).rgb;
+    } else {
+      for(int j = 0; j < 8; j++) for(int i = 0; i < 8; i++){
+        vec2 sd = (b + (vec2(float(i), float(j)) + 0.5)/8.0)*bs + vec2(0.0, uShift*bs.y);
+        col += texture(uSrc, clamp(vec2(sd.x, uRes.y - sd.y), vec2(0.5), uRes - 0.5)/uRes).rgb;
+      }
+      col /= 64.0;
+    }
+    o = vec4(col, 1.0);
+  }`;
+
+  function compile(type, src){
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  function program(fs){
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for(let i = 0; i < n; i++){ const info = gl.getActiveUniform(p, i); u[info.name] = gl.getUniformLocation(p, info.name); }
+    return { p, u };
+  }
+  const prDemo = program(FS_DEMO), prGrade = program(FS_GRADE), prMosaic = program(FS_MOSAIC);
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  function texParams(filter){
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+  function makeTarget(w, h){
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    texParams(gl.LINEAR);
+    const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { t, f, w, h };
+  }
+  const freeTarget = t => { if(t){ gl.deleteFramebuffer(t.f); gl.deleteTexture(t.t); } };
+  let tGrade = null, tDemo = null;
+  const texSrc = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, texSrc); texParams(gl.LINEAR);
+  const texLut = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, texLut); texParams(gl.LINEAR);
+
+  /* ================= джерела ================= */
+  const video = document.createElement("video");
+  video.muted = true; video.loop = true; video.playsInline = true; video.crossOrigin = "anonymous";
+  let image = null, stream = null, srcW = 1, srcH = 1, srcReady = false, videoURL = null, cameraOn = false;
+
+  function stopCamera(){
+    if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; }
+    cameraOn = false;
+  }
+  function setSource(kind){
+    if(kind !== "camera") stopCamera();
+    if(kind === "demo" || kind === "image") video.pause();
+    P.src = kind;
+    if(kind === "image" && image){ srcW = image.naturalWidth; srcH = image.naturalHeight; uploadEl(image); srcReady = true; }
+    syncUI(); if(P.aspect === "src") resize();
+    needRender = true;
+  }
+  /* завантажене відео як джерело (після камери елемент треба перезавантажити) */
+  function attachVideo(){
+    stopCamera();
+    srcReady = false;
+    video.onloadeddata = () => {
+      video.onloadeddata = null;
+      srcW = video.videoWidth; srcH = video.videoHeight; srcReady = true;
+      status(""); setSource("video");
+      if(playing) video.play().catch(() => {});
+    };
+    video.onerror = () => { status(""); alert("Не вдалося відкрити відео. Спробуйте MP4 (H.264) або WebM."); };
+    video.src = videoURL;
+  }
+  function loadFile(file){
+    if(!file) return;
+    if(/^video\//.test(file.type)){
+      if(videoURL) URL.revokeObjectURL(videoURL);
+      videoURL = URL.createObjectURL(file);
+      $("srcName").textContent = file.name;
+      status("Завантаження відео…", true);
+      attachVideo();
+    } else if(/^image\//.test(file.type)){
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => { image = im; $("srcName").textContent = file.name; setSource("image"); };
+      im.onerror = () => alert("Не вдалося відкрити файл як зображення.");
+      im.src = url;
+    }
+  }
+  async function startCamera(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ alert("Камера недоступна в цьому браузері."); return; }
+    let s;
+    try{ s = await navigator.mediaDevices.getUserMedia({ video:{ width:{ ideal:1280 }, height:{ ideal:720 } }, audio:false }); }
+    catch(e){ alert("Немає доступу до камери."); return; }
+    stopCamera();
+    stream = s; cameraOn = true; srcReady = false;
+    video.onloadeddata = () => {
+      video.onloadeddata = null;
+      srcW = video.videoWidth; srcH = video.videoHeight; srcReady = true;
+      if(P.aspect === "src") resize();
+    };
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    P.mirror = true;
+    setSource("camera");
+  }
+  function uploadEl(el){
+    gl.bindTexture(gl.TEXTURE_2D, texSrc);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    try{ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, el); }catch(e){}
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  }
+
+  /* ================= розмір ================= */
+  function resize(){
+    if(P.aspect === "src"){
+      if(P.src === "demo" || srcW < 2){ [W, H] = [1080, 1080]; }
+      else { const k = Math.min(1, 1920/Math.max(srcW, srcH)); W = Math.round(srcW*k/2)*2; H = Math.round(srcH*k/2)*2; }
+    } else [W, H] = ASPECTS[P.aspect] || ASPECTS["1:1"];
+    out.width = W; out.height = H;
+    freeTarget(tGrade); freeTarget(tDemo);
+    tGrade = makeTarget(W, H);
+    tDemo = makeTarget(Math.round(W/2), Math.round(H/2));
+    $("dims").textContent = `${W}×${H}`;
+    needRender = true;
+  }
+
+  /* ================= Colorama LUT ================= */
+  const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const cycleStops = () => P.stops.concat([[1, P.wrap ? P.stops[0][1] : P.stops[P.stops.length - 1][1]]]);
+  function sampleStops(st, t){
+    let i = 1; while(i < st.length - 1 && st[i][0] < t) i++;
+    const [p0, a] = st[i-1], [p1, b] = st[i];
+    const k = p1 > p0 ? Math.min(1, Math.max(0, (t - p0)/(p1 - p0))) : 0;
+    const A = hex(a), B = hex(b);
+    return [A[0] + (B[0]-A[0])*k, A[1] + (B[1]-A[1])*k, A[2] + (B[2]-A[2])*k];
+  }
+  let lutKey = "";
+  const lutData = new Uint8Array(1024*4);
+  function buildLUT(){
+    const st = cycleStops(), key = JSON.stringify(st);
+    if(key === lutKey) return; lutKey = key;
+    for(let i = 0; i < 1024; i++){
+      const c = sampleStops(st, i/1023);
+      lutData[i*4] = c[0]; lutData[i*4+1] = c[1]; lutData[i*4+2] = c[2]; lutData[i*4+3] = 255;
+    }
+    gl.bindTexture(gl.TEXTURE_2D, texLut);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1024, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, lutData);
+    drawWheel();
+  }
+
+  /* ================= кадр ================= */
+  const frac = x => x - Math.floor(x);
+  /* t — секунди: для демо задає поворот голови, для всіх — фазу лупа (колір-цикл, пульс, дрейф) */
+  function renderFrame(t){
+    buildLUT();
+    const ph = frac(t/P.dur);
+    gl.bindVertexArray(vao);
+    let sw = srcW, sh = srcH, src = texSrc;
+    if(P.src === "demo"){
+      gl.bindFramebuffer(gl.FRAMEBUFFER, tDemo.f);
+      gl.viewport(0, 0, tDemo.w, tDemo.h);
+      gl.useProgram(prDemo.p);
+      gl.uniform2f(prDemo.u.uRes, tDemo.w, tDemo.h);
+      gl.uniform1f(prDemo.u.uYaw, P.yaw*0.95*Math.sin(ph*Math.PI*2));
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      sw = tDemo.w; sh = tDemo.h; src = tDemo.t;
+    }
+    const ok = P.src === "demo" || srcReady;
+
+    /* 1 · кадрування + Levels + Colorama */
+    gl.bindFramebuffer(gl.FRAMEBUFFER, tGrade.f);
+    gl.viewport(0, 0, W, H);
+    gl.useProgram(prGrade.p);
+    const u = prGrade.u;
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.uniform1i(u.uSrc, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texLut); gl.uniform1i(u.uLut, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform2f(u.uRes, W, H);
+    gl.uniform2f(u.uSrcSize, ok ? sw : 1, ok ? sh : 1);
+    gl.uniform1f(u.uScale, (ok ? Math.max(W/sw, H/sh) : 1e-6)*P.zoom);
+    gl.uniform2f(u.uOff, P.offX*W, -P.offY*H);
+    gl.uniform1i(u.uMirror, P.mirror ? 1 : 0);
+    gl.uniform1f(u.uIb, P.ib); gl.uniform1f(u.uIw, P.iw); gl.uniform1f(u.uGamma, P.gamma);
+    gl.uniform1f(u.uOb, P.ob); gl.uniform1f(u.uOw, P.ow);
+    gl.uniform1f(u.uReps, P.reps);
+    const phase = frac(P.phase + P.cycle*ph);
+    gl.uniform1f(u.uPhase, phase);
+    gl.uniform1i(u.uCyc, (P.wrap || P.reps !== 1 || phase !== 0) ? 1 : 0);
+    gl.uniform1f(u.uBlend, P.blend);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    /* 2 · Mosaic → екран */
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.useProgram(prMosaic.p);
+    gl.bindTexture(gl.TEXTURE_2D, tGrade.t); gl.uniform1i(prMosaic.u.uSrc, 0);
+    gl.uniform2f(prMosaic.u.uRes, W, H);
+    const vb = Math.max(1, Math.round(P.vb*Math.pow(2, P.pulse*Math.sin(ph*Math.PI*2))));
+    gl.uniform1f(prMosaic.u.uHB, P.hb);
+    gl.uniform1f(prMosaic.u.uVB, vb);
+    gl.uniform1f(prMosaic.u.uShift, P.drift*ph);
+    gl.uniform1i(prMosaic.u.uSharp, P.sharp ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  /* ================= цикл ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, t0 = now(), tPause = 0, needRender = true, lastT = -1;
+  let busy = false;
+  const live = () => (P.src === "video" || P.src === "camera") && srcReady;
+  /* для відео фаза лупа йде від часу кліпу, щоб колір-цикл не «їхав» відносно картинки */
+  const clock = () => P.src === "video" && srcReady ? video.currentTime : (playing ? now() - t0 : tPause);
+  function tick(){
+    requestAnimationFrame(tick);
+    if(busy) return;
+    const t = clock();
+    const moving = live() && (cameraOn || !video.paused);
+    if(live() && video.readyState >= 2 && (moving || needRender)) uploadEl(video);
+    const animated = P.src === "demo" || P.cycle !== 0 || P.pulse > 0 || P.drift !== 0;
+    if(needRender || moving || (playing && animated && Math.abs(t - lastT) > 0.5/FPS)){
+      needRender = false; lastT = t;
+      renderFrame(t);
+    }
+  }
+  $("playBtn").addEventListener("click", () => {
+    if(playing){ tPause = now() - t0; video.pause(); } else { t0 = now() - tPause; if(P.src === "video" || P.src === "camera") video.play().catch(() => {}); }
+    playing = !playing;
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+    needRender = true;
+  });
+
+  /* ================= exports ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  const fname = ext => `morph-${P.src}-${P.hb}x${P.vb}.${ext}`;
+  function seekVid(t){
+    return new Promise(res => {
+      let done = false;
+      const on = () => { if(done) return; done = true; video.removeEventListener("seeked", on); res(); };
+      video.addEventListener("seeked", on);
+      try{ video.currentTime = t; }catch(e){ on(); }
+      setTimeout(on, 1500);
+    });
+  }
+
+  $("exPng").addEventListener("click", () => { renderFrame(clock()); out.toBlob(b => { if(b) downloadBlob(b, fname("png")); }, "image/png"); });
+  $("exJpg").addEventListener("click", () => { renderFrame(clock()); out.toBlob(b => { if(b) downloadBlob(b, fname("jpg")); }, "image/jpeg", 0.95); });
+
+  let mp4Abort = false;
+  $("exMp4").addEventListener("click", async () => {
+    if(busy){ mp4Abort = true; return; }
+    if(P.src === "camera"){ alert("З камери записується лише WebM — натисніть «WebM»."); return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    const isVid = P.src === "video" && srcReady;
+    busy = true; mp4Abort = false;
+    $("mp4Label").textContent = "■ Скасувати";
+    const wasPlaying = !video.paused;
+    if(isVid) video.pause();
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:W, height:H }, fastStart:"in-memory" });
+    let err = null;
+    const enc = new VideoEncoder({ output:(c, m) => muxer.addVideoChunk(c, m), error:e => { err = e; } });
+    enc.configure({ codec: W*H > 1500000 ? "avc1.640033" : "avc1.640028", width:W, height:H, bitrate:P.bitrate*1e6, framerate:FPS });
+    const total = isVid ? Math.max(1, Math.floor(Math.min(video.duration || 0, 120)*FPS)) : Math.round(P.dur*FPS)*P.loops;
+    try{
+      for(let i = 0; i < total && !err && !mp4Abort; i++){
+        const t = i/FPS;
+        if(isVid){ await seekVid(t); uploadEl(video); }
+        renderFrame(t);
+        const fr = new VideoFrame(out, { timestamp: Math.round(i*1e6/FPS), duration: Math.round(1e6/FPS) });
+        enc.encode(fr, { keyFrame: i % (FPS*2) === 0 }); fr.close();
+        if(enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 0));
+        if(i % 6 === 0){ status(`Рендер ${Math.round(i/total*100)}%`, true); await new Promise(r => setTimeout(r, 0)); }
+      }
+      if(!err && !mp4Abort){
+        status("Кодування…", true);
+        await enc.flush(); muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer], { type:"video/mp4" }), fname("mp4"));
+      }
+      enc.close();
+    }catch(e){ err = err || e; }
+    if(err) alert("Помилка кодування MP4: " + (err.message || err));
+    if(isVid && wasPlaying && playing) video.play().catch(() => {});
+    busy = false; needRender = true;
+    $("mp4Label").textContent = "MP4 (30 fps)"; status("");
+  });
+
+  let webmRec = null;
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    if(!playing) $("playBtn").click();
+    t0 = now();
+    const isVid = P.src === "video" && srcReady;
+    if(isVid){ video.currentTime = 0; video.play().catch(() => {}); }
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    try{ webmRec = new MediaRecorder(out.captureStream(FPS), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+    webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop = () => { if(chunks.length) downloadBlob(new Blob(chunks, { type:"video/webm" }), fname("webm")); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    const len = isVid ? Math.min(video.duration || P.dur, 120) : P.dur*P.loops;
+    setTimeout(() => { if(webmRec) webmRec.stop(); }, len*1000);
+  });
+
+  /* ================= файли / drag & drop ================= */
+  $("fileVideo").addEventListener("change", e => { loadFile(e.target.files[0]); e.target.value = ""; });
+  $("fileImage").addEventListener("change", e => { loadFile(e.target.files[0]); e.target.value = ""; });
+  const stage = $("stage");
+  ["dragenter","dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if(f) loadFile(f); });
+  window.addEventListener("paste", e => {
+    const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith("image/"));
+    if(it){ e.preventDefault(); loadFile(it.getAsFile()); }
+  });
+
+  /* ================= Colorama wheel ================= */
+  const wheel = $("wheel"), wctx = wheel.getContext("2d");
+  const WC = 170, WR = 122, Wr = 52;
+  const angOf = t => -Math.PI/2 + t*Math.PI*2;
+  let dragStop = -1, dragMoved = false;
+  function drawWheel(){
+    const st = cycleStops();
+    wctx.clearRect(0, 0, 340, 340);
+    const rgb = c => `rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
+    if(wctx.createConicGradient){
+      const g = wctx.createConicGradient(-Math.PI/2, WC, WC);
+      for(let i = 0; i <= 256; i++) g.addColorStop(i/256, rgb(sampleStops(st, i/256)));
+      wctx.fillStyle = g;
+      wctx.beginPath(); wctx.arc(WC, WC, WR, 0, Math.PI*2); wctx.arc(WC, WC, Wr, 0, Math.PI*2, true); wctx.fill();
+    } else {
+      for(let a = 0; a < 360; a++){                      // запасний варіант без conic-gradient
+        const t0w = a/360, t1w = (a + 1.6)/360;
+        wctx.fillStyle = rgb(sampleStops(st, Math.min(1, t0w + 0.5/360)));
+        wctx.beginPath();
+        wctx.arc(WC, WC, WR, angOf(t0w), angOf(t1w));
+        wctx.arc(WC, WC, Wr, angOf(t1w), angOf(t0w), true);
+        wctx.closePath(); wctx.fill();
+      }
+    }
+    wctx.lineWidth = 3; wctx.strokeStyle = "#3a3a42";
+    wctx.beginPath(); wctx.arc(WC, WC, WR, 0, Math.PI*2); wctx.stroke();
+    wctx.beginPath(); wctx.arc(WC, WC, Wr, 0, Math.PI*2); wctx.stroke();
+    P.stops.forEach(([t, col], i) => {
+      const a = angOf(t), ca = Math.cos(a), sa = Math.sin(a);
+      const tip = WR + 6, back = WR + 30, half = 12;
+      wctx.beginPath();
+      wctx.moveTo(WC + ca*tip, WC + sa*tip);
+      wctx.lineTo(WC + ca*back - sa*half, WC + sa*back + ca*half);
+      wctx.lineTo(WC + ca*back + sa*half, WC + sa*back - ca*half);
+      wctx.closePath();
+      wctx.fillStyle = col; wctx.fill();
+      wctx.lineWidth = i === dragStop ? 4 : 2.5; wctx.strokeStyle = i === dragStop ? "#fff" : "#9a9aa6"; wctx.stroke();
+    });
+  }
+  function wheelT(e){
+    const r = wheel.getBoundingClientRect();
+    const x = (e.clientX - r.left)/r.width*340 - WC, y = (e.clientY - r.top)/r.height*340 - WC;
+    return frac((Math.atan2(y, x) + Math.PI/2)/(Math.PI*2));
+  }
+  wheel.addEventListener("pointerdown", e => {
+    const t = wheelT(e);
+    let best = -1, bd = 0.06;
+    P.stops.forEach(([p], i) => { if(!i) return; const d = Math.min(Math.abs(p - t), 1 - Math.abs(p - t)); if(d < bd){ bd = d; best = i; } });
+    if(best < 0) return;
+    dragStop = best; dragMoved = false; wheel.setPointerCapture(e.pointerId); drawWheel();
+  });
+  wheel.addEventListener("pointermove", e => {
+    if(dragStop < 0) return;
+    const i = dragStop, t = wheelT(e);
+    const lo = P.stops[i-1][0] + 0.01, hi = (i < P.stops.length - 1 ? P.stops[i+1][0] : 1) - 0.01;
+    const v = Math.min(hi, Math.max(lo, t));
+    if(Math.abs(v - P.stops[i][0]) > 1e-4){ P.stops[i][0] = v; dragMoved = true; markPalette(); needRender = true; drawWheel(); }
+  });
+  wheel.addEventListener("pointerup", () => {
+    if(dragStop >= 0 && !dragMoved){ const inp = $("stopColors").querySelectorAll("input")[dragStop]; if(inp) inp.click(); }
+    dragStop = -1; drawWheel();
+  });
+  function renderStopInputs(){
+    const box = $("stopColors"); box.innerHTML = "";
+    P.stops.forEach(([, col], i) => {
+      const f = document.createElement("div"); f.className = "color-field";
+      f.innerHTML = `<div class="color-wrap"><input type="color" value="${col}"></div>`;
+      f.querySelector("input").addEventListener("input", e => { P.stops[i][1] = e.target.value; markPalette(); needRender = true; });
+      box.appendChild(f);
+    });
+  }
+  $("stopAdd").addEventListener("click", () => {
+    if(P.stops.length >= 6) return;
+    const st = cycleStops(); let gi = 0, gap = 0;
+    for(let i = 0; i < st.length - 1; i++){ const g = st[i+1][0] - st[i][0]; if(g > gap){ gap = g; gi = i; } }
+    const t = st[gi][0] + gap/2, c = sampleStops(st, t);
+    const hx = "#" + c.map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+    P.stops.splice(gi + 1, 0, [t, hx]);
+    renderStopInputs(); markPalette(); needRender = true;
+  });
+  $("stopDel").addEventListener("click", () => {
+    if(P.stops.length <= 2) return;
+    P.stops.pop(); renderStopInputs(); markPalette(); needRender = true;
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  const palBox = $("palettes");
+  for(const [key, p] of Object.entries(PALETTES)){
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.pal = key;
+    const st = p.stops.concat([[1, p.stops[0][1]]]);
+    el.innerHTML = `<div>${p.name}</div><div class="pal" style="background:linear-gradient(90deg,${st.map(s => `${s[1]} ${s[0]*100}%`).join(",")})"></div>`;
+    el.addEventListener("click", () => { P.stops = JSON.parse(JSON.stringify(p.stops)); syncUI(); needRender = true; });
+    palBox.appendChild(el);
+  }
+  const sameStops = (a, b) => a.length === b.length && a.every((s, i) => Math.abs(s[0] - b[i][0]) < 1e-3 && s[1].toLowerCase() === b[i][1].toLowerCase());
+  function markPalette(){
+    palBox.querySelectorAll(".preset").forEach(el => el.classList.toggle("active", sameStops(P.stops, PALETTES[el.dataset.pal].stops)));
+  }
+
+  const stBox = $("styles");
+  STYLES.forEach((s, i) => {
+    const el = document.createElement("div");
+    el.className = "preset"; el.textContent = s.name;
+    el.addEventListener("click", () => {
+      const keep = {}; KEEP.forEach(k => keep[k] = P[k]);
+      Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)), keep, JSON.parse(JSON.stringify(s.p)));
+      stBox.querySelectorAll(".preset").forEach(x => x.classList.toggle("active", x === el));
+      syncUI(); needRender = true;
+    });
+    stBox.appendChild(el);
+  });
+
+  document.querySelectorAll("#sources .preset").forEach(p => p.addEventListener("click", () => {
+    const k = p.dataset.src;
+    if(k === "video"){ if(!videoURL || P.src === "video") $("fileVideo").click(); else attachVideo(); return; }
+    if(k === "image"){ if(!image || P.src === "image") $("fileImage").click(); else setSource("image"); return; }
+    if(k === "camera"){ if(P.src !== "camera") startCamera(); return; }
+    setSource(k);
+  }));
+  document.querySelectorAll("#aspects .preset").forEach(p => p.addEventListener("click", () => {
+    P.aspect = p.dataset.aspect; syncUI(); resize();
+  }));
+  document.querySelectorAll("#grids .preset").forEach(p => p.addEventListener("click", () => {
+    P.hb = +p.dataset.hb; P.vb = +p.dataset.vb; syncUI(); needRender = true;
+  }));
+
+  /* блоки — логарифмічний слайдер 1…2000 */
+  const toLog = n => Math.round(Math.log(n)/Math.log(2000)*1000);
+  const fromLog = s => Math.max(1, Math.round(Math.exp(s/1000*Math.log(2000))));
+  $("hbS").addEventListener("input", e => { P.hb = fromLog(+e.target.value); $("vHb").textContent = P.hb; markGrids(); needRender = true; });
+  $("vbS").addEventListener("input", e => { P.vb = fromLog(+e.target.value); $("vVb").textContent = P.vb; markGrids(); needRender = true; });
+
+  const f2 = x => x.toFixed(2), f3 = x => x.toFixed(3);
+  const RANGES = [
+    ["zoom","vZoom",f2], ["offX","vOffX",f2], ["offY","vOffY",f2], ["yaw","vYaw",f2],
+    ["ib","vIb",f3], ["iw","vIw",f3], ["gamma","vGamma",f2], ["ob","vOb",f2], ["ow","vOw",f2],
+    ["reps","vReps",f2], ["phase","vPhase",f2], ["cycle","vCycle",null], ["blend","vBlend",f2],
+    ["pulse","vPulse",f2], ["drift","vDrift",null],
+    ["dur","vDur",null], ["loops","vLoops",null], ["bitrate","vBitrate",null],
+  ];
+  for(const [id, vid, fmt] of RANGES){
+    $(id).addEventListener("input", e => {
+      P[id] = parseFloat(e.target.value);
+      $(vid).textContent = fmt ? fmt(P[id]) : P[id];
+      needRender = true;
+    });
+  }
+  $("mirror").addEventListener("change", e => { P.mirror = e.target.checked; needRender = true; });
+  $("sharp").addEventListener("change", e => { P.sharp = e.target.checked; needRender = true; });
+  $("wrap").addEventListener("change", e => { P.wrap = e.target.checked; needRender = true; });
+
+  function markGrids(){
+    document.querySelectorAll("#grids .preset").forEach(x => x.classList.toggle("active", +x.dataset.hb === P.hb && +x.dataset.vb === P.vb));
+  }
+  function syncUI(){
+    for(const [id, vid, fmt] of RANGES){ $(id).value = P[id]; $(vid).textContent = fmt ? fmt(P[id]) : P[id]; }
+    $("hbS").value = toLog(P.hb); $("vHb").textContent = P.hb;
+    $("vbS").value = toLog(P.vb); $("vVb").textContent = P.vb;
+    $("mirror").checked = P.mirror; $("sharp").checked = P.sharp; $("wrap").checked = P.wrap;
+    const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x.dataset[attr] === val));
+    mark("#sources", "src", P.src); mark("#aspects", "aspect", P.aspect);
+    $("demoGroup").style.display = P.src === "demo" ? "block" : "none";
+    markGrids(); markPalette(); renderStopInputs(); lutKey = ""; drawWheel();
+  }
+  $("reset").addEventListener("click", () => {
+    const src = P.src;
+    Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)), { src });
+    stBox.querySelectorAll(".preset").forEach((x, i) => x.classList.toggle("active", i === 0));
+    syncUI(); resize();
+  });
+
+  /* ================= boot ================= */
+  stBox.firstChild.classList.add("active");
+  resize(); syncUI();
+  tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

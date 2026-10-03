@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klik Tools — Creative Studio Toolkit</title>
-<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo. Everything runs locally in your browser." />
+<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph. Everything runs locally in your browser." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23bbff32'/%3E%3Cpath d='M10 7v18M10 16l9-9M10 16l9 9' stroke='%23060612' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,7 +44,9 @@
   .brand .sep{width:1px;height:22px;background:var(--border)}
   .brand .sub{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 
-  nav{display:flex;gap:4px;margin-left:8px}
+  nav{display:flex;gap:4px;margin-left:8px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent)}
+  nav::-webkit-scrollbar{display:none}
   nav .tab{
     font-size:13.5px;font-weight:600;color:var(--muted);
     padding:8px 14px;border-radius:999px;cursor:pointer;transition:.15s;
@@ -53,7 +55,7 @@
   nav .tab:hover{color:var(--text)}
   nav .tab.active{color:var(--accent);border-color:var(--accent-dim);background:var(--accent-dim)}
 
-  .head-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .head-right{margin-left:auto;display:flex;align-items:center;gap:14px;flex:none}
   .langs{display:flex;gap:2px;background:var(--panel-2);border:1px solid var(--border);border-radius:999px;padding:3px;flex:none}
   .langs button{
     background:none;border:0;color:var(--muted);font-family:inherit;
@@ -229,6 +231,35 @@
   .prev-echo span:nth-child(7){transform:scale(.19);color:#fdbd55;-webkit-text-stroke:1px #fffaf0}
   @keyframes echobreath{to{transform:scale(1.06)}}
 
+  /* preview art: sweep (light sweep → radial blur → colorama) */
+  .prev-sweep{position:absolute;inset:0;background:#000;overflow:hidden;display:grid;place-items:center}
+  .prev-sweep .rays{position:absolute;inset:-40%;
+    background:conic-gradient(from 230deg at 50% 52%,transparent 0deg,#620bf3 18deg,#ec7a50 34deg,#f3d4b1 40deg,#ec7a50 47deg,#620bf3 62deg,transparent 84deg,
+      transparent 150deg,#620bf3 175deg,#ec7a50 190deg,#620bf3 205deg,transparent 228deg);
+    filter:blur(22px);opacity:.85;animation:sweeprays 4.5s ease-in-out infinite alternate}
+  .prev-sweep span{position:relative;font-weight:800;font-size:112px;line-height:1;letter-spacing:-.04em;color:transparent;
+    background:linear-gradient(110deg,#000 38%,#620bf3 44%,#ec7a50 48%,#f3d4b1 50%,#ec7a50 52%,#620bf3 56%,#000 62%);
+    background-size:300% 100%;-webkit-background-clip:text;background-clip:text;animation:sweepbg 4.5s ease-in-out infinite alternate}
+  @keyframes sweeprays{from{transform:rotate(-18deg) scale(1.05)}to{transform:rotate(14deg) scale(1.2)}}
+  @keyframes sweepbg{from{background-position:100% 0}to{background-position:0 0}}
+
+  /* preview art: morph (levels → colorama → mosaic) */
+  .prev-morph{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;overflow:hidden}
+  .prev-morph i{display:block;height:13px;border-radius:1px;
+    background:linear-gradient(90deg,#000 0%,#183bf7 18%,#fff 32%,#8a8a8a 46%,#fff 58%,#183bf7 74%,#000 100%);
+    animation:morphrow 3.6s ease-in-out infinite alternate}
+  .prev-morph i:nth-child(1){width:78px;animation-delay:-.2s}
+  .prev-morph i:nth-child(2){width:104px;animation-delay:-.5s}
+  .prev-morph i:nth-child(3){width:118px;animation-delay:-.8s}
+  .prev-morph i:nth-child(4){width:112px;animation-delay:-1.1s}
+  .prev-morph i:nth-child(5){width:100px;animation-delay:-1.4s}
+  .prev-morph i:nth-child(6){width:84px;animation-delay:-1.7s}
+  .prev-morph i:nth-child(7){width:56px;animation-delay:-2s}
+  .prev-morph i:nth-child(8){width:60px;animation-delay:-2.3s}
+  .prev-morph i:nth-child(9){width:150px;animation-delay:-2.6s}
+  .prev-morph i:nth-child(10){width:190px;animation-delay:-2.9s}
+  @keyframes morphrow{from{transform:translateX(-14px);filter:hue-rotate(0deg)}to{transform:translateX(14px);filter:hue-rotate(-45deg)}}
+
   /* preview art: orbit */
   .prev-orbit{position:absolute;inset:0;background:#e9e9e6;overflow:hidden}
   .prev-orbit i{position:absolute;border-radius:2px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
@@ -306,6 +337,8 @@
     <div class="tab" data-tool="dotmatrix">DotMatrix</div>
     <div class="tab" data-tool="orbit">Orbit</div>
     <div class="tab" data-tool="echo">Echo</div>
+    <div class="tab" data-tool="sweep">Sweep</div>
+    <div class="tab" data-tool="morph">Morph</div>
   </nav>
 
   <div class="head-right">
@@ -327,7 +360,7 @@
     <div class="glow"></div>
     <div class="tagline"><span class="pulse"></span> <span data-i18n="tagline">In-house studio tools</span></div>
     <h1 data-i18n-html="heroTitle">Creative tools by <span class="green">Klik</span> — right in your browser.</h1>
-    <p class="lede" data-i18n="lede">Fourteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts and echo-ring typography. No installs, no server — everything runs locally.</p>
+    <p class="lede" data-i18n="lede">Seventeen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals and gradient-morph video. No installs, no server — everything runs locally.</p>
   </div>
 
   <div class="cards">
@@ -519,6 +552,28 @@
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
     </div>
+    <!-- Sweep -->
+    <div class="card" data-tool="sweep">
+      <div class="preview">
+        <div class="prev-sweep"><div class="rays"></div><span>new</span></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">16</span> Sweep Studio</h3>
+        <p data-i18n="sweepDesc">The After Effects text-reveal recipe in three effects: CC Light Sweep → CC Radial Fast Blur → Colorama. A light band sweeps across black text or your logo, the zoom blur turns it into rays, Colorama paints violet → orange → cream and wraps the hottest spots back to black. Animated sweep and blur centers, 8 output cycles, seamless loops, PNG / JPG / MP4 / WebM export.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+    <!-- Morph -->
+    <div class="card" data-tool="morph">
+      <div class="preview">
+        <div class="prev-morph"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">17</span> Morph Studio</h3>
+        <p data-i18n="morphDesc">The After Effects gradient-morph recipe: Levels → Colorama → Mosaic. Your video, photo or webcam: Levels blows out the bright wall, Colorama maps shadows → blue → white and loops the background to black, Mosaic 1300 × 30 with Sharp Colors smears every row into a gradient bar. Built-in 3D demo head, 8 palettes, pulse and drift, frame-exact MP4 export.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
   </div>
 
   <div class="strip">
@@ -546,7 +601,7 @@
       title: "Klik Tools — Creative Studio Toolkit",
       tagline: "In-house studio tools",
       heroTitle: 'Creative tools by <span class="green">Klik</span> — right in your browser.',
-      lede: "Fifteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes and 3D photo-card layouts. No installs, no server — everything runs locally.",
+      lede: "Seventeen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals and gradient-morph video. No installs, no server — everything runs locally.",
       lumaDesc: "CellMap · PixelSynth · ASCII. Turns photos and videos into luminance-driven grids: clip tiles, color zones or classic ASCII art with export.",
       sphereDesc: "A 3D glowing-sphere generator on WebGL: noise, glow, orbiting particles, presets and MP4 recording — all in real time.",
       xrayDesc: "Photo → x-ray: Canny contour detection, thin 1px lines, Wireframe / Blueprint / Neon styles and export to PNG or vector SVG.",
@@ -562,6 +617,8 @@
       dotmatrixDesc: "The Milk & Peppers pixel-silhouette effect: Mosaic 72×128 → Threshold → 15×15 PIXEL matte. Eagle, butterfly, whale, rocket, any text or your own mask — over a flat sky with clouds, grid lines, a vertical caption and a 24 fps timecode.",
       orbitDesc: "Photo cards in 3D layouts: a growing spiral, a petal ring, a 3D globe, a carousel, a scatter field and flipping cards — with seamless animated loops: spin, shuffle, fly-through, flip. 1 to 200 cards, transparent background, PNG / SVG / JPG / WebP / MP4 export.",
       echoDesc: "The After Effects text-echo recipe: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Nested glowing rings from any digits, word or your own shape (PNG / SVG / logo), anchor and drift stairs, 8 gradient maps, seamless outward / inward / breathing loops, PNG / JPG / MP4 / WebM export.",
+      sweepDesc: "The After Effects text-reveal recipe in three effects: CC Light Sweep → CC Radial Fast Blur → Colorama. A light band sweeps across black text or your logo, the zoom blur turns it into rays, Colorama paints violet → orange → cream and wraps the hottest spots back to black. Animated sweep and blur centers, 8 output cycles, seamless loops, PNG / JPG / MP4 / WebM export.",
+      morphDesc: "The After Effects gradient-morph recipe: Levels → Colorama → Mosaic. Your video, photo or webcam: Levels blows out the bright wall, Colorama maps shadows → blue → white and loops the background to black, Mosaic 1300 × 30 with Sharp Colors smears every row into a gradient bar. Built-in 3D demo head, 8 palettes, pulse and drift, frame-exact MP4 export.",
       open: "Open studio",
       strip1: "Private — files never leave your browser",
       strip2: "No installs, no dependencies",
@@ -572,7 +629,7 @@
       title: "Klik Tools — внутренние студии",
       tagline: "Внутренние инструменты студии",
       heroTitle: 'Креативные тулы <span class="green">Klik</span> — прямо в браузере.',
-      lede: "Пятнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек и эхо-кольца из текста. Без установок и сервера — всё локально.",
+      lede: "Семнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света и градиент-морф видео. Без установок и сервера — всё локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото и видео → сетки по яркости, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) с палитрами, неоновые капсулы, стек glow/glitch пост-эффектов.",
       sphereDesc: "3D генератор световых сфер на WebGL: шум, свечение, орбитальные частицы, пресеты и запись в MP4 — всё в реальном времени.",
       xrayDesc: "Фото → рентген: детекция контуров Canny, тонкие 1px-линии, стили Wireframe / Blueprint / Neon и экспорт в PNG или вектор SVG.",
@@ -588,6 +645,8 @@
       dotmatrixDesc: "Эффект пиксельного силуэта Milk & Peppers: Mosaic 72×128 → Threshold → PIXEL-матте 15×15. Орёл, бабочка, кит, ракета, любой текст или своя маска — на ровном небе с облаками, сеткой линий, вертикальной подписью и таймкодом 24 fps.",
       orbitDesc: "Фотокарточки в 3D-раскладках: растущая спираль, кольцо-лепестки, 3D-глобус, карусель, разлёт в пространстве и флип-карточки — с бесшовными анимационными лупами: вращение, тасовка, пролёт камеры, флип. От 1 до 200 карточек, прозрачный фон, экспорт PNG / SVG / JPG / WebP / MP4.",
       echoDesc: "Рецепт текст-эхо из After Effects: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Вложенные светящиеся кольца из любых цифр, слова или своей фигуры (PNG / SVG / логотип), anchor и дрейф-ступеньки, 8 градиент-карт, бесшовные лупы наружу / внутрь / дыхание, экспорт PNG / JPG / MP4 / WebM.",
+      sweepDesc: "Рецепт текст-ревила из After Effects в три эффекта: CC Light Sweep → CC Radial Fast Blur → Colorama. Полоса света проходит по чёрному тексту или логотипу, зум-блюр превращает её в лучи, Colorama красит фиолетовый → оранжевый → крем и заворачивает самые яркие места обратно в чёрный. Анимированные центры света и блюра, 8 циклов цвета, бесшовные лупы, экспорт PNG / JPG / MP4 / WebM.",
+      morphDesc: "Рецепт градиент-морфа из After Effects: Levels → Colorama → Mosaic. Твоё видео, фото или камера: Levels выжигает светлую стену, Colorama красит тени → синий → белый и заворачивает фон в чёрный, Mosaic 1300 × 30 с Sharp Colors растягивает каждую строку в градиентную полосу. Встроенная 3D-демо-голова, 8 палитр, пульсация и дрейф, покадровый экспорт MP4.",
       open: "Открыть студию",
       strip1: "Приватно — файлы не покидают браузер",
       strip2: "Без установок и зависимостей",
@@ -598,7 +657,7 @@
       title: "Klik Tools — внутрішні студії",
       tagline: "Внутрішні інструменти студії",
       heroTitle: 'Креативні тули <span class="green">Klik</span> — прямо у браузері.',
-      lede: "Пʼятнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток і ехо-кільця з тексту. Без інсталяцій, без сервера — все локально.",
+      lede: "Сімнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла й градієнт-морф відео. Без інсталяцій, без сервера — все локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото й відео → сітки за яскравістю, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) з палітрами, неонові капсули, стек glow/glitch пост-ефектів.",
       sphereDesc: "3D генератор світлових сфер на WebGL: шум, ґлоу, орбітальні частинки, пресети та запис у MP4 — все в реальному часі.",
       xrayDesc: "Фото → рентген: детекція контурів Canny, тонкі 1px-лінії, стилі Wireframe / Blueprint / Neon і експорт у PNG або вектор SVG.",
@@ -614,6 +673,8 @@
       dotmatrixDesc: "Ефект піксельного силуету Milk & Peppers: Mosaic 72×128 → Threshold → PIXEL-матте 15×15. Орел, метелик, кит, ракета, будь-який текст чи своя маска — на рівному небі з хмарами, сіткою ліній, вертикальним підписом і таймкодом 24 fps.",
       orbitDesc: "Фото-картки у 3D-розкладках: наростаюча спіраль, кільце-пелюстки, 3D-глобус, карусель, розліт у просторі та фліп-картки — з безшовними анімаційними лупами: обертання, тасування, проліт камери, фліп. Від 1 до 200 карток, прозорий фон, експорт PNG / SVG / JPG / WebP / MP4.",
       echoDesc: "Рецепт текст-відлуння з After Effects: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Вкладені кільця, що світяться, з будь-яких цифр, слова чи своєї фігури (PNG / SVG / логотип), anchor і дрейф-сходинки, 8 градієнт-мап, безшовні лупи назовні / всередину / дихання, експорт PNG / JPG / MP4 / WebM.",
+      sweepDesc: "Рецепт текст-ревілу з After Effects у три ефекти: CC Light Sweep → CC Radial Fast Blur → Colorama. Смуга світла проходить по чорному тексту чи логотипу, зум-блюр робить з неї промені, Colorama фарбує фіолет → помаранч → крем і загортає найяскравіші місця назад у чорний. Анімовані центри світла й блюру, 8 циклів кольору, безшовні лупи, експорт PNG / JPG / MP4 / WebM.",
+      morphDesc: "Рецепт градієнт-морфу з After Effects: Levels → Colorama → Mosaic. Твоє відео, фото чи камера: Levels випалює світлу стіну, Colorama фарбує тіні → синій → білий і загортає фон у чорний, Mosaic 1300 × 30 із Sharp Colors розтягує кожен рядок у градієнтну смугу. Вбудована 3D-демо-голова, 8 палітр, пульсація й дрейф, покадровий експорт MP4.",
       open: "Відкрити студію",
       strip1: "Приватно — файли не покидають браузер",
       strip2: "Без інсталяцій та залежностей",
@@ -661,6 +722,8 @@
     dotmatrix:{ src: "tools/matrix-studio.html",   title: "DotMatrix Studio" },
     orbit:    { src: "tools/orbit-studio.html",    title: "Orbit Studio" },
     echo:     { src: "tools/echo-studio.html",     title: "Echo Studio" },
+    sweep:    { src: "tools/sweep-studio.html",    title: "Sweep Studio" },
+    morph:    { src: "tools/morph-studio.html",    title: "Morph Studio" },
   };
 
   const toolview = document.getElementById("toolview");
@@ -677,8 +740,10 @@
 
     document.body.classList.toggle("tool-open", !!tool);
     toolview.classList.toggle("on", !!tool);
-    document.querySelectorAll("nav .tab").forEach(t =>
-      t.classList.toggle("active", t.dataset.tool === tool));
+    document.querySelectorAll("nav .tab").forEach(t => {
+      t.classList.toggle("active", t.dataset.tool === tool);
+      if (t.dataset.tool === tool) t.scrollIntoView({ block:"nearest", inline:"nearest" });
+    });
     updateTitle();
 
     if (tool){
@@ -686,7 +751,7 @@
         const f = document.createElement("iframe");
         f.src = TOOLS[tool].src;
         f.title = TOOLS[tool].title;
-        f.allow = "clipboard-write";
+        f.allow = "clipboard-write; camera";
         frames[tool] = f;
         toolview.appendChild(f);
       }
