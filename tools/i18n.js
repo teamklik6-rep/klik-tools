@@ -986,7 +986,102 @@
     "Повторів у файлі": ["Loops per file", "Повторов в файле"],
     "MP4 рендериться покадрово (WebCodecs) — луп замикається ідеально, нічого не вивантажується. WebM пишеться з живого превʼю.": ["MP4 is rendered frame by frame (WebCodecs) — the loop closes perfectly and nothing is uploaded. WebM is recorded from the live preview.", "MP4 рендерится покадрово (WebCodecs) — луп замыкается идеально, ничего не выгружается. WebM пишется из живого превью."],
     "один файл · Text + Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur · все локально": ["single file · Text + Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur · all local", "один файл · Text + Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur · всё локально"],
-    "Помилка кодування MP4: ": ["MP4 encoding error: ", "Ошибка кодирования MP4: "]
+    "Помилка кодування MP4: ": ["MP4 encoding error: ", "Ошибка кодирования MP4: "],
+
+    /* === Sweep Studio === */
+    "Sweep Studio — текст-ревіл: Light Sweep → Radial Fast Blur → Colorama": ["Sweep Studio — text reveal: Light Sweep → Radial Fast Blur → Colorama", "Sweep Studio — текст-ревил: Light Sweep → Radial Fast Blur → Colorama"],
+    "Слово чи фраза…": ["A word or a phrase…", "Слово или фраза…"],
+    "Ширина тексту": ["Text width", "Ширина текста"],
+    "Ширина > 1 — текст більший за кадр, як у фінальному кадрі туторіалу: літери перестають читатися й стають площинами світла з різкими гранями.": [
+      "Width > 1 makes the text bigger than the frame, like the final shot of the tutorial: the letters stop reading as letters and become planes of light with sharp edges.",
+      "Ширина > 1 — текст больше кадра, как в финальном кадре туториала: буквы перестают читаться и становятся плоскостями света с резкими гранями."],
+    "Яскравість тексту": ["Text brightness", "Яркость текста"],
+    "Параметри як у туторі: Sharp, Width 200, Sweep 90, Edge 60 / 10, Add. Текст чорний — видно лише те, що зачепило світло; Edge підсвічує краї літер усередині смуги.": [
+      "Settings as in the tutorial: Sharp, Width 200, Sweep 90, Edge 60 / 10, Add. The text is black — you only see what the light touches; Edge lights up the letter edges inside the band.",
+      "Параметры как в туторе: Sharp, Width 200, Sweep 90, Edge 60 / 10, Add. Текст чёрный — видно только то, что задел свет; Edge подсвечивает края букв внутри полосы."],
+    "Анімація центру": ["Center animation", "Анимация центра"],
+    "Прохід": ["Pass", "Проход"],
+    "Туди-назад": ["Ping-pong", "Туда-обратно"],
+    "Стоп-кадр": ["Freeze", "Стоп-кадр"],
+    "Старт": ["Start", "Старт"],
+    "Фініш": ["End", "Финиш"],
+    "Пауза в темряві": ["Hold in the dark", "Пауза в темноте"],
+    "Позиція (статика)": ["Position (freeze)", "Позиция (стоп-кадр)"],
+    "Наїзд камери": ["Camera push-in", "Наезд камеры"],
+    "±1 — смуга повністю за межами тексту, тож кадр темний на початку й у кінці: «Прохід» дає безшовний луп (темрява → ревіл → темрява). Center Blur рухається разом зі світлом.": [
+      "±1 puts the band fully outside the text, so the frame is dark at the start and at the end: “Pass” gives a seamless loop (dark → reveal → dark). The blur center moves along with the light.",
+      "±1 — полоса полностью за пределами текста, поэтому кадр тёмный в начале и в конце: «Проход» даёт бесшовный луп (темнота → ревил → темнота). Center Blur движется вместе со светом."],
+    "Стоїть на adjustment layer над текстом і розмазує все під собою від центру назовні. 50 — легкий ореол, 95 — промені на весь кадр.": [
+      "Sits on an adjustment layer above the text and smears everything below it outward from the center. 50 is a soft halo, 95 is rays across the whole frame.",
+      "Стоит на adjustment layer над текстом и размазывает всё под собой от центра наружу. 50 — лёгкий ореол, 95 — лучи на весь кадр."],
+    "AE: центр → ліво": ["AE: center → left", "AE: центр → лево"],
+    "Нерухомо": ["Fixed", "Неподвижно"],
+    "Назустріч": ["Head-on", "Навстречу"],
+    "Слідувати за світлом": ["Follow the light", "Следовать за светом"],
+    "Старт X": ["Start X", "Старт X"],
+    "Старт Y": ["Start Y", "Старт Y"],
+    "Фініш X": ["End X", "Финиш X"],
+    "Фініш Y": ["End Y", "Финиш Y"],
+    "Координати — частки кадру (0…1). Центр за межами кадру (X < 0) дає майже паралельні промені, як у кінці туторіалу. Клік чи перетягування по превʼю ставить «Старт».": [
+      "Coordinates are fractions of the frame (0…1). A center outside the frame (X < 0) gives almost parallel rays, like at the end of the tutorial. Click or drag on the preview to set “Start”.",
+      "Координаты — доли кадра (0…1). Центр за пределами кадра (X < 0) даёт почти параллельные лучи, как в конце туториала. Клик или перетаскивание по превью ставит «Старт»."],
+    "Білий → назад у чорний": ["White → back to black", "Белый → обратно в чёрный"],
+    "Кольори зняті з кола в туторі: чорний → фіолет → помаранч → крем і знову в чорний. Через це найяскравіші місця провалюються в темряву (той самий темний трикутник у фіналі). Трикутники на колі можна тягати.": [
+      "Colors picked from the wheel in the tutorial: black → violet → orange → cream and back to black. That is why the hottest spots collapse into darkness (the same dark triangle in the final shot). You can drag the triangles on the wheel.",
+      "Цвета сняты с круга в туторе: чёрный → фиолетовый → оранжевый → крем и снова в чёрный. Поэтому самые яркие места проваливаются в темноту (тот самый тёмный треугольник в финале). Треугольники на круге можно тянуть."],
+    "Тягни трикутники — як в Output Cycle": ["Drag the triangles — like in Output Cycle", "Тяните треугольники — как в Output Cycle"],
+    "Формат": ["Format", "Формат"],
+    "MP4 рендериться покадрово (WebCodecs) — луп замикається ідеально, нічого не вивантажується. WebM пишеться з живого превʼю. Фон чорний — у монтажці кладіть шар у режимі Screen / Add.": [
+      "MP4 is rendered frame by frame (WebCodecs) — the loop closes perfectly and nothing is uploaded. WebM is recorded from the live preview. The background is black — in your editor put the layer in Screen / Add mode.",
+      "MP4 рендерится покадрово (WebCodecs) — луп замыкается идеально, ничего не выгружается. WebM пишется из живого превью. Фон чёрный — в монтажке ставьте слой в режим Screen / Add."],
+    "один файл · Text → CC Light Sweep → Adjustment Layer: CC Radial Fast Blur → Colorama · WebGL2 · все локально": ["single file · Text → CC Light Sweep → Adjustment Layer: CC Radial Fast Blur → Colorama · WebGL2 · all local", "один файл · Text → CC Light Sweep → Adjustment Layer: CC Radial Fast Blur → Colorama · WebGL2 · всё локально"],
+    "Цей браузер не підтримує WebGL2 — відкрийте студію в актуальному Chrome, Edge, Firefox або Safari.": ["This browser doesn't support WebGL2 — open the studio in an up-to-date Chrome, Edge, Firefox or Safari.", "Этот браузер не поддерживает WebGL2 — откройте студию в актуальном Chrome, Edge, Firefox или Safari."],
+
+    /* === Morph Studio === */
+    "Morph Studio — градієнт-морф: Levels → Colorama → Mosaic": ["Morph Studio — gradient morph: Levels → Colorama → Mosaic", "Morph Studio — градиент-морф: Levels → Colorama → Mosaic"],
+    "Камера": ["Camera", "Камера"],
+    "Як у туторі: відео, де ти повільно повертаєш голову на світлому однотонному фоні. Після Levels фон вигорає в білий, а Colorama замикає білий назад у чорний — фон зникає сам. Файл можна перетягнути прямо на превʼю.": [
+      "As in the tutorial: a video of you slowly turning your head against a light plain background. After Levels the background blows out to white, and Colorama loops white back to black — the background disappears by itself. You can drop the file right onto the preview.",
+      "Как в туторе: видео, где ты медленно поворачиваешь голову на светлом однотонном фоне. После Levels фон выгорает в белый, а Colorama замыкает белый обратно в чёрный — фон исчезает сам. Файл можно перетащить прямо на превью."],
+    "Кадрування": ["Framing", "Кадрирование"],
+    "Демо-голова": ["Demo head", "Демо-голова"],
+    "Поворот голови": ["Head turn", "Поворот головы"],
+    "Процедурна 3D-голова на білій стіні замість твого відео — щоб одразу бачити ефект. Тривалість повороту = тривалість лупа в «Експорті».": [
+      "A procedural 3D head against a white wall instead of your video — so you see the effect right away. The turn takes as long as the loop duration in “Export”.",
+      "Процедурная 3D-голова на белой стене вместо твоего видео — чтобы сразу видеть эффект. Длительность поворота = длительность лупа в «Экспорте»."],
+    "У туторі: Input Black 2313 і Input White 20174.8 зі шкали 32768 — це 0.071 і 0.616. Контраст росте, світла стіна вигорає до 1.0. Якщо обличчя теж провалюється в чорний — підніми Input White.": [
+      "In the tutorial: Input Black 2313 and Input White 20174.8 on a 32768 scale — that is 0.071 and 0.616. Contrast goes up and the light wall blows out to 1.0. If the face also collapses into black, raise Input White.",
+      "В туторе: Input Black 2313 и Input White 20174.8 по шкале 32768 — это 0.071 и 0.616. Контраст растёт, светлая стена выгорает до 1.0. Если лицо тоже проваливается в чёрный — подними Input White."],
+    "+ колір": ["+ color", "+ цвет"],
+    "− колір": ["− color", "− цвет"],
+    "Коло з тутора: чорний → синій → білий і через сірий знову в чорний. Темне (волосся) стає синім, світле обличчя — білим і сірим, а вигорілий фон — чорним.": [
+      "The wheel from the tutorial: black → blue → white and through gray back to black. Dark areas (hair) turn blue, the lit face turns white and gray, and the blown-out background turns black.",
+      "Круг из тутора: чёрный → синий → белый и через серый снова в чёрный. Тёмное (волосы) становится синим, светлое лицо — белым и серым, а выгоревший фон — чёрным."],
+    "Багато блоків по горизонталі й мало по вертикалі — кожна смуга бере колір з центрального рядка і розтягує його вниз, звідси «градієнтні» смуги. Sharp Colors — колір центрального пікселя блока замість середнього.": [
+      "Many horizontal blocks and few vertical ones — each band takes the colors of its center row and stretches them down, hence the “gradient” bars. Sharp Colors uses the block's center pixel instead of the average.",
+      "Много блоков по горизонтали и мало по вертикали — каждая полоса берёт цвет из центральной строки и растягивает его вниз, отсюда «градиентные» полосы. Sharp Colors — цвет центрального пикселя блока вместо среднего."],
+    "Анімація смуг": ["Band animation", "Анимация полос"],
+    "Пульсація рядків": ["Row pulse", "Пульсация строк"],
+    "Дрейф сітки": ["Grid drift", "Дрейф сетки"],
+    "Пульсація змінює кількість рядків за луп (×2 / ÷2), дрейф зсуває сітку вниз чи вгору на ціле число рядків за луп — обидва варіанти безшовні.": [
+      "Pulse changes the number of rows over the loop (×2 / ÷2), drift moves the grid down or up by a whole number of rows per loop — both are seamless.",
+      "Пульсация меняет число строк за луп (×2 / ÷2), дрейф сдвигает сетку вниз или вверх на целое число строк за луп — оба варианта бесшовные."],
+    "Як джерело": ["As source", "Как источник"],
+    "MP4 рендериться покадрово (WebCodecs): завантажене відео проходить кадр за кадром (до 2 хв, без звуку), демо й фото — луп заданої тривалості. З камери — лише WebM із живого превʼю.": [
+      "MP4 is rendered frame by frame (WebCodecs): an uploaded video is processed frame by frame (up to 2 min, no audio), the demo and photos as a loop of the set duration. From the camera — WebM from the live preview only.",
+      "MP4 рендерится покадрово (WebCodecs): загруженное видео проходит кадр за кадром (до 2 мин, без звука), демо и фото — луп заданной длительности. С камеры — только WebM из живого превью."],
+    "один файл · Footage → Levels → Colorama → Mosaic (Sharp Colors) · WebGL2 · все локально": ["single file · Footage → Levels → Colorama → Mosaic (Sharp Colors) · WebGL2 · all local", "один файл · Footage → Levels → Colorama → Mosaic (Sharp Colors) · WebGL2 · всё локально"],
+    "Блоки 10×10": ["Blocks 10×10", "Блоки 10×10"],
+    "Широкі смуги": ["Wide bars", "Широкие полосы"],
+    "Скан 1300×90": ["Scan 1300×90", "Скан 1300×90"],
+    "Вертикаль": ["Vertical", "Вертикаль"],
+    "Пульс · Acid": ["Pulse · Acid", "Пульс · Acid"],
+    "Дрейф · Ember": ["Drift · Ember", "Дрейф · Ember"],
+    "Не вдалося відкрити відео. Спробуйте MP4 (H.264) або WebM.": ["Couldn't open the video. Try MP4 (H.264) or WebM.", "Не удалось открыть видео. Попробуйте MP4 (H.264) или WebM."],
+    "Завантаження відео…": ["Loading video…", "Загрузка видео…"],
+    "Камера недоступна в цьому браузері.": ["The camera isn't available in this browser.", "Камера недоступна в этом браузере."],
+    "Немає доступу до камери.": ["No access to the camera.", "Нет доступа к камере."],
+    "З камери записується лише WebM — натисніть «WebM».": ["The camera can only be recorded as WebM — press “WebM”.", "С камеры записывается только WebM — нажмите «WebM»."]
   };
 
   /* ---------- pattern replacements for dynamic strings ---------- */
