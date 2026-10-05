@@ -1081,7 +1081,69 @@
     "Завантаження відео…": ["Loading video…", "Загрузка видео…"],
     "Камера недоступна в цьому браузері.": ["The camera isn't available in this browser.", "Камера недоступна в этом браузере."],
     "Немає доступу до камери.": ["No access to the camera.", "Нет доступа к камере."],
-    "З камери записується лише WebM — натисніть «WebM».": ["The camera can only be recorded as WebM — press “WebM”.", "С камеры записывается только WebM — нажмите «WebM»."]
+    "З камери записується лише WebM — натисніть «WebM».": ["The camera can only be recorded as WebM — press “WebM”.", "С камеры записывается только WebM — нажмите «WebM»."],
+
+    /* === Glass Studio === */
+    "Glass Studio — SVG → рідке скло з рефракцією": ["Glass Studio — SVG → liquid glass with refraction", "Glass Studio — SVG → жидкое стекло с рефракцией"],
+    "Скло": ["Glass", "Стекло"],
+    "Завантажити SVG": ["Upload SVG", "Загрузить SVG"],
+    "Найкраще — SVG або PNG з прозорістю: логотип, іконка, силует. Для непрозорих картинок фон визначається автоматично. Файл можна перетягнути на превʼю чи вставити ⌘V.": [
+      "Best results: an SVG or a transparent PNG — a logo, an icon, a silhouette. For opaque images the background is detected automatically. You can drop the file onto the preview or paste it with ⌘V.",
+      "Лучше всего — SVG или PNG с прозрачностью: логотип, иконка, силуэт. Для непрозрачных картинок фон определяется автоматически. Файл можно перетащить на превью или вставить ⌘V."],
+    "Літера чи слово…": ["A letter or a word…", "Буква или слово…"],
+    "Обʼєм": ["Volume", "Объём"],
+    "Заокруглення країв": ["Edge rounding", "Скругление краёв"],
+    "Надутість": ["Puffiness", "Надутость"],
+    "Позиція X": ["Position X", "Позиция X"],
+    "Позиція Y": ["Position Y", "Позиция Y"],
+    "Контур видавлюється в 3D і заокруглюється по краю. «Надутість» робить середину опуклою, як подушку, — звідси «рідке» скло. Обʼєкт можна тягати мишкою прямо на превʼю.": [
+      "The outline is extruded into 3D and rounded along the edge. “Puffiness” makes the middle convex like a cushion — that is the “liquid” glass look. You can drag the object right on the preview.",
+      "Контур выдавливается в 3D и скругляется по краю. «Надутость» делает середину выпуклой, как подушку, — отсюда «жидкое» стекло. Объект можно таскать мышкой прямо на превью."],
+    "Матеріал": ["Material", "Материал"],
+    "IOR (заломлення)": ["IOR (refraction)", "IOR (преломление)"],
+    "Матовість": ["Frost", "Матовость"],
+    "Відстань до фону": ["Distance to background", "Расстояние до фона"],
+    "Колір скла": ["Glass color", "Цвет стекла"],
+    "Насиченість кольору": ["Color density", "Насыщенность цвета"],
+    "Відбиття (Fresnel)": ["Reflection (Fresnel)", "Отражение (Fresnel)"],
+    "Оточення": ["Environment", "Окружение"],
+    "Обідок": ["Rim", "Ободок"],
+    "Кут світла": ["Light angle", "Угол света"],
+    "Промінь заломлюється на вході й на виході зі скла і бере колір фону там, куди влучив, — тому текст за склом гнеться й темніє на краях, як у референсі. «Відстань до фону» підсилює зсув.": [
+      "Each ray bends on the way into the glass and on the way out and takes the background color where it lands — that is why the text behind bends and darkens at the edges, like in the reference. “Distance to background” strengthens the shift.",
+      "Луч преломляется на входе и на выходе из стекла и берёт цвет фона там, куда попал, — поэтому текст за стеклом гнётся и темнеет на краях, как в референсе. «Расстояние до фона» усиливает сдвиг."],
+    "Кадр лупа (пауза)": ["Loop frame (pause)", "Кадр лупа (пауза)"],
+    "Усі рухи замикаються в безшовний луп. Оберти — навколо власних осей фігури з урахуванням базового нахилу; амплітуда керує гойданням, ковзанням, маятником.": [
+      "Every motion closes into a seamless loop. Spins go around the shape's own axes, on top of the base tilt; amplitude drives sway, slide and pendulum.",
+      "Все движения замыкаются в бесшовный луп. Обороты — вокруг собственных осей фигуры с учётом базового наклона; амплитуда управляет покачиванием, скольжением, маятником."],
+    "Базовий нахил": ["Base tilt", "Базовый наклон"],
+    "Нахил X": ["Tilt X", "Наклон X"],
+    "Нахил Y": ["Tilt Y", "Наклон Y"],
+    "Поворот Z": ["Rotate Z", "Поворот Z"],
+    "Оберт Y": ["Spin Y", "Оборот Y"],
+    "Оберт X": ["Spin X", "Оборот X"],
+    "Оберт Z": ["Spin Z", "Оборот Z"],
+    "Прецесія": ["Precession", "Прецессия"],
+    "Кульбіт": ["Tumble", "Кульбит"],
+    "Маятник": ["Pendulum", "Маятник"],
+    "Ковзання": ["Slide", "Скольжение"],
+    "Постер": ["Poster", "Постер"],
+    "Завантажити фон": ["Upload background", "Загрузить фон"],
+    "Тло": ["Backdrop", "Подложка"],
+    "Ширина рядків": ["Line width", "Ширина строк"],
+    "Верх": ["Top", "Верх"],
+    "Низ": ["Bottom", "Низ"],
+    "Кут": ["Angle", "Угол"],
+    "Обробка фону": ["Background processing", "Обработка фона"],
+    "Розмиття": ["Blur", "Размытие"],
+    "Фон — окремий шар: фото, постер із великим текстом, колір чи градієнт. Скло бачить саме його, тож контрастний текст за склом дає найсильнішу рефракцію.": [
+      "The background is a separate layer: a photo, a big-type poster, a color or a gradient. The glass refracts exactly this layer, so contrasty text behind it gives the strongest effect.",
+      "Фон — отдельный слой: фото, постер с большим текстом, цвет или градиент. Стекло видит именно его, поэтому контрастный текст за стеклом даёт самую сильную рефракцию."],
+    "Як фото": ["As photo", "Как фото"],
+    "MP4 рендериться покадрово (WebCodecs) — луп замикається ідеально, нічого не вивантажується. Тривалість лупа — у вкладці «Рух».": [
+      "MP4 is rendered frame by frame (WebCodecs) — the loop closes perfectly and nothing is uploaded. Loop duration is in the “Motion” tab.",
+      "MP4 рендерится покадрово (WebCodecs) — луп замыкается идеально, ничего не выгружается. Длительность лупа — во вкладке «Движение»."],
+    "один файл · SVG → SDF → видавлене заокруглене скло → рефракція (IOR, дисперсія) · WebGL2 · все локально": ["single file · SVG → SDF → extruded rounded glass → refraction (IOR, dispersion) · WebGL2 · all local", "один файл · SVG → SDF → выдавленное скруглённое стекло → рефракция (IOR, дисперсия) · WebGL2 · всё локально"]
   };
 
   /* ---------- pattern replacements for dynamic strings ---------- */
