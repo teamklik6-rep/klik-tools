@@ -1334,7 +1334,110 @@
       "SVG-анимация работает со встроенными силуэтами, текстом, GIF и кадрами — для видео экспортируйте MP4."],
     "Забагато поз для SVG-анімації (понад 240). Зменште «Поз у циклі» або «Перетин кадру».": [
       "Too many poses for an animated SVG (over 240). Lower “Poses per cycle” or “Crossing time”.",
-      "Слишком много поз для SVG-анимации (больше 240). Уменьшите «Поз в цикле» или «Пересечение кадра»."]
+      "Слишком много поз для SVG-анимации (больше 240). Уменьшите «Поз в цикле» или «Пересечение кадра»."],
+
+    /* === Halo Studio === */
+    "Halo Studio — хвиля розфокусу → градієнт-мапа": ["Halo Studio — defocus wave → gradient map", "Halo Studio — волна расфокуса → градиент-карта"],
+    "Варіації": ["Variations", "Вариации"],
+    "Пресети міняють лише ефект — твій текст, шрифт і формат лишаються. «Оригінал» — параметри, зняті з референсу покадрово: блюр 0.9 → 19 px, хвиля від центру, краї в протифазі, період 2 с.": [
+      "Presets change only the effect — your text, font and format stay. “Original” uses the settings measured frame by frame from the reference: blur 0.9 → 19 px, wave from the center, edges in antiphase, 2 s period.",
+      "Пресеты меняют только эффект — твой текст, шрифт и формат остаются. «Оригинал» — параметры, снятые с референса покадрово: блюр 0.9 → 19 px, волна от центра, края в противофазе, период 2 с."],
+    "Оригінал · doof": ["Original · doof", "Оригинал · doof"],
+    "Ореол+": ["Halo+", "Ореол+"],
+    "Ліво → право": ["Left → right", "Слева → направо"],
+    "По літерах": ["By letter", "По буквам"],
+    "Фокус-кільце": ["Focus ring", "Кольцо фокуса"],
+    "Брижі ×2": ["Ripples ×2", "Рябь ×2"],
+    "Органіка": ["Organic", "Органика"],
+    "Рідкий хром": ["Liquid chrome", "Жидкий хром"],
+    "Жар": ["Heat", "Жар"],
+    "Призма": ["Prism", "Призма"],
+    "Стрік": ["Streak", "Стрик"],
+    "Радар": ["Radar", "Радар"],
+    "Удар": ["Beat", "Удар"],
+    "Лого / фігура": ["Logo / shape", "Лого / фигура"],
+    "Завантажити лого (SVG / PNG)": ["Upload a logo (SVG / PNG)", "Загрузить лого (SVG / PNG)"],
+    "Або перетягни файл прямо на превʼю, або встав ⌘V — картинку чи SVG-код (наприклад «Copy as SVG» з Figma).": [
+      "Or drop a file right onto the preview, or paste with ⌘V — an image or SVG code (e.g. “Copy as SVG” from Figma).",
+      "Или перетащи файл прямо на превью, или вставь ⌘V — картинку или SVG-код (например «Copy as SVG» из Figma)."],
+    "Своє лого": ["Your logo", "Своё лого"],
+    "SVG, PNG з прозорістю або будь-яка чорно-біла картинка (логотип, іконка, силует). Колір лого не важливий — ефект бере лише форму: прозорість, а якщо її немає — яскравість (фон визначається автоматично). Вийшло «навиворіт» — «Інвертувати». SVG растеризується у 2048 px, тож краї лишаються чистими на будь-якому розмірі.": [
+      "SVG, PNG with transparency or any black-and-white image (logo, icon, silhouette). The logo's colors don't matter — the effect only takes the shape: transparency, or brightness if there is none (the background is detected automatically). Came out inside-out? Hit “Invert”. SVG is rasterized at 2048 px, so the edges stay clean at any size.",
+      "SVG, PNG с прозрачностью или любая чёрно-белая картинка (логотип, иконка, силуэт). Цвет лого не важен — эффект берёт только форму: прозрачность, а если её нет — яркость (фон определяется автоматически). Получилось «наизнанку» — «Инвертировать». SVG растеризуется в 2048 px, поэтому края остаются чистыми на любом размере."],
+    "Не вдалося прочитати SVG.": ["Couldn't read the SVG.", "Не удалось прочитать SVG."],
+    "Розтяг по X": ["Stretch X", "Растяжение по X"],
+    "Товщина (px)": ["Weight (px)", "Толщина (px)"],
+    "Ширина": ["Width", "Ширина"],
+    "Розмір і позиція": ["Size and position", "Размер и позиция"],
+    "Референс набрано дуже широким жирним італіком (як Eurostile Extended): Rubik Black Italic із розтягом ×1.6, нахилом 6° і товщиною −4 дає той самий силует. Прямим шрифтам додай нахил 10–14°. Товщина підрізає чи нарощує штрихи — від неї залежить, скільки світла потрапить усередину літер.": [
+      "The reference is set in a very wide heavy italic (like Eurostile Extended): Rubik Black Italic stretched ×1.6 with a 6° slant and −4 weight gives the same silhouette. Add a 10–14° slant to upright fonts. Weight trims or thickens the strokes — it decides how much light gets inside the letters.",
+      "Референс набран очень широким жирным италиком (как Eurostile Extended): Rubik Black Italic с растяжением ×1.6, наклоном 6° и толщиной −4 даёт тот же силуэт. Прямым шрифтам добавь наклон 10–14°. Толщина подрезает или наращивает штрихи — от неё зависит, сколько света попадёт внутрь букв."],
+    "Від центру": ["From center", "От центра"],
+    "Лінійна": ["Linear", "Линейная"],
+    "Зворотний напрям": ["Reverse direction", "Обратное направление"],
+    "Розкид фази": ["Phase spread", "Разброс фазы"],
+    "Овальність кілець": ["Ring ovality", "Овальность колец"],
+    "Масштаб шуму (px)": ["Noise scale (px)", "Масштаб шума (px)"],
+    "Варіант шуму": ["Noise variant", "Вариант шума"],
+    "Витки": ["Turns", "Витки"],
+    "Розкид — на скільки періодів відстають краї тексту від центру (чи кінець від початку). 0.5 — краї в протифазі до центру, як в оригіналі; 1 — по тексту йде одна ціла хвиля; 2 — дві (брижі).": [
+      "Spread is how many periods the edges of the text lag behind the center (or the end behind the start). 0.5 puts the edges in antiphase with the center, as in the original; 1 runs one whole wave across the text; 2 runs two (ripples).",
+      "Разброс — на сколько периодов края текста отстают от центра (или конец от начала). 0.5 — края в противофазе к центру, как в оригинале; 1 — по тексту идёт одна целая волна; 2 — две (рябь)."],
+    "Центр хвилі": ["Wave center", "Центр волны"],
+    "Центр тексту": ["Text center", "Центр текста"],
+    "Клік чи перетягування по превʼю ставить центр хвилі. Координати — частки кадру.": [
+      "Click or drag on the preview to set the wave center. Coordinates are fractions of the frame.",
+      "Клик или перетаскивание по превью ставит центр волны. Координаты — доли кадра."],
+    "Ритм": ["Rhythm", "Ритм"],
+    "Період (с)": ["Period (s)", "Период (с)"],
+    "Профіль": ["Profile", "Профиль"],
+    "Синус": ["Sine", "Синус"],
+    "Імпульс": ["Pulse", "Импульс"],
+    "Плато": ["Plateau", "Плато"],
+    "Тривалість імпульсу": ["Pulse length", "Длительность импульса"],
+    "Зсув фази": ["Phase offset", "Сдвиг фазы"],
+    "Луп завжди безшовний: хвиля повторюється рівно раз на період. Синус — плавне «дихання», Імпульс — спалах і пауза, Удар — різкий наплив і довгий спад, Плато — тримає розфокус.": [
+      "The loop is always seamless: the wave repeats exactly once per period. Sine is a smooth “breath”, Pulse is a flash and a pause, Beat is a sharp rush and a long decay, Plateau holds the defocus.",
+      "Луп всегда бесшовный: волна повторяется ровно раз за период. Синус — плавное «дыхание», Импульс — вспышка и пауза, Удар — резкий наплыв и долгий спад, Плато — держит расфокус."],
+    "Розфокус": ["Defocus", "Расфокус"],
+    "Блюр у спокої (px)": ["Blur at rest (px)", "Блюр в покое (px)"],
+    "Блюр на піку (px)": ["Blur at peak (px)", "Блюр на пике (px)"],
+    "Напрям блюру": ["Blur direction", "Направление блюра"],
+    "Пікселі кадру 1080. Якщо «у спокої» більше, ніж «на піку», виходить кільце різкості, що біжить по розмитому слову. Напрям: −1 — вертикальні патьоки, +1 — горизонтальний стрік.": [
+      "Pixels of a 1080 frame. If “at rest” is bigger than “at peak”, you get a ring of focus running across a blurred word. Direction: −1 gives vertical drips, +1 a horizontal streak.",
+      "Пиксели кадра 1080. Если «в покое» больше, чем «на пике», получается кольцо резкости, бегущее по размытому слову. Направление: −1 — вертикальные потёки, +1 — горизонтальный стрик."],
+    "Ореол": ["Halo", "Ореол"],
+    "Розмір ×": ["Size ×", "Размер ×"],
+    "Другий, ширший шар блюру поверх першого — довший хвіст світіння за межами літер.": [
+      "A second, wider blur layer on top of the first — a longer glow tail beyond the letters.",
+      "Второй, более широкий слой блюра поверх первого — более длинный хвост свечения за пределами букв."],
+    "Хроматика": ["Chromatic", "Хроматика"],
+    "Розщеплення RGB": ["RGB split", "Расщепление RGB"],
+    "Канали R, G і B беруть різний радіус блюру — кільця розходяться веселкою.": [
+      "The R, G and B channels use different blur radii — the rings split into a rainbow.",
+      "Каналы R, G и B берут разный радиус блюра — кольца расходятся радугой."],
+    "Градієнт-мапа": ["Gradient map", "Градиент-карта"],
+    "Клік по смузі — новий стоп, маркери можна тягати": ["Click the bar to add a stop, drag the markers", "Клик по полосе — новый стоп, маркеры можно тянуть"],
+    "Колір стопу": ["Stop color", "Цвет стопа"],
+    "Видалити стоп": ["Delete stop", "Удалить стоп"],
+    "− стоп": ["− stop", "− стоп"],
+    "Розвернути градієнт": ["Reverse gradient", "Развернуть градиент"],
+    "Ліво — фон (альфа 0), право — суцільна літера (альфа 1). Кожен рівень розмитої альфи стає кільцем свого кольору: в оригіналі чорний → navy → royal → світла лінія → azure → steel → сірий.": [
+      "Left is the background (alpha 0), right is the solid letter (alpha 1). Every level of the blurred alpha becomes a ring of its own color: in the original black → navy → royal → light line → azure → steel → gray.",
+      "Слева — фон (альфа 0), справа — сплошная буква (альфа 1). Каждый уровень размытой альфы становится кольцом своего цвета: в оригинале чёрный → navy → royal → светлая линия → azure → steel → серый."],
+    "Gamma > 1 — кільця розповзаються назовні, < 1 — ховаються в літери. Input Black обрізає далекий хвіст світіння.": [
+      "Gamma > 1 spreads the rings outward, < 1 tucks them into the letters. Input Black trims the far tail of the glow.",
+      "Gamma > 1 — кольца расползаются наружу, < 1 — прячутся в буквы. Input Black обрезает дальний хвост свечения."],
+    "Сяйво": ["Bloom", "Свечение"],
+    "Радіус (px)": ["Radius (px)", "Радиус (px)"],
+    "Періодів у файлі": ["Periods per file", "Периодов в файле"],
+    "Тривалість файлу (с)": ["File length (s)", "Длительность файла (с)"],
+    "MP4 рендериться покадрово (WebCodecs) — хвиля замикається ідеально, нічого не вивантажується. WebM пишеться з живого превʼю. Фон — перший колір градієнт-мапи; на чорному фоні кладіть шар у режимі Screen / Add.": [
+      "MP4 is rendered frame by frame (WebCodecs) — the wave loops perfectly and nothing is uploaded. WebM is recorded from the live preview. The background is the first color of the gradient map; on a black background put the layer in Screen / Add mode.",
+      "MP4 рендерится покадрово (WebCodecs) — волна замыкается идеально, ничего не выгружается. WebM пишется из живого превью. Фон — первый цвет градиент-карты; на чёрном фоне ставьте слой в режим Screen / Add."],
+    "один файл · Text → Variable Blur (хвиля розфокусу) → Levels → Gradient Map → Bloom · WebGL2 · все локально": [
+      "single file · Text → Variable Blur (defocus wave) → Levels → Gradient Map → Bloom · WebGL2 · all local",
+      "один файл · Text → Variable Blur (волна расфокуса) → Levels → Gradient Map → Bloom · WebGL2 · всё локально"]
   };
 
   /* ---------- pattern replacements for dynamic strings ---------- */
