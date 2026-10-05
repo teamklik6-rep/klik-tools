@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klik Tools — Creative Studio Toolkit</title>
-<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph. Everything runs locally in your browser." />
+<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph, Glass. Everything runs locally in your browser." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23bbff32'/%3E%3Cpath d='M10 7v18M10 16l9-9M10 16l9 9' stroke='%23060612' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -258,6 +258,16 @@
   .prev-morph i:nth-child(8){width:60px;animation-delay:-2.3s}
   .prev-morph i:nth-child(9){width:150px;animation-delay:-2.6s}
   .prev-morph i:nth-child(10){width:190px;animation-delay:-2.9s}
+  /* preview art: glass (svg → liquid glass over a poster) */
+  .prev-glass{position:absolute;inset:0;background:#ff5a1f;overflow:hidden;display:grid;place-items:center;perspective:520px}
+  .prev-glass .txt{position:absolute;inset:-6px -14px;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    font-family:"Bodoni Moda",Didot,"Bodoni 72",Georgia,serif;font-weight:900;color:#141414;font-size:62px;line-height:.86;letter-spacing:-.03em;transform:scaleY(1.22)}
+  .prev-glass i{position:relative;width:96px;height:148px;
+    clip-path:polygon(14% 6%,46% 6%,88% 50%,46% 94%,14% 94%,56% 50%);
+    background:linear-gradient(135deg,rgba(255,255,255,.6),rgba(255,255,255,.06) 38%,rgba(255,255,255,.22) 68%,rgba(255,255,255,.65));
+    -webkit-backdrop-filter:blur(2.5px) saturate(1.7) contrast(1.25);backdrop-filter:blur(2.5px) saturate(1.7) contrast(1.25);
+    animation:glasssway 4.2s ease-in-out infinite alternate}
+  @keyframes glasssway{from{transform:rotateY(-38deg) rotateZ(-7deg)}to{transform:rotateY(38deg) rotateZ(7deg)}}
   @keyframes morphrow{from{transform:translateX(-14px);filter:hue-rotate(0deg)}to{transform:translateX(14px);filter:hue-rotate(-45deg)}}
 
   /* preview art: orbit */
@@ -379,6 +389,7 @@
     <div class="tab" data-tool="echo">Echo</div>
     <div class="tab" data-tool="sweep">Sweep</div>
     <div class="tab" data-tool="morph">Morph</div>
+    <div class="tab" data-tool="glass">Glass</div>
     <div class="tab" data-route="refs" data-i18n="navRefs">Similar sites</div>
   </nav>
 
@@ -401,7 +412,7 @@
     <div class="glow"></div>
     <div class="tagline"><span class="pulse"></span> <span data-i18n="tagline">In-house studio tools</span></div>
     <h1 data-i18n-html="heroTitle">Creative tools by <span class="green">Klik</span> — right in your browser.</h1>
-    <p class="lede" data-i18n="lede">Seventeen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals and gradient-morph video. No installs, no server — everything runs locally.</p>
+    <p class="lede" data-i18n="lede">Eighteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video and liquid-glass 3D logos. No installs, no server — everything runs locally.</p>
   </div>
 
   <div class="cards">
@@ -615,6 +626,17 @@
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
     </div>
+    <!-- Glass -->
+    <div class="card" data-tool="glass">
+      <div class="preview">
+        <div class="prev-glass"><div class="txt"><span>INNOVATE</span><span>WITH</span><span>PURPOSE</span></div><i></i></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">18</span> Glass Studio</h3>
+        <p data-i18n="glassDesc">Upload an SVG and get a 3D liquid-glass object: the outline is extruded, rounded and puffed up, then real refraction bends whatever is behind it — a big-type poster, your photo, a color or a gradient. IOR, RGB dispersion, frost, tint, Fresnel, highlights and soft shadow; 10 seamless motions (spins, sway, precession, tumble, pendulum, flip); PNG / JPG / MP4 / WebM.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
   </div>
 
   <div class="strip">
@@ -654,7 +676,7 @@
       title: "Klik Tools — Creative Studio Toolkit",
       tagline: "In-house studio tools",
       heroTitle: 'Creative tools by <span class="green">Klik</span> — right in your browser.',
-      lede: "Seventeen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals and gradient-morph video. No installs, no server — everything runs locally.",
+      lede: "Eighteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video and liquid-glass 3D logos. No installs, no server — everything runs locally.",
       lumaDesc: "CellMap · PixelSynth · ASCII. Turns photos and videos into luminance-driven grids: clip tiles, color zones or classic ASCII art with export.",
       sphereDesc: "A 3D glowing-sphere generator on WebGL: noise, glow, orbiting particles, presets and MP4 recording — all in real time.",
       xrayDesc: "Photo → x-ray: Canny contour detection, thin 1px lines, Wireframe / Blueprint / Neon styles and export to PNG or vector SVG.",
@@ -672,6 +694,7 @@
       echoDesc: "The After Effects text-echo recipe: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Nested glowing rings from any digits, word or your own shape (PNG / SVG / logo), anchor and drift stairs, 8 gradient maps, seamless outward / inward / breathing loops, PNG / JPG / MP4 / WebM export.",
       sweepDesc: "The After Effects text-reveal recipe in three effects: CC Light Sweep → CC Radial Fast Blur → Colorama. A light band sweeps across black text or your logo, the zoom blur turns it into rays, Colorama paints violet → orange → cream and wraps the hottest spots back to black. Animated sweep and blur centers, 8 output cycles, seamless loops, PNG / JPG / MP4 / WebM export.",
       morphDesc: "The After Effects gradient-morph recipe: Levels → Colorama → Mosaic. Your video, photo or webcam: Levels blows out the bright wall, Colorama maps shadows → blue → white and loops the background to black, Mosaic 1300 × 30 with Sharp Colors smears every row into a gradient bar. Built-in 3D demo head, 8 palettes, pulse and drift, frame-exact MP4 export.",
+      glassDesc: "Upload an SVG and get a 3D liquid-glass object: the outline is extruded, rounded and puffed up, then real refraction bends whatever is behind it — a big-type poster, your photo, a color or a gradient. IOR, RGB dispersion, frost, tint, Fresnel, highlights and soft shadow; 10 seamless motions (spins, sway, precession, tumble, pendulum, flip); PNG / JPG / MP4 / WebM.",
       open: "Open studio",
       navRefs: "Similar sites",
       refsKicker: "Inspiration",
@@ -687,7 +710,7 @@
       title: "Klik Tools — внутренние студии",
       tagline: "Внутренние инструменты студии",
       heroTitle: 'Креативные тулы <span class="green">Klik</span> — прямо в браузере.',
-      lede: "Семнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света и градиент-морф видео. Без установок и сервера — всё локально.",
+      lede: "Восемнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света, градиент-морф видео и 3D-логотипы из жидкого стекла. Без установок и сервера — всё локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото и видео → сетки по яркости, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) с палитрами, неоновые капсулы, стек glow/glitch пост-эффектов.",
       sphereDesc: "3D генератор световых сфер на WebGL: шум, свечение, орбитальные частицы, пресеты и запись в MP4 — всё в реальном времени.",
       xrayDesc: "Фото → рентген: детекция контуров Canny, тонкие 1px-линии, стили Wireframe / Blueprint / Neon и экспорт в PNG или вектор SVG.",
@@ -705,6 +728,7 @@
       echoDesc: "Рецепт текст-эхо из After Effects: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Вложенные светящиеся кольца из любых цифр, слова или своей фигуры (PNG / SVG / логотип), anchor и дрейф-ступеньки, 8 градиент-карт, бесшовные лупы наружу / внутрь / дыхание, экспорт PNG / JPG / MP4 / WebM.",
       sweepDesc: "Рецепт текст-ревила из After Effects в три эффекта: CC Light Sweep → CC Radial Fast Blur → Colorama. Полоса света проходит по чёрному тексту или логотипу, зум-блюр превращает её в лучи, Colorama красит фиолетовый → оранжевый → крем и заворачивает самые яркие места обратно в чёрный. Анимированные центры света и блюра, 8 циклов цвета, бесшовные лупы, экспорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градиент-морфа из After Effects: Levels → Colorama → Mosaic. Твоё видео, фото или камера: Levels выжигает светлую стену, Colorama красит тени → синий → белый и заворачивает фон в чёрный, Mosaic 1300 × 30 с Sharp Colors растягивает каждую строку в градиентную полосу. Встроенная 3D-демо-голова, 8 палитр, пульсация и дрейф, покадровый экспорт MP4.",
+      glassDesc: "Загрузи SVG — и получи 3D-объект из жидкого стекла: контур выдавливается, скругляется и «надувается», а настоящая рефракция гнёт всё, что за ним, — постер с большим текстом, твоё фото, цвет или градиент. IOR, RGB-дисперсия, матовость, оттенок, Fresnel, блики и мягкая тень; 10 бесшовных движений (обороты, покачивание, прецессия, кульбит, маятник, флип); PNG / JPG / MP4 / WebM.",
       open: "Открыть студию",
       navRefs: "Похожие сайты",
       refsKicker: "Вдохновение",
@@ -720,7 +744,7 @@
       title: "Klik Tools — внутрішні студії",
       tagline: "Внутрішні інструменти студії",
       heroTitle: 'Креативні тули <span class="green">Klik</span> — прямо у браузері.',
-      lede: "Сімнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла й градієнт-морф відео. Без інсталяцій, без сервера — все локально.",
+      lede: "Вісімнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла, градієнт-морф відео й 3D-логотипи з рідкого скла. Без інсталяцій, без сервера — все локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото й відео → сітки за яскравістю, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) з палітрами, неонові капсули, стек glow/glitch пост-ефектів.",
       sphereDesc: "3D генератор світлових сфер на WebGL: шум, ґлоу, орбітальні частинки, пресети та запис у MP4 — все в реальному часі.",
       xrayDesc: "Фото → рентген: детекція контурів Canny, тонкі 1px-лінії, стилі Wireframe / Blueprint / Neon і експорт у PNG або вектор SVG.",
@@ -738,6 +762,7 @@
       echoDesc: "Рецепт текст-відлуння з After Effects: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Вкладені кільця, що світяться, з будь-яких цифр, слова чи своєї фігури (PNG / SVG / логотип), anchor і дрейф-сходинки, 8 градієнт-мап, безшовні лупи назовні / всередину / дихання, експорт PNG / JPG / MP4 / WebM.",
       sweepDesc: "Рецепт текст-ревілу з After Effects у три ефекти: CC Light Sweep → CC Radial Fast Blur → Colorama. Смуга світла проходить по чорному тексту чи логотипу, зум-блюр робить з неї промені, Colorama фарбує фіолет → помаранч → крем і загортає найяскравіші місця назад у чорний. Анімовані центри світла й блюру, 8 циклів кольору, безшовні лупи, експорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градієнт-морфу з After Effects: Levels → Colorama → Mosaic. Твоє відео, фото чи камера: Levels випалює світлу стіну, Colorama фарбує тіні → синій → білий і загортає фон у чорний, Mosaic 1300 × 30 із Sharp Colors розтягує кожен рядок у градієнтну смугу. Вбудована 3D-демо-голова, 8 палітр, пульсація й дрейф, покадровий експорт MP4.",
+      glassDesc: "Завантаж SVG — і отримай 3D-обʼєкт із рідкого скла: контур видавлюється, заокруглюється й «надувається», а справжня рефракція гне все, що за ним, — постер з великим текстом, твоє фото, колір чи градієнт. IOR, RGB-дисперсія, матовість, відтінок, Fresnel, бліки й мʼяка тінь; 10 безшовних рухів (оберти, гойдання, прецесія, кульбіт, маятник, фліп); PNG / JPG / MP4 / WebM.",
       open: "Відкрити студію",
       navRefs: "Схожі сайти",
       refsKicker: "Натхнення",
@@ -793,6 +818,7 @@
     echo:     { src: "tools/echo-studio.html",     title: "Echo Studio" },
     sweep:    { src: "tools/sweep-studio.html",    title: "Sweep Studio" },
     morph:    { src: "tools/morph-studio.html",    title: "Morph Studio" },
+    glass:    { src: "tools/glass-studio.html",    title: "Glass Studio" },
   };
 
   /* ---------------- similar sites ----------------

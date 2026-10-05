@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glass Studio — SVG → рідке скло з рефракцією</title>
+<link rel="stylesheet" href="studio.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bodoni+Moda:wght@900&family=Inter:wght@900&family=Playfair+Display:wght@900&family=Unbounded:wght@900&display=swap" rel="stylesheet">
+<style>
+  #out{background:#000;touch-action:none;cursor:grab}
+  #out:active{cursor:grabbing}
+  .tabs{grid-template-columns:repeat(5,1fr)}
+  input[type=text],textarea{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;font-family:inherit;outline:none;box-sizing:border-box}
+  textarea{resize:vertical;min-height:74px;line-height:1.35;text-transform:uppercase}
+  .preset .pal{margin-top:6px}
+  .preset svg{width:22px;height:22px;display:block;margin:0 auto}
+  #shapes .preset{padding:7px 4px}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+  .glmsg{color:hsl(var(--muted-foreground));font-size:13px;text-align:center;max-width:340px}
+  .srcname{font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:8px;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linejoin="round">
+          <path d="M6 3h6l7 9-7 9H6l7-9z" fill="white" fill-opacity=".18"/>
+          <path d="M8.5 5.5h2.4" opacity=".8"/>
+        </svg>
+      </div>
+      <div><h1>Glass Studio</h1><p>svg → liquid glass · refraction</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="shape">Форма</div>
+        <div class="tab" data-tab="glass">Скло</div>
+        <div class="tab" data-tab="motion">Рух</div>
+        <div class="tab" data-tab="bg">Фон</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ SHAPE ============ -->
+      <div data-pane="shape" class="active">
+        <div class="group">
+          <h2>Джерело</h2>
+          <div class="presets c3" id="sources">
+            <div class="preset active" data-src="shape">Фігура</div>
+            <div class="preset" data-src="file">SVG / PNG</div>
+            <div class="preset" data-src="text">Текст</div>
+          </div>
+          <div class="btns-grid" style="margin-top:10px"><button class="btn primary full" id="shapeLoad">Завантажити SVG</button></div>
+          <div class="srcname" id="shapeName"></div>
+        </div>
+        <div class="group" id="shapeGroup">
+          <h2>Фігура</h2>
+          <div class="presets c4" id="shapes"></div>
+        </div>
+        <div class="group" id="fileGroup" style="display:none">
+          <h2>Свій файл</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Інвертувати</span>
+            <label class="switch"><input type="checkbox" id="invert"><span class="track"></span></label></div>
+          <div class="row mt"><label class="lbl">Поріг</label><span class="val" id="vThresh">128</span></div>
+          <input type="range" id="thresh" min="1" max="254" step="1" value="128">
+          <div class="note">Найкраще — SVG або PNG з прозорістю: логотип, іконка, силует. Для непрозорих картинок фон визначається автоматично. Файл можна перетягнути на превʼю чи вставити ⌘V.</div>
+        </div>
+        <div class="group" id="textGroup" style="display:none">
+          <h2>Текст</h2>
+          <input type="text" id="text" value="K" maxlength="10" placeholder="Літера чи слово…">
+          <div class="presets c3" id="tfonts" style="margin-top:10px">
+            <div class="preset active" data-font="Archivo Black" data-w="400" style="font-family:'Archivo Black'">Archivo</div>
+            <div class="preset" data-font="Inter" data-w="900" style="font-family:Inter;font-weight:900">Inter</div>
+            <div class="preset" data-font="Unbounded" data-w="900" style="font-family:Unbounded;font-weight:900">Unbounded</div>
+            <div class="preset" data-font="Bodoni Moda" data-w="900" style="font-family:'Bodoni Moda';font-weight:900">Bodoni</div>
+            <div class="preset" data-font="Anton" data-w="400" style="font-family:Anton">Anton</div>
+            <div class="preset" data-font="Playfair Display" data-w="900" style="font-family:'Playfair Display';font-weight:900">Playfair</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Обʼєм</h2>
+          <div class="row"><label class="lbl">Розмір</label><span class="val" id="vSize">0.80</span></div>
+          <input type="range" id="size" min="0.15" max="2" step="0.01" value="0.8">
+          <div class="row mt"><label class="lbl">Товщина</label><span class="val" id="vThick">0.22</span></div>
+          <input type="range" id="thick" min="0.02" max="0.8" step="0.01" value="0.22">
+          <div class="row mt"><label class="lbl">Заокруглення країв</label><span class="val" id="vRound">0.09</span></div>
+          <input type="range" id="round" min="0" max="0.4" step="0.005" value="0.09">
+          <div class="row mt"><label class="lbl">Надутість</label><span class="val" id="vBulge">0.20</span></div>
+          <input type="range" id="bulge" min="0" max="1.2" step="0.01" value="0.2">
+          <div class="row mt"><label class="lbl">Позиція X</label><span class="val" id="vOffX">0.00</span></div>
+          <input type="range" id="offX" min="-1.5" max="1.5" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Позиція Y</label><span class="val" id="vOffY">0.00</span></div>
+          <input type="range" id="offY" min="-1.5" max="1.5" step="0.01" value="0">
+          <div class="note">Контур видавлюється в 3D і заокруглюється по краю. «Надутість» робить середину опуклою, як подушку, — звідси «рідке» скло. Обʼєкт можна тягати мишкою прямо на превʼю.</div>
+        </div>
+      </div>
+
+      <!-- ============ GLASS ============ -->
+      <div data-pane="glass">
+        <div class="group">
+          <h2>Матеріал</h2>
+          <div class="presets c2" id="glasses"></div>
+        </div>
+        <div class="group">
+          <h2>Рефракція</h2>
+          <div class="row"><label class="lbl">IOR (заломлення)</label><span class="val" id="vIor">1.50</span></div>
+          <input type="range" id="ior" min="1" max="2.4" step="0.01" value="1.5">
+          <div class="row mt"><label class="lbl">Дисперсія (RGB)</label><span class="val" id="vDisp">0.015</span></div>
+          <input type="range" id="disp" min="0" max="0.12" step="0.001" value="0.015">
+          <div class="row mt"><label class="lbl">Матовість</label><span class="val" id="vFrost">0.00</span></div>
+          <input type="range" id="frost" min="0" max="1" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Відстань до фону</label><span class="val" id="vBgDepth">0.60</span></div>
+          <input type="range" id="bgDepth" min="0.1" max="4" step="0.01" value="0.6">
+          <div class="colors" style="margin-top:12px">
+            <div class="color-field"><span>Колір скла</span><div class="color-wrap"><input type="color" id="tint" value="#ffffff"></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Насиченість кольору</label><span class="val" id="vAbsorb">0.00</span></div>
+          <input type="range" id="absorb" min="0" max="3" step="0.01" value="0">
+        </div>
+        <div class="group">
+          <h2>Світло</h2>
+          <div class="row"><label class="lbl">Відбиття (Fresnel)</label><span class="val" id="vRefl">1.00</span></div>
+          <input type="range" id="refl" min="0" max="2" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Блік</label><span class="val" id="vSpec">1.00</span></div>
+          <input type="range" id="spec" min="0" max="3" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Оточення</label><span class="val" id="vEnv">0.80</span></div>
+          <input type="range" id="env" min="0" max="2" step="0.01" value="0.8">
+          <div class="row mt"><label class="lbl">Обідок</label><span class="val" id="vRim">0.35</span></div>
+          <input type="range" id="rim" min="0" max="2" step="0.01" value="0.35">
+          <div class="row mt"><label class="lbl">Кут світла</label><span class="val" id="vLightA">-40</span></div>
+          <input type="range" id="lightA" min="-180" max="180" step="1" value="-40">
+          <div class="row mt"><label class="lbl">Тінь</label><span class="val" id="vShadow">0.30</span></div>
+          <input type="range" id="shadow" min="0" max="1" step="0.01" value="0.3">
+          <div class="row mt"><label class="lbl">Перспектива</label><span class="val" id="vPersp">0.50</span></div>
+          <input type="range" id="persp" min="0" max="1" step="0.01" value="0.5">
+          <div class="note">Промінь заломлюється на вході й на виході зі скла і бере колір фону там, куди влучив, — тому текст за склом гнеться й темніє на краях, як у референсі. «Відстань до фону» підсилює зсув.</div>
+        </div>
+      </div>
+
+      <!-- ============ MOTION ============ -->
+      <div data-pane="motion">
+        <div class="group">
+          <h2>Анімація</h2>
+          <div class="presets c2" id="motions"></div>
+          <div class="row mt"><label class="lbl">Амплітуда</label><span class="val" id="vAmp">1.00</span></div>
+          <input type="range" id="amp" min="0" max="2.5" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Тривалість лупа (с)</label><span class="val" id="vDur">6</span></div>
+          <input type="range" id="dur" min="1" max="20" step="0.5" value="6">
+          <div class="row mt"><label class="lbl">Кадр лупа (пауза)</label><span class="val" id="vScrub">—</span></div>
+          <input type="range" id="scrub" min="0" max="1" step="0.005" value="0">
+          <div class="note">Усі рухи замикаються в безшовний луп. Оберти — навколо власних осей фігури з урахуванням базового нахилу; амплітуда керує гойданням, ковзанням, маятником.</div>
+        </div>
+        <div class="group">
+          <h2>Базовий нахил</h2>
+          <div class="row"><label class="lbl">Нахил X</label><span class="val" id="vTiltX">-15</span></div>
+          <input type="range" id="tiltX" min="-90" max="90" step="1" value="-15">
+          <div class="row mt"><label class="lbl">Нахил Y</label><span class="val" id="vTiltY">25</span></div>
+          <input type="range" id="tiltY" min="-90" max="90" step="1" value="25">
+          <div class="row mt"><label class="lbl">Поворот Z</label><span class="val" id="vTiltZ">-8</span></div>
+          <input type="range" id="tiltZ" min="-180" max="180" step="1" value="-8">
+        </div>
+      </div>
+
+      <!-- ============ BACKGROUND ============ -->
+      <div data-pane="bg">
+        <div class="group">
+          <h2>Фон</h2>
+          <div class="presets c4" id="bgTypes">
+            <div class="preset active" data-bg="poster">Постер</div>
+            <div class="preset" data-bg="image">Фото</div>
+            <div class="preset" data-bg="solid">Колір</div>
+            <div class="preset" data-bg="gradient">Градієнт</div>
+          </div>
+          <div class="btns-grid" style="margin-top:10px"><button class="btn full" id="bgLoad">Завантажити фон</button></div>
+          <div class="srcname" id="bgName"></div>
+        </div>
+        <div class="group" id="posterGroup">
+          <h2>Постер</h2>
+          <textarea id="lines" spellcheck="false">INNOVATE
+WITH
+PURPOSE</textarea>
+          <div class="presets c3" id="pfonts" style="margin-top:10px">
+            <div class="preset active" data-font="Bodoni Moda" data-w="900" style="font-family:'Bodoni Moda';font-weight:900">Bodoni</div>
+            <div class="preset" data-font="Playfair Display" data-w="900" style="font-family:'Playfair Display';font-weight:900">Playfair</div>
+            <div class="preset" data-font="Anton" data-w="400" style="font-family:Anton">Anton</div>
+            <div class="preset" data-font="Archivo Black" data-w="400" style="font-family:'Archivo Black'">Archivo</div>
+            <div class="preset" data-font="Unbounded" data-w="900" style="font-family:Unbounded;font-weight:900">Unbounded</div>
+            <div class="preset" data-font="Inter" data-w="900" style="font-family:Inter;font-weight:900">Inter</div>
+          </div>
+          <div class="colors" style="margin-top:12px">
+            <div class="color-field"><span>Текст</span><div class="color-wrap"><input type="color" id="pColor" value="#141414"></div></div>
+            <div class="color-field"><span>Тло</span><div class="color-wrap"><input type="color" id="pBg" value="#ff5a1f"></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Ширина рядків</label><span class="val" id="vPStretch">1.12</span></div>
+          <input type="range" id="pStretch" min="0.5" max="1.6" step="0.01" value="1.12">
+        </div>
+        <div class="group" id="solidGroup" style="display:none">
+          <h2>Колір</h2>
+          <div class="colors">
+            <div class="color-field"><span>Фон</span><div class="color-wrap"><input type="color" id="solid" value="#ff5a1f"></div></div>
+          </div>
+        </div>
+        <div class="group" id="gradGroup" style="display:none">
+          <h2>Градієнт</h2>
+          <div class="colors">
+            <div class="color-field"><span>Верх</span><div class="color-wrap"><input type="color" id="g1" value="#ff5a1f"></div></div>
+            <div class="color-field"><span>Низ</span><div class="color-wrap"><input type="color" id="g2" value="#4b10c8"></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Кут</label><span class="val" id="vGAng">0</span></div>
+          <input type="range" id="gAng" min="-180" max="180" step="1" value="0">
+        </div>
+        <div class="group">
+          <h2>Обробка фону</h2>
+          <div class="row"><label class="lbl">Розмиття</label><span class="val" id="vBgBlur">0</span></div>
+          <input type="range" id="bgBlur" min="0" max="40" step="1" value="0">
+          <div class="row mt"><label class="lbl">Яскравість</label><span class="val" id="vBgBright">1.00</span></div>
+          <input type="range" id="bgBright" min="0.2" max="1.6" step="0.01" value="1">
+          <div class="note">Фон — окремий шар: фото, постер із великим текстом, колір чи градієнт. Скло бачить саме його, тож контрастний текст за склом дає найсильнішу рефракцію.</div>
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Формат</h2>
+          <div class="presets c3" id="aspects">
+            <div class="preset" data-aspect="1:1">1:1</div>
+            <div class="preset active" data-aspect="4:5">4:5</div>
+            <div class="preset" data-aspect="9:16">9:16</div>
+            <div class="preset" data-aspect="16:9">16:9</div>
+            <div class="preset" data-aspect="bg">Як фото</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid"><button class="btn primary" id="exPng">PNG</button><button class="btn" id="exJpg">JPG</button></div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">Повторів у файлі</label><span class="val" id="vLoops">1</span></div>
+          <input type="range" id="loops" min="1" max="5" step="1" value="1">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">20</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="20">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (30 fps)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово (WebCodecs) — луп замикається ідеально, нічого не вивантажується. Тривалість лупа — у вкладці «Рух».</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <input type="file" id="shapeFile" accept="image/*,.svg" hidden>
+        <input type="file" id="bgFile" accept="image/*" hidden>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · SVG → SDF → видавлене заокруглене скло → рефракція (IOR, дисперсія) · WebGL2 · все локально</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const FPS = 30, TAU = Math.PI*2;
+  const P = {
+    src:"shape", shape:"chevron", invert:false, thresh:128, text:"K", tfont:"Archivo Black", tfw:"400",
+    size:0.8, thick:0.22, round:0.09, bulge:0.2, offX:0, offY:0,
+    ior:1.5, disp:0.015, frost:0, bgDepth:0.6, tint:"#ffffff", absorb:0,
+    refl:1, spec:1, env:0.8, rim:0.35, lightA:-40, shadow:0.3, persp:0.5,
+    motion:"sway", amp:1, dur:6, tiltX:-15, tiltY:25, tiltZ:-8,
+    bg:"poster", lines:"INNOVATE\nWITH\nPURPOSE", pfont:"Bodoni Moda", pfw:"900", pColor:"#141414", pBg:"#ff5a1f", pStretch:1.12,
+    solid:"#ff5a1f", g1:"#ff5a1f", g2:"#4b10c8", gAng:0, bgBlur:0, bgBright:1,
+    aspect:"4:5", loops:1, bitrate:20,
+  };
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  /* вбудовані фігури — шляхи в боксі 100×100 */
+  const SHAPES = {
+    chevron:{ d:"M14 6 H46 L88 50 L46 94 H14 L56 50 Z" },
+    star:   { d:"M50 4 L61.8 37.6 L97.6 38.2 L69 59.8 L79.4 94 L50 73.6 L20.6 94 L31 59.8 L2.4 38.2 L38.2 37.6 Z" },
+    heart:  { d:"M50 92 C50 92 6 64 6 34 C6 17 19 6 32 6 C41 6 47 11 50 18 C53 11 59 6 68 6 C81 6 94 17 94 34 C94 64 50 92 50 92 Z" },
+    ring:   { d:"M50 4 A46 46 0 1 1 49.99 4 Z M50 30 A20 20 0 1 0 50.01 30 Z", evenodd:true },
+    blob:   { d:"M50 6 C74 4 96 22 94 48 C92 72 78 96 50 94 C24 92 4 76 6 50 C8 26 26 8 50 6 Z" },
+    arrow:  { d:"M8 38 H56 V14 L94 50 L56 86 V62 H8 Z" },
+    plus:   { d:"M36 6 H64 V36 H94 V64 H64 V94 H36 V64 H6 V36 H36 Z" },
+    klik:   { d:"M8 4 H34 V38 L64 4 H94 L58 44 L96 96 H64 L40 62 L34 68 V96 H8 Z" },
+  };
+
+  const GLASSES = {
+    clear:  { name:"Clear",   p:{ ior:1.5,  disp:0.015, frost:0,    tint:"#ffffff", absorb:0,   refl:1,   spec:1,   env:0.8, rim:0.35 } },
+    tinted: { name:"Orange",  p:{ ior:1.5,  disp:0.02,  frost:0,    tint:"#ff7a3a", absorb:0.7, refl:1,   spec:1.1, env:0.8, rim:0.3 } },
+    frost:  { name:"Frost",   p:{ ior:1.45, disp:0.01,  frost:0.55, tint:"#ffffff", absorb:0,   refl:0.7, spec:0.6, env:1,   rim:0.6 } },
+    smoke:  { name:"Smoke",   p:{ ior:1.5,  disp:0.01,  frost:0,    tint:"#3a3a3a", absorb:1.3, refl:1.2, spec:1.4, env:0.9, rim:0.25 } },
+    prism:  { name:"Prism",   p:{ ior:1.62, disp:0.075, frost:0,    tint:"#ffffff", absorb:0,   refl:1,   spec:1.2, env:0.8, rim:0.4 } },
+    liquid: { name:"Liquid",  p:{ ior:1.38, disp:0.025, frost:0,    tint:"#ffffff", absorb:0,   refl:0.9, spec:1.3, env:0.9, rim:0.8, bulge:0.7, round:0.2 } },
+    ice:    { name:"Ice",     p:{ ior:1.31, disp:0.02,  frost:0.18, tint:"#bfe6ff", absorb:0.55,refl:1,   spec:1.2, env:1.1, rim:0.6 } },
+    gold:   { name:"Amber",   p:{ ior:1.55, disp:0.02,  frost:0,    tint:"#ffbb44", absorb:1.1, refl:1.1, spec:1.6, env:0.9, rim:0.3 } },
+  };
+
+  const frac = x => x - Math.floor(x);
+  const clamp01 = x => Math.min(1, Math.max(0, x));
+  const smooth = x => x*x*(3 - 2*x);
+  /* 10 рухів: rx/ry/rz — у власних осях фігури (градуси), wz — поворот у площині кадру навколо півоту, tx/ty — зсув */
+  const MOTIONS = {
+    spinY:   { name:"Оберт Y",   f:ph => ({ ry:360*ph }) },
+    spinX:   { name:"Оберт X",   f:ph => ({ rx:360*ph }) },
+    spinZ:   { name:"Оберт Z",   f:ph => ({ rz:360*ph }) },
+    sway:    { name:"Гойдання",  f:(ph, a) => ({ ry:35*a*Math.sin(TAU*ph), rx:6*a*Math.sin(2*TAU*ph) }) },
+    wobble:  { name:"Прецесія",  f:(ph, a) => ({ rx:22*a*Math.sin(TAU*ph), ry:22*a*Math.cos(TAU*ph) }) },
+    float:   { name:"Ширяння",   f:(ph, a) => ({ ty:0.07*a*Math.sin(TAU*ph), rx:8*a*Math.sin(TAU*ph + 1.2), ry:14*a*Math.sin(TAU*ph), rz:4*a*Math.sin(2*TAU*ph) }) },
+    tumble:  { name:"Кульбіт",   f:ph => ({ axis:[1, 1, 0.35], ang:360*ph }) },
+    pendulum:{ name:"Маятник",   f:(ph, a) => ({ pend:28*a*Math.sin(TAU*ph) }) },
+    slide:   { name:"Ковзання",  f:(ph, a) => ({ tx:0.5*a*Math.sin(TAU*ph), ry:-22*a*Math.cos(TAU*ph), rz:5*a*Math.sin(TAU*ph) }) },
+    flip:    { name:"Фліп",      f:ph => { const u = frac(2*ph); return { ry:180*(Math.floor(2*ph) + smooth(clamp01((u - 0.2)/0.6))) }; } },
+  };
+
+  const $ = id => document.getElementById(id);
+  const out = $("out");
+  let W = 1080, H = 1350;
+  const ASPECTS = { "1:1":[1080,1080], "4:5":[1080,1350], "9:16":[1080,1920], "16:9":[1920,1080] };
+
+  /* ================= WebGL2 ================= */
+  const gl = out.getContext("webgl2", { preserveDrawingBuffer:true, antialias:false, alpha:false, premultipliedAlpha:false });
+  if(!gl){
+    $("stage").innerHTML = '<div class="glmsg">Цей браузер не підтримує WebGL2 — відкрийте студію в актуальному Chrome, Edge, Firefox або Safari.</div>';
+    return;
+  }
+  const VS = `#version 300 es
+  layout(location=0) in vec2 p;
+  void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
+
+  /* Сцена: камера на +Z дивиться в −Z; фон — площина z = −uBgD, яка в кадрі збігається з картинкою фону.
+     Обʼєкт — SDF: 2D-відстань до контуру (текстура) → видавлювання з заокругленням і «надутістю». */
+  const FS = `#version 300 es
+  precision highp float;
+  uniform sampler2D uSdf, uBg;
+  uniform vec2 uRes;
+  uniform float uCamZ, uBgD, uB;
+  uniform mat3 uRot;
+  uniform vec3 uPos, uLight, uTint, uBgAvg;
+  uniform float uScale, uHalfT, uRound, uBulge, uStepK;
+  uniform float uIor, uDisp, uFrost, uAbsorb, uRefl, uSpec, uEnv, uRim, uShadow;
+  out vec4 o;
+
+  float sdObj(vec3 p){
+    vec2 s = texture(uSdf, clamp(p.xy/(2.0*uB) + 0.5, 0.0, 1.0)).rg;
+    float d = s.r + length(max(abs(p.xy) - uB, 0.0));
+    /* «надутість» — від сильно розмитої відстані, щоб подушка була гладкою, без хребта по середній лінії */
+    float h = uHalfT + uBulge*0.3*(1.0 - exp(-max(-s.g, 0.0)*4.0));
+    float r = min(uRound, uHalfT*0.98);
+    vec2 w = vec2(d + r, abs(p.z) - h + r);
+    return min(max(w.x, w.y), 0.0) + length(max(w, 0.0)) - r;
+  }
+  float sdW(vec3 p){ return sdObj(transpose(uRot)*(p - uPos)/uScale)*uScale; }
+  vec3 nrm(vec3 p){
+    float e = 0.006*uScale;                                   // ≥1.5 текселя SDF — без «сходинок» від білінійної інтерполяції
+    vec2 k = vec2(1.0, -1.0);
+    return normalize(k.xyy*sdW(p + k.xyy*e) + k.yyx*sdW(p + k.yyx*e) + k.yxy*sdW(p + k.yxy*e) + k.xxx*sdW(p + k.xxx*e));
+  }
+  /* ray ↔ bounding box обʼєкта (у його просторі) */
+  vec2 boxHit(vec3 ro, vec3 rd, float pad){
+    vec3 o2 = transpose(uRot)*(ro - uPos)/uScale, d2 = transpose(uRot)*rd/uScale;
+    vec3 bmax = vec3(uB, uB, uHalfT + uBulge*0.3 + 0.02) + pad;
+    vec3 inv = 1.0/d2, t0 = (-bmax - o2)*inv, t1 = (bmax - o2)*inv;
+    vec3 tmin = min(t0, t1), tmax = max(t0, t1);
+    return vec2(max(max(tmin.x, tmin.y), tmin.z), min(min(tmax.x, tmax.y), tmax.z));
+  }
+  vec2 project(vec3 q){
+    float m = min(uRes.x, uRes.y);
+    vec2 nd = q.xy*uCamZ/(uCamZ - q.z);
+    return (nd*0.5*m + 0.5*uRes)/uRes;
+  }
+  vec3 bgAt(vec2 uv, float lod){ return textureLod(uBg, uv, lod).rgb; }
+  /* студійне оточення для відбиттів: м'який градієнт + дві софтбокси, підфарбоване середнім кольором фону */
+  vec3 env(vec3 d){
+    vec3 c = mix(uBgAvg*0.35, mix(uBgAvg, vec3(1.0), 0.35)*0.75, d.y*0.5 + 0.5);
+    c += vec3(1.0)*smoothstep(0.90, 0.985, dot(d, normalize(vec3(-0.55, 0.6, 0.6))))*1.8;
+    c += vec3(1.0)*smoothstep(0.94, 0.99, dot(d, normalize(vec3(0.75, -0.25, 0.6))))*0.9;
+    c += vec3(1.0)*smoothstep(0.035, 0.0, abs(d.x - 0.35))*smoothstep(0.2, 0.6, d.z)*0.35;
+    return c*uEnv;
+  }
+  /* промінь, що вийшов зі скла, → де він влучає в площину фону */
+  vec3 behind(vec3 p, vec3 d, float lod){
+    if(d.z > -0.02) return env(d)*0.6;
+    vec3 q = p + d*((-uBgD - p.z)/d.z);
+    return bgAt(project(q), lod);
+  }
+  float softShadow(vec3 q){
+    vec2 bh = boxHit(q, uLight, 0.45);                       // запас під півтінь, інакше тінь обрізається прямокутником
+    if(bh.y < max(bh.x, 0.0)) return 1.0;
+    float res = 1.0, t = max(bh.x, 0.01);
+    for(int i = 0; i < 48; i++){
+      float h = sdW(q + uLight*t)*uStepK;
+      res = min(res, 10.0*h/t);
+      t += clamp(h, 0.01*uScale, 0.25);
+      if(res < 0.002 || t > bh.y) break;
+    }
+    return clamp(res, 0.0, 1.0);
+  }
+  vec3 shade(vec3 p, vec3 rd){
+    vec3 n = nrm(p);
+    float cosi = clamp(dot(-rd, n), 0.0, 1.0);
+    float F0 = pow((uIor - 1.0)/(uIor + 1.0), 2.0);
+    float F = clamp((F0 + (1.0 - F0)*pow(1.0 - cosi, 5.0))*uRefl, 0.0, 1.0);
+    vec3 refl = env(reflect(rd, n));
+    /* вхід у скло */
+    vec3 ri = refract(rd, n, 1.0/uIor);
+    vec3 q = p - n*0.003*uScale;
+    float t = 0.0, dPrev = -1.0;
+    for(int i = 0; i < 56; i++){
+      float d = sdW(q + ri*t)*uStepK;
+      if(d > 0.0){
+        float a = t - max(-dPrev, 0.002*uScale), b = t;      // уточнюємо точку виходу
+        for(int j = 0; j < 5; j++){ float m = 0.5*(a + b); if(sdW(q + ri*m) > 0.0) b = m; else a = m; }
+        t = b; break;
+      }
+      dPrev = d;
+      t += max(-d*0.9, 0.0025*uScale);
+    }
+    vec3 pe = q + ri*t;
+    vec3 ne = nrm(pe);
+    float lod = uFrost*7.0;
+    vec3 iors = uIor + vec3(-uDisp, 0.0, uDisp);
+    vec3 col;
+    for(int c = 0; c < 3; c++){
+      vec3 ro2 = refract(ri, -ne, iors[c]);
+      vec3 s = dot(ro2, ro2) < 1e-4 ? behind(pe, reflect(ri, -ne), lod + 1.0)*0.55 : behind(pe, ro2, lod);
+      col[c] = s[c];
+    }
+    /* поглинання за законом Бера: шлях усередині → колір скла */
+    vec3 T = pow(max(uTint, vec3(0.002)), vec3(uAbsorb*t/uScale));
+    col *= T;
+    float spec = pow(max(dot(reflect(rd, n), uLight), 0.0), 90.0)*uSpec*2.2 + pow(max(dot(reflect(rd, n), uLight), 0.0), 12.0)*uSpec*0.15;
+    float rim = pow(1.0 - cosi, 3.0)*uRim;
+    return mix(col, refl, F) + spec + rim*mix(vec3(1.0), uTint, 0.5);
+  }
+  float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x*p.y); }
+  void main(){
+    float m = min(uRes.x, uRes.y);
+    vec2 nd = (gl_FragCoord.xy - 0.5*uRes)/(0.5*m);
+    vec3 ro = vec3(0.0, 0.0, uCamZ), rd = normalize(vec3(nd/uCamZ, -1.0));
+    /* фон + тінь */
+    vec3 qb = ro + rd*((-uBgD - uCamZ)/rd.z);
+    vec3 bg = bgAt(gl_FragCoord.xy/uRes, 0.0);
+    if(uShadow > 0.0){
+      float sh = softShadow(qb);
+      vec3 shc = mix(vec3(1.0), mix(vec3(0.25), uTint*0.8, 0.5), uShadow*(1.0 - sh));
+      bg *= shc;
+    }
+    vec3 col = bg;
+    vec2 bh = boxHit(ro, rd, 0.0);
+    if(bh.y > max(bh.x, 0.0)){
+      float t = max(bh.x, 0.0), dmin = 1e9, tmin = t;
+      bool hit = false;
+      for(int i = 0; i < 110; i++){
+        float d = sdW(ro + rd*t)*uStepK;
+        if(d < dmin){ dmin = d; tmin = t; }
+        if(d < 0.0004*uScale){ hit = true; break; }
+        t += max(d, 0.0008*uScale);
+        if(t > bh.y) break;
+      }
+      float pix = tmin*2.0/(m*uCamZ);
+      float cov = hit ? 1.0 : clamp(1.0 - dmin/pix, 0.0, 1.0);
+      if(cov > 0.0) col = mix(bg, shade(ro + rd*(hit ? t : tmin), rd), cov);
+    }
+    col += (hash(gl_FragCoord.xy) - 0.5)/255.0;
+    o = vec4(clamp(col, 0.0, 1.0), 1.0);
+  }`;
+
+  function compile(type, src){
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  const U = {};
+  for(let i = 0, n = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS); i < n; i++){ const info = gl.getActiveUniform(prog, i); U[info.name] = gl.getUniformLocation(prog, info.name); }
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  const texSdf = gl.createTexture(), texBg = gl.createTexture();
+  const F32 = !!gl.getExtension("OES_texture_float_linear");
+  gl.bindTexture(gl.TEXTURE_2D, texSdf);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.bindTexture(gl.TEXTURE_2D, texBg);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  /* ================= EDT (Felzenszwalb) ================= */
+  function edt(inside, w, h){
+    const INF = 1e20, n = Math.max(w, h);
+    const f = new Float64Array(n), d = new Float64Array(n), z = new Float64Array(n + 1), v = new Int32Array(n);
+    const g = new Float64Array(w*h);
+    for(let i = 0; i < w*h; i++) g[i] = inside[i] ? INF : 0;
+    function dt1(len){
+      let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+      for(let q = 1; q < len; q++){
+        let s = ((f[q] + q*q) - (f[v[k]] + v[k]*v[k])) / (2*q - 2*v[k]);
+        while(s <= z[k]){ k--; s = ((f[q] + q*q) - (f[v[k]] + v[k]*v[k])) / (2*q - 2*v[k]); }
+        k++; v[k] = q; z[k] = s; z[k+1] = INF;
+      }
+      k = 0;
+      for(let q = 0; q < len; q++){ while(z[k+1] < q) k++; d[q] = (q - v[k])*(q - v[k]) + f[v[k]]; }
+    }
+    for(let x = 0; x < w; x++){
+      for(let y = 0; y < h; y++) f[y] = g[y*w + x];
+      dt1(h);
+      for(let y = 0; y < h; y++) g[y*w + x] = d[y];
+    }
+    for(let y = 0; y < h; y++){
+      const o = y*w;
+      for(let x = 0; x < w; x++) f[x] = g[o + x];
+      dt1(w);
+      for(let x = 0; x < w; x++) g[o + x] = Math.sqrt(d[x]);
+    }
+    return g;
+  }
+
+  /* ================= форма → 2D SDF ================= */
+  const N = 640, B = 1.3;                   // текстура SDF покриває [−B, B]² в одиницях обʼєкта; фігура вписана в [−1, 1]
+  const FIT = Math.round(N/(2*B)*2);        // скільки пікселів займає [−1, 1]
+  const maskCv = document.createElement("canvas"); maskCv.width = maskCv.height = N;
+  const mctx = maskCv.getContext("2d", { willReadFrequently:true });
+  let userShape = null, maxInset = 0.3;
+
+  function drawShapeMask(){
+    mctx.setTransform(1, 0, 0, 1, 0, 0);
+    mctx.clearRect(0, 0, N, N);
+    const o = (N - FIT)/2;
+    if(P.src === "text"){
+      const txt = P.text || "K";
+      mctx.font = `${P.tfw} 200px "${P.tfont}", Inter, sans-serif`;
+      const mt = mctx.measureText(txt);
+      const w = mt.actualBoundingBoxLeft + mt.actualBoundingBoxRight, h = mt.actualBoundingBoxAscent + mt.actualBoundingBoxDescent;
+      const k = FIT/Math.max(w, h, 1);
+      mctx.setTransform(k, 0, 0, k, N/2, N/2);
+      mctx.fillStyle = "#fff"; mctx.textBaseline = "alphabetic";
+      mctx.fillText(txt, -(mt.actualBoundingBoxRight - mt.actualBoundingBoxLeft)/2, (mt.actualBoundingBoxAscent - mt.actualBoundingBoxDescent)/2);
+      mctx.setTransform(1, 0, 0, 1, 0, 0);
+      return;
+    }
+    if(P.src === "file" && userShape){
+      const iw = userShape.naturalWidth || userShape.width || 1000, ih = userShape.naturalHeight || userShape.height || 1000;
+      const k = FIT/Math.max(iw, ih), dw = iw*k, dh = ih*k;
+      const tmp = document.createElement("canvas"); tmp.width = Math.max(2, Math.round(dw)); tmp.height = Math.max(2, Math.round(dh));
+      const c = tmp.getContext("2d", { willReadFrequently:true });
+      c.imageSmoothingQuality = "high"; c.drawImage(userShape, 0, 0, tmp.width, tmp.height);
+      const img = c.getImageData(0, 0, tmp.width, tmp.height), d = img.data, n = tmp.width*tmp.height;
+      let transp = 0, opaque = 0;
+      for(let i = 0; i < n; i += 3){ if(d[i*4 + 3] < 128) transp++; else opaque++; }
+      const useAlpha = transp > (transp + opaque)*0.01;
+      let invert = P.invert;
+      if(!useAlpha){
+        let s = 0, cnt = 0;
+        for(let x = 0; x < tmp.width; x++) for(const y of [0, tmp.height - 1]){ const i = (y*tmp.width + x)*4; s += d[i] + d[i+1] + d[i+2]; cnt += 3; }
+        if(s/cnt > 127) invert = !invert;
+      }
+      for(let i = 0; i < n; i++){
+        const q = i*4;
+        let v = useAlpha ? d[q+3] : (d[q]*0.299 + d[q+1]*0.587 + d[q+2]*0.114);
+        if(invert) v = 255 - v;
+        if(!useAlpha) v = Math.max(0, Math.min(255, (v - P.thresh)*6 + 128));
+        else if(P.invert) v = 255 - d[q+3];
+        d[q] = d[q+1] = d[q+2] = 255; d[q+3] = v;
+      }
+      c.putImageData(img, 0, 0);
+      mctx.drawImage(tmp, (N - dw)/2, (N - dh)/2, dw, dh);
+      return;
+    }
+    const sh = SHAPES[P.shape] || SHAPES.chevron;
+    mctx.setTransform(FIT/100, 0, 0, FIT/100, o, o);
+    mctx.fillStyle = "#fff";
+    mctx.fill(new Path2D(sh.d), sh.evenodd ? "evenodd" : "nonzero");
+    mctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  function boxBlur(src, n, r, passes){
+    let a = Float32Array.from(src), b = new Float32Array(n*n);
+    const span = 2*r + 1;
+    for(let p = 0; p < passes; p++){
+      for(let y = 0; y < n; y++){                     // по X
+        const o = y*n; let acc = 0;
+        for(let j = -r; j <= r; j++) acc += a[o + Math.min(n - 1, Math.max(0, j))];
+        for(let x = 0; x < n; x++){
+          b[o + x] = acc/span;
+          acc += a[o + Math.min(n - 1, x + r + 1)] - a[o + Math.max(0, x - r)];
+        }
+      }
+      for(let x = 0; x < n; x++){                     // по Y
+        let acc = 0;
+        for(let j = -r; j <= r; j++) acc += b[Math.min(n - 1, Math.max(0, j))*n + x];
+        for(let y = 0; y < n; y++){
+          a[y*n + x] = acc/span;
+          acc += b[Math.min(n - 1, y + r + 1)*n + x] - b[Math.max(0, y - r)*n + x];
+        }
+      }
+    }
+    return a;
+  }
+  function buildSdf(){
+    drawShapeMask();
+    const a = mctx.getImageData(0, 0, N, N).data;
+    const ins = new Uint8Array(N*N), outs = new Uint8Array(N*N);
+    for(let i = 0; i < N*N; i++){ const v = a[i*4 + 3] >= 128; ins[i] = v ? 1 : 0; outs[i] = v ? 0 : 1; }
+    const dIn = edt(ins, N, N), dOut = edt(outs, N, N);
+    const px = 2*B/N;
+    let sd = new Float32Array(N*N), mx = 0;
+    for(let i = 0; i < N*N; i++){
+      const al = a[i*4 + 3]/255;
+      /* субпіксельна корекція за альфою + знак */
+      const v = ins[i] ? -(dIn[i] - 1 + al) : (dOut[i] - al);
+      sd[i] = v*px;
+      if(ins[i] && dIn[i] > mx) mx = dIn[i];
+    }
+    maxInset = Math.max(0.01, mx*px);
+    /* сильно розмита копія для профілю «надутості» (3 проходи box blur ≈ гаус) */
+    const wide = boxBlur(sd, N, Math.round(N*0.018), 3);
+    /* розмиття SDF (≈ гаус σ≈3 px): EDT дає шум ±½ px, а рефракція його підсилює в «деревні» хвилі.
+       Пряма ділянка контуру від розмиття не змінюється, кути лише трохи округлюються — їх і так скругляє фаска. */
+    sd = boxBlur(sd, N, 3, 3);
+    /* RG: контур + розмита відстань; рядки перевертаємо — у просторі обʼєкта y вгору */
+    const rg = new Float32Array(N*N*2);
+    for(let y = 0; y < N; y++){
+      const src = y*N, dst = (N - 1 - y)*N;
+      for(let x = 0; x < N; x++){ rg[(dst + x)*2] = sd[src + x]; rg[(dst + x)*2 + 1] = wide[src + x]; }
+    }
+    gl.bindTexture(gl.TEXTURE_2D, texSdf);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, F32 ? gl.RG32F : gl.RG16F, N, N, 0, gl.RG, gl.FLOAT, rg);
+    needRender = true;
+  }
+  let sdfTimer = 0;
+  function rebuildShape(){
+    clearTimeout(sdfTimer);
+    sdfTimer = setTimeout(async () => {
+      if(P.src === "text"){ try{ await document.fonts.load(`${P.tfw} 100px "${P.tfont}"`, P.text || "K"); }catch(e){} }
+      buildSdf();
+    }, 40);
+  }
+
+  /* ================= фон ================= */
+  const bgCv = document.createElement("canvas"), bctx = bgCv.getContext("2d");
+  let bgImg = null, bgAvg = [1, 0.35, 0.12];
+  const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+
+  function drawPoster(c){
+    c.fillStyle = P.pBg; c.fillRect(0, 0, W, H);
+    const lines = P.lines.toUpperCase().split("\n").map(s => s.trim()).filter(Boolean);
+    if(!lines.length) return;
+    const lh = H/lines.length;
+    c.fillStyle = P.pColor; c.textBaseline = "alphabetic";
+    lines.forEach((ln, i) => {
+      c.font = `${P.pfw} 200px "${P.pfont}", serif`;
+      const mt = c.measureText(ln);
+      const w = mt.actualBoundingBoxLeft + mt.actualBoundingBoxRight, h = mt.actualBoundingBoxAscent + mt.actualBoundingBoxDescent;
+      if(w < 1 || h < 1) return;
+      const sx = W*P.pStretch/w, sy = lh*0.86/h;
+      c.save();
+      c.translate(W/2, i*lh + lh/2); c.scale(sx, sy);
+      c.fillText(ln, -(mt.actualBoundingBoxRight - mt.actualBoundingBoxLeft)/2, (mt.actualBoundingBoxAscent - mt.actualBoundingBoxDescent)/2);
+      c.restore();
+    });
+  }
+  function buildBg(){
+    bgCv.width = W; bgCv.height = H;
+    const c = bctx;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.filter = "none";
+    c.fillStyle = "#000"; c.fillRect(0, 0, W, H);
+    const blur = P.bgBlur*W/1080;
+    const flt = (blur > 0 ? `blur(${blur}px) ` : "") + (P.bgBright !== 1 ? `brightness(${P.bgBright})` : "");
+    /* малюємо в проміжний канвас, щоб розмиття не тягнуло темні краї */
+    const tmp = document.createElement("canvas"); tmp.width = W; tmp.height = H;
+    const t = tmp.getContext("2d");
+    if(P.bg === "image" && bgImg){
+      const iw = bgImg.naturalWidth, ih = bgImg.naturalHeight, k = Math.max(W/iw, H/ih);
+      t.drawImage(bgImg, (W - iw*k)/2, (H - ih*k)/2, iw*k, ih*k);
+    } else if(P.bg === "solid"){
+      t.fillStyle = P.solid; t.fillRect(0, 0, W, H);
+    } else if(P.bg === "gradient"){
+      const a = (P.gAng - 90)*Math.PI/180, r = Math.hypot(W, H)/2;
+      const g = t.createLinearGradient(W/2 - Math.cos(a)*r, H/2 - Math.sin(a)*r, W/2 + Math.cos(a)*r, H/2 + Math.sin(a)*r);
+      g.addColorStop(0, P.g1); g.addColorStop(1, P.g2);
+      t.fillStyle = g; t.fillRect(0, 0, W, H);
+    } else drawPoster(t);
+    if(flt){
+      const pad = Math.ceil(blur*2);
+      c.filter = flt.trim();
+      c.drawImage(tmp, -pad, -pad, W + pad*2, H + pad*2);           // трохи ширше — краї без темної облямівки
+      c.filter = "none";
+    } else c.drawImage(tmp, 0, 0);
+    /* середній колір — для відбиттів у склі */
+    const s = document.createElement("canvas"); s.width = s.height = 8;
+    const sc = s.getContext("2d", { willReadFrequently:true }); sc.drawImage(bgCv, 0, 0, 8, 8);
+    const d = sc.getImageData(0, 0, 8, 8).data; let r = 0, g2 = 0, b = 0;
+    for(let i = 0; i < 64; i++){ r += d[i*4]; g2 += d[i*4+1]; b += d[i*4+2]; }
+    bgAvg = [r/64/255, g2/64/255, b/64/255];
+    gl.bindTexture(gl.TEXTURE_2D, texBg);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bgCv);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    needRender = true;
+  }
+  let bgTimer = 0;
+  function rebuildBg(){
+    clearTimeout(bgTimer);
+    bgTimer = setTimeout(async () => {
+      if(P.bg === "poster"){ try{ await document.fonts.load(`${P.pfw} 100px "${P.pfont}"`, "INNOVATE"); }catch(e){} }
+      buildBg();
+    }, 30);
+  }
+
+  /* ================= розмір ================= */
+  function resize(){
+    if(P.aspect === "bg" && bgImg){
+      const k = Math.min(1, 1920/Math.max(bgImg.naturalWidth, bgImg.naturalHeight));
+      W = Math.max(2, Math.round(bgImg.naturalWidth*k/2)*2); H = Math.max(2, Math.round(bgImg.naturalHeight*k/2)*2);
+    } else [W, H] = ASPECTS[P.aspect] || ASPECTS["4:5"];
+    out.width = W; out.height = H;
+    $("dims").textContent = `${W}×${H}`;
+    rebuildBg();
+  }
+
+  /* ================= матриці (row-major) ================= */
+  const R3 = {
+    x: a => { const c = Math.cos(a), s = Math.sin(a); return [1,0,0, 0,c,-s, 0,s,c]; },
+    y: a => { const c = Math.cos(a), s = Math.sin(a); return [c,0,s, 0,1,0, -s,0,c]; },
+    z: a => { const c = Math.cos(a), s = Math.sin(a); return [c,-s,0, s,c,0, 0,0,1]; },
+    axis: (v, a) => {
+      const l = Math.hypot(...v), x = v[0]/l, y = v[1]/l, z = v[2]/l, c = Math.cos(a), s = Math.sin(a), t = 1 - c;
+      return [t*x*x + c, t*x*y - s*z, t*x*z + s*y, t*x*y + s*z, t*y*y + c, t*y*z - s*x, t*x*z - s*y, t*y*z + s*x, t*z*z + c];
+    },
+  };
+  const mul = (A, Bm) => { const C = new Array(9); for(let i = 0; i < 3; i++) for(let j = 0; j < 3; j++) C[i*3 + j] = A[i*3]*Bm[j] + A[i*3 + 1]*Bm[3 + j] + A[i*3 + 2]*Bm[6 + j]; return C; };
+  const DEG = Math.PI/180;
+
+  /* ================= кадр ================= */
+  function renderFrame(t){
+    const ph = frac(t/P.dur);
+    const mo = (MOTIONS[P.motion] || MOTIONS.sway).f(ph, P.amp);
+    const base = mul(R3.z(P.tiltZ*DEG), mul(R3.x(P.tiltX*DEG), R3.y(P.tiltY*DEG)));
+    let anim = mo.axis ? R3.axis(mo.axis, mo.ang*DEG) : mul(R3.z((mo.rz || 0)*DEG), mul(R3.x((mo.rx || 0)*DEG), R3.y((mo.ry || 0)*DEG)));
+    let R = mul(base, anim);
+    let px = P.offX + (mo.tx || 0), py = -P.offY + (mo.ty || 0);
+    if(mo.pend){                                         // маятник: півот над фігурою, гойдання в площині кадру
+      const th = mo.pend*DEG, L = 1.25*P.size;
+      R = mul(R3.z(th), R);
+      px += L*Math.sin(th); py += L - L*Math.cos(th);
+    }
+    const camZ = 14 - 11*P.persp;                        // перспектива: далека камера → майже ортографія
+    const halfT = P.thick/2;
+    const la = P.lightA*DEG, L3 = [Math.sin(la)*0.75, Math.cos(la)*0.75, 0.85], ll = Math.hypot(...L3);
+    const tint = hex(P.tint).map(v => v/255);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.useProgram(prog); gl.bindVertexArray(vao);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texSdf); gl.uniform1i(U.uSdf, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texBg); gl.uniform1i(U.uBg, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform2f(U.uRes, W, H);
+    gl.uniform1f(U.uCamZ, camZ);
+    gl.uniform1f(U.uBgD, P.bgDepth);
+    gl.uniform1f(U.uB, B);
+    gl.uniformMatrix3fv(U.uRot, true, R);
+    gl.uniform3f(U.uPos, px, py, 0);
+    gl.uniform3f(U.uLight, L3[0]/ll, L3[1]/ll, L3[2]/ll);
+    gl.uniform3f(U.uTint, tint[0], tint[1], tint[2]);
+    gl.uniform3f(U.uBgAvg, bgAvg[0], bgAvg[1], bgAvg[2]);
+    gl.uniform1f(U.uScale, P.size);
+    gl.uniform1f(U.uHalfT, halfT);
+    gl.uniform1f(U.uRound, Math.min(P.round, maxInset*0.92, halfT*0.98));
+    gl.uniform1f(U.uBulge, P.bulge);
+    gl.uniform1f(U.uStepK, Math.min(0.85, 1/Math.sqrt(1 + Math.pow(1.2*P.bulge, 2))));
+    gl.uniform1f(U.uIor, P.ior);
+    gl.uniform1f(U.uDisp, P.disp);
+    gl.uniform1f(U.uFrost, P.frost);
+    gl.uniform1f(U.uAbsorb, P.absorb);
+    gl.uniform1f(U.uRefl, P.refl);
+    gl.uniform1f(U.uSpec, P.spec);
+    gl.uniform1f(U.uEnv, P.env);
+    gl.uniform1f(U.uRim, P.rim);
+    gl.uniform1f(U.uShadow, P.shadow);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  /* ================= цикл ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, t0 = now(), tPause = 0, needRender = true, lastT = -1, busy = false;
+  function tick(){
+    requestAnimationFrame(tick);
+    if(busy) return;
+    const t = playing ? now() - t0 : tPause;
+    if(needRender || (playing && Math.abs(t - lastT) > 0.5/FPS)){
+      needRender = false; lastT = t;
+      renderFrame(t);
+    }
+  }
+  const curT = () => playing ? now() - t0 : tPause;
+  function setPlaying(v){
+    if(v === playing) return;
+    if(playing){ tPause = now() - t0; } else { t0 = now() - tPause; }
+    playing = v;
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+    if(playing) $("vScrub").textContent = "—";
+    needRender = true;
+  }
+  $("playBtn").addEventListener("click", () => setPlaying(!playing));
+  /* скраб по лупу: ставить на паузу й показує потрібну позу — зручно для PNG */
+  $("scrub").addEventListener("input", e => {
+    setPlaying(false);
+    tPause = parseFloat(e.target.value)*P.dur;
+    $("vScrub").textContent = parseFloat(e.target.value).toFixed(2);
+    needRender = true;
+  });
+
+  /* ================= exports ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  const fname = ext => `glass-${P.src === "text" ? (P.text || "text").replace(/[^\wЀ-ӿ-]+/g, "") : P.src === "file" ? "svg" : P.shape}-${P.motion}.${ext}`;
+  $("exPng").addEventListener("click", () => { renderFrame(curT()); out.toBlob(b => { if(b) downloadBlob(b, fname("png")); }, "image/png"); });
+  $("exJpg").addEventListener("click", () => { renderFrame(curT()); out.toBlob(b => { if(b) downloadBlob(b, fname("jpg")); }, "image/jpeg", 0.95); });
+
+  let mp4Abort = false;
+  $("exMp4").addEventListener("click", async () => {
+    if(busy){ mp4Abort = true; return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    busy = true; mp4Abort = false;
+    $("mp4Label").textContent = "■ Скасувати";
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:W, height:H }, fastStart:"in-memory" });
+    let err = null;
+    const enc = new VideoEncoder({ output:(c, m) => muxer.addVideoChunk(c, m), error:e => { err = e; } });
+    enc.configure({ codec: W*H > 1500000 ? "avc1.640033" : "avc1.640028", width:W, height:H, bitrate:P.bitrate*1e6, framerate:FPS });
+    const total = Math.round(P.dur*FPS)*P.loops;
+    try{
+      for(let i = 0; i < total && !err && !mp4Abort; i++){
+        renderFrame(i/FPS);
+        const fr = new VideoFrame(out, { timestamp: Math.round(i*1e6/FPS), duration: Math.round(1e6/FPS) });
+        enc.encode(fr, { keyFrame: i % (FPS*2) === 0 }); fr.close();
+        if(enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 0));
+        if(i % 4 === 0){ status(`Рендер ${Math.round(i/total*100)}%`, true); await new Promise(r => setTimeout(r, 0)); }
+      }
+      if(!err && !mp4Abort){
+        status("Кодування…", true);
+        await enc.flush(); muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer], { type:"video/mp4" }), fname("mp4"));
+      }
+      enc.close();
+    }catch(e){ err = err || e; }
+    if(err) alert("Помилка кодування MP4: " + (err.message || err));
+    busy = false; needRender = true;
+    $("mp4Label").textContent = "MP4 (30 fps)"; status("");
+  });
+
+  let webmRec = null;
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    setPlaying(true);
+    t0 = now();
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    try{ webmRec = new MediaRecorder(out.captureStream(FPS), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+    webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop = () => { if(chunks.length) downloadBlob(new Blob(chunks, { type:"video/webm" }), fname("webm")); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    setTimeout(() => { if(webmRec) webmRec.stop(); }, P.dur*P.loops*1000);
+  });
+
+  /* ================= файли ================= */
+  function loadImage(file, cb){
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { if(!im.naturalWidth){ im.width = 1000; im.height = 1000; } cb(im); };
+    im.onerror = () => alert("Не вдалося відкрити файл як зображення.");
+    im.src = url;
+  }
+  function useShapeFile(file){
+    loadImage(file, im => { userShape = im; P.src = "file"; $("shapeName").textContent = file.name || ""; syncUI(); rebuildShape(); });
+  }
+  function useBgFile(file){
+    loadImage(file, im => { bgImg = im; P.bg = "image"; $("bgName").textContent = file.name || ""; syncUI(); if(P.aspect === "bg") resize(); else rebuildBg(); });
+  }
+  /* перетягнуте чи вставлене: SVG або картинка з прозорістю → форма, звичайне фото → фон */
+  function routeFile(file){
+    if(!file) return;
+    const isSvg = /svg/.test(file.type) || /\.svg$/i.test(file.name || "");
+    if(!isSvg && !/^image\//.test(file.type)) return;
+    if(isSvg){ useShapeFile(file); return; }
+    loadImage(file, im => {
+      const c = document.createElement("canvas"); c.width = c.height = 64;
+      const x = c.getContext("2d", { willReadFrequently:true }); x.drawImage(im, 0, 0, 64, 64);
+      const d = x.getImageData(0, 0, 64, 64).data; let tr = 0;
+      for(let i = 3; i < d.length; i += 4) if(d[i] < 200) tr++;
+      if(tr > 64*64*0.02) useShapeFile(file); else useBgFile(file);
+    });
+  }
+  $("shapeLoad").addEventListener("click", () => $("shapeFile").click());
+  $("bgLoad").addEventListener("click", () => $("bgFile").click());
+  $("shapeFile").addEventListener("change", e => { if(e.target.files[0]) useShapeFile(e.target.files[0]); e.target.value = ""; });
+  $("bgFile").addEventListener("change", e => { if(e.target.files[0]) useBgFile(e.target.files[0]); e.target.value = ""; });
+  const stage = $("stage");
+  ["dragenter","dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if(f) routeFile(f); });
+  window.addEventListener("paste", e => {
+    const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith("image/"));
+    if(it){ e.preventDefault(); routeFile(it.getAsFile()); }
+  });
+
+  /* тягнемо обʼєкт мишкою */
+  let drag = null;
+  out.addEventListener("pointerdown", e => {
+    out.setPointerCapture(e.pointerId);
+    const r = out.getBoundingClientRect(), m = Math.min(r.width, r.height);
+    drag = { x:e.clientX, y:e.clientY, ox:P.offX, oy:P.offY, k:2/m };
+  });
+  out.addEventListener("pointermove", e => {
+    if(!drag) return;
+    P.offX = Math.round(Math.min(1.5, Math.max(-1.5, drag.ox + (e.clientX - drag.x)*drag.k))*100)/100;
+    P.offY = Math.round(Math.min(1.5, Math.max(-1.5, drag.oy + (e.clientY - drag.y)*drag.k))*100)/100;
+    $("offX").value = P.offX; $("vOffX").textContent = P.offX.toFixed(2);
+    $("offY").value = P.offY; $("vOffY").textContent = P.offY.toFixed(2);
+    needRender = true;
+  });
+  out.addEventListener("pointerup", () => { drag = null; });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  const shBox = $("shapes");
+  for(const [key, s] of Object.entries(SHAPES)){
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.shape = key; el.title = key;
+    el.innerHTML = `<svg viewBox="0 0 100 100"><path d="${s.d}" fill="currentColor" fill-rule="${s.evenodd ? "evenodd" : "nonzero"}"/></svg>`;
+    el.addEventListener("click", () => { P.shape = key; P.src = "shape"; syncUI(); rebuildShape(); });
+    shBox.appendChild(el);
+  }
+  const glBox = $("glasses");
+  for(const [key, g] of Object.entries(GLASSES)){
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.glass = key;
+    el.innerHTML = `<div>${g.name}</div><div class="pal" style="background:linear-gradient(90deg,#fff2 0%,${g.p.tint}${g.p.absorb > 0 ? "" : "44"} 55%,#fff8 100%)"></div>`;
+    el.addEventListener("click", () => { Object.assign(P, g.p); syncUI(); needRender = true; });
+    glBox.appendChild(el);
+  }
+  const moBox = $("motions");
+  for(const [key, m] of Object.entries(MOTIONS)){
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.motion = key; el.textContent = m.name;
+    el.addEventListener("click", () => { P.motion = key; t0 = now(); tPause = 0; syncUI(); needRender = true; });
+    moBox.appendChild(el);
+  }
+  document.querySelectorAll("#sources .preset").forEach(p => p.addEventListener("click", () => {
+    if(p.dataset.src === "file" && !userShape){ $("shapeFile").click(); return; }
+    P.src = p.dataset.src; syncUI(); rebuildShape();
+  }));
+  document.querySelectorAll("#tfonts .preset").forEach(p => p.addEventListener("click", () => {
+    P.tfont = p.dataset.font; P.tfw = p.dataset.w; syncUI(); rebuildShape();
+  }));
+  document.querySelectorAll("#pfonts .preset").forEach(p => p.addEventListener("click", () => {
+    P.pfont = p.dataset.font; P.pfw = p.dataset.w; syncUI(); rebuildBg();
+  }));
+  document.querySelectorAll("#bgTypes .preset").forEach(p => p.addEventListener("click", () => {
+    if(p.dataset.bg === "image" && !bgImg){ $("bgFile").click(); return; }
+    P.bg = p.dataset.bg; syncUI(); rebuildBg();
+  }));
+  document.querySelectorAll("#aspects .preset").forEach(p => p.addEventListener("click", () => {
+    if(p.dataset.aspect === "bg" && !bgImg){ $("bgFile").click(); return; }
+    P.aspect = p.dataset.aspect; syncUI(); resize();
+  }));
+
+  const f2 = x => x.toFixed(2), f3 = x => x.toFixed(3);
+  /* [id, value-id, формат, що перебудувати: "shape" | "bg" | null] */
+  const RANGES = [
+    ["thresh","vThresh",null,"shape"],
+    ["size","vSize",f2], ["thick","vThick",f2], ["round","vRound",f2], ["bulge","vBulge",f2], ["offX","vOffX",f2], ["offY","vOffY",f2],
+    ["ior","vIor",f2], ["disp","vDisp",f3], ["frost","vFrost",f2], ["bgDepth","vBgDepth",f2], ["absorb","vAbsorb",f2],
+    ["refl","vRefl",f2], ["spec","vSpec",f2], ["env","vEnv",f2], ["rim","vRim",f2], ["lightA","vLightA",null], ["shadow","vShadow",f2], ["persp","vPersp",f2],
+    ["amp","vAmp",f2], ["dur","vDur",null], ["tiltX","vTiltX",null], ["tiltY","vTiltY",null], ["tiltZ","vTiltZ",null],
+    ["pStretch","vPStretch",f2,"bg"], ["gAng","vGAng",null,"bg"], ["bgBlur","vBgBlur",null,"bg"], ["bgBright","vBgBright",f2,"bg"],
+    ["loops","vLoops",null], ["bitrate","vBitrate",null],
+  ];
+  for(const [id, vid, fmt, rb] of RANGES){
+    $(id).addEventListener("input", e => {
+      P[id] = parseFloat(e.target.value);
+      $(vid).textContent = fmt ? fmt(P[id]) : P[id];
+      if(GLASS_KEYS.has(id)) markGlass();
+      if(rb === "shape") rebuildShape(); else if(rb === "bg") rebuildBg(); else needRender = true;
+    });
+  }
+  const GLASS_KEYS = new Set(["ior","disp","frost","tint","absorb","refl","spec","env","rim"]);
+  $("text").addEventListener("input", e => { P.text = e.target.value; rebuildShape(); });
+  $("lines").addEventListener("input", e => { P.lines = e.target.value; rebuildBg(); });
+  $("invert").addEventListener("change", e => { P.invert = e.target.checked; rebuildShape(); });
+  $("tint").addEventListener("input", e => { P.tint = e.target.value; markGlass(); needRender = true; });
+  ["pColor","pBg","solid","g1","g2"].forEach(id => $(id).addEventListener("input", e => { P[id] = e.target.value; rebuildBg(); }));
+
+  function markGlass(){
+    glBox.querySelectorAll(".preset").forEach(el => {
+      const g = GLASSES[el.dataset.glass].p;
+      el.classList.toggle("active", Object.keys(g).every(k => typeof g[k] === "string" ? g[k].toLowerCase() === String(P[k]).toLowerCase() : Math.abs(g[k] - P[k]) < 1e-3));
+    });
+  }
+  function syncUI(){
+    for(const [id, vid, fmt] of RANGES){ $(id).value = P[id]; $(vid).textContent = fmt ? fmt(P[id]) : P[id]; }
+    $("text").value = P.text; $("lines").value = P.lines; $("invert").checked = P.invert;
+    ["tint","pColor","pBg","solid","g1","g2"].forEach(id => $(id).value = P[id]);
+    const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x.dataset[attr] === val));
+    mark("#sources", "src", P.src); mark("#shapes", "shape", P.src === "shape" ? P.shape : "");
+    mark("#tfonts", "font", P.tfont); mark("#pfonts", "font", P.pfont);
+    mark("#bgTypes", "bg", P.bg); mark("#aspects", "aspect", P.aspect); mark("#motions", "motion", P.motion);
+    $("shapeGroup").style.display = P.src === "shape" ? "block" : "none";
+    $("fileGroup").style.display = P.src === "file" ? "block" : "none";
+    $("textGroup").style.display = P.src === "text" ? "block" : "none";
+    $("posterGroup").style.display = P.bg === "poster" ? "block" : "none";
+    $("solidGroup").style.display = P.bg === "solid" ? "block" : "none";
+    $("gradGroup").style.display = P.bg === "gradient" ? "block" : "none";
+    markGlass();
+  }
+  $("reset").addEventListener("click", () => {
+    Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
+    t0 = now(); syncUI(); resize(); rebuildShape();
+  });
+
+  /* ================= boot ================= */
+  syncUI(); resize(); buildSdf();
+  if(document.fonts) document.fonts.ready.then(() => { rebuildBg(); if(P.src === "text") rebuildShape(); });
+  tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
