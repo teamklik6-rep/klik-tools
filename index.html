@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klik Tools — Creative Studio Toolkit</title>
-<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph, Halo. Everything runs locally in your browser." />
+<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph, Glass, Halo. Everything runs locally in your browser." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23bbff32'/%3E%3Cpath d='M10 7v18M10 16l9-9M10 16l9 9' stroke='%23060612' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -258,6 +258,16 @@
   .prev-morph i:nth-child(8){width:60px;animation-delay:-2.3s}
   .prev-morph i:nth-child(9){width:150px;animation-delay:-2.6s}
   .prev-morph i:nth-child(10){width:190px;animation-delay:-2.9s}
+  /* preview art: glass (svg → liquid glass over a poster) */
+  .prev-glass{position:absolute;inset:0;background:#ff5a1f;overflow:hidden;display:grid;place-items:center;perspective:520px}
+  .prev-glass .txt{position:absolute;inset:-6px -14px;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    font-family:"Bodoni Moda",Didot,"Bodoni 72",Georgia,serif;font-weight:900;color:#141414;font-size:62px;line-height:.86;letter-spacing:-.03em;transform:scaleY(1.22)}
+  .prev-glass i{position:relative;width:96px;height:148px;
+    clip-path:polygon(14% 6%,46% 6%,88% 50%,46% 94%,14% 94%,56% 50%);
+    background:linear-gradient(135deg,rgba(255,255,255,.6),rgba(255,255,255,.06) 38%,rgba(255,255,255,.22) 68%,rgba(255,255,255,.65));
+    -webkit-backdrop-filter:blur(2.5px) saturate(1.7) contrast(1.25);backdrop-filter:blur(2.5px) saturate(1.7) contrast(1.25);
+    animation:glasssway 4.2s ease-in-out infinite alternate}
+  @keyframes glasssway{from{transform:rotateY(-38deg) rotateZ(-7deg)}to{transform:rotateY(38deg) rotateZ(7deg)}}
   @keyframes morphrow{from{transform:translateX(-14px);filter:hue-rotate(0deg)}to{transform:translateX(14px);filter:hue-rotate(-45deg)}}
 
   /* preview art: halo (defocus wave → gradient map): центр розмивається першим, краї — у протифазі */
@@ -284,6 +294,46 @@
   .prev-orbit i:nth-child(8){left:58%;top:47%;width:86px;height:62px;background:#c95f28;transform:rotate(-3deg)}
   .prev-orbit i:nth-child(9){left:34%;top:56%;width:104px;height:76px;background:#8fa9bd;transform:rotate(2deg)}
   .prev-orbit b{position:absolute;left:38%;top:44%;font-size:13px;font-weight:800;color:#fff;letter-spacing:.01em;text-shadow:0 2px 10px rgba(0,0,0,.2)}
+
+  /* ---------------- similar sites (external effect studios) ---------------- */
+  #refs{margin-top:88px;scroll-margin-top:84px}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 40px;flex-wrap:wrap;margin-bottom:26px}
+  .sec-head .kicker{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .sec-head h2{font-size:clamp(28px,3.6vw,40px);font-weight:800;line-height:1.08;letter-spacing:-.025em}
+  .sec-head p{font-size:15px;line-height:1.6;color:var(--muted);max-width:440px}
+  .refs{display:flex;flex-direction:column;gap:20px}
+  .card.ref{flex-direction:row;text-decoration:none;color:inherit}
+  .ref .preview{height:auto;min-height:220px;width:40%;flex:none;border-bottom:0;border-right:1px solid var(--border)}
+  .ref .domain{font-size:12.5px;font-weight:600;color:var(--accent);letter-spacing:.02em}
+  .ref .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .ref .tags span{font-size:11.5px;font-weight:600;color:#ffffffb0;border:1px solid var(--border-hover);border-radius:999px;padding:3px 10px}
+  .card.ref:hover .open svg{transform:translate(3px,-3px)}
+  @media (max-width:760px){
+    .card.ref{flex-direction:column}
+    .ref .preview{width:auto;min-height:0;height:180px;border-right:0;border-bottom:1px solid var(--border)}
+  }
+  /* preview art: uninspired experiments (sliced rings shifting) */
+  .prev-slice{position:absolute;inset:0;background:#0b0b0b;overflow:hidden}
+  .prev-slice i{position:absolute;left:0;right:0;height:11.2%;top:calc(var(--n) * 11.111%);overflow:hidden;
+    animation:sliceshift 3.2s ease-in-out infinite alternate;animation-delay:calc(var(--n) * -.36s)}
+  .prev-slice i b{position:absolute;left:0;right:0;height:900%;top:calc(var(--n) * -100%);
+    background:radial-gradient(circle at 50% 50%,#fff 0 18px,#ff4d1a 18px 38px,#ffd23f 38px 56px,#2741ff 56px 76px,#0b0b0b 76px 80px,#fff 80px 82px,transparent 82px)}
+  @keyframes sliceshift{from{transform:translateX(-22px)}to{transform:translateX(22px)}}
+  /* preview art: design minis (a shelf of tiny tool tiles) */
+  .prev-minis{position:absolute;inset:0;background:#f1efe9;display:grid;place-content:center;
+    grid-template-columns:repeat(4,54px);grid-auto-rows:54px;gap:10px}
+  .prev-minis i{display:grid;place-items:center;border-radius:12px;box-shadow:0 8px 18px -10px rgba(0,0,0,.45);
+    font-style:normal;font-weight:800;font-size:19px;letter-spacing:-.02em;color:#111;
+    animation:minibob 2.8s ease-in-out infinite;animation-delay:calc(var(--n) * -.35s)}
+  .prev-minis i:nth-child(1){background:radial-gradient(circle,#fff 1.3px,transparent 1.7px) 0 0/6px 6px,#151515}
+  .prev-minis i:nth-child(2){background:linear-gradient(135deg,#ff4d1a,#ffd23f)}
+  .prev-minis i:nth-child(3){background:conic-gradient(#2741ff 25%,#151515 0 50%,#2741ff 0 75%,#151515 0) 0 0/14px 14px}
+  .prev-minis i:nth-child(4){background:#fff}
+  .prev-minis i:nth-child(5){background:radial-gradient(circle at 0 100%,transparent 60%,#151515 61% 67%,transparent 68%),#bbff32}
+  .prev-minis i:nth-child(6){background:radial-gradient(circle at 32% 30%,#e6d6ff,#7b3bff 52%,#1a0640)}
+  .prev-minis i:nth-child(7){background:repeating-linear-gradient(90deg,#151515 0 2px,#fff 2px 6px)}
+  .prev-minis i:nth-child(8){background:linear-gradient(90deg,#ff4d1a 0 25%,#ffd23f 0 50%,#2741ff 0 75%,#151515 0)}
+  @keyframes minibob{50%{transform:translateY(-5px)}}
 
   /* ---------------- footnote strip ---------------- */
   .strip{
@@ -350,7 +400,9 @@
     <div class="tab" data-tool="echo">Echo</div>
     <div class="tab" data-tool="sweep">Sweep</div>
     <div class="tab" data-tool="morph">Morph</div>
+    <div class="tab" data-tool="glass">Glass</div>
     <div class="tab" data-tool="halo">Halo</div>
+    <div class="tab" data-route="refs" data-i18n="navRefs">Similar sites</div>
   </nav>
 
   <div class="head-right">
@@ -372,7 +424,7 @@
     <div class="glow"></div>
     <div class="tagline"><span class="pulse"></span> <span data-i18n="tagline">In-house studio tools</span></div>
     <h1 data-i18n-html="heroTitle">Creative tools by <span class="green">Klik</span> — right in your browser.</h1>
-    <p class="lede" data-i18n="lede">Eighteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video and defocus-wave neon type. No installs, no server — everything runs locally.</p>
+    <p class="lede" data-i18n="lede">Nineteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos and defocus-wave neon type. No installs, no server — everything runs locally.</p>
   </div>
 
   <div class="cards">
@@ -586,13 +638,24 @@
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
     </div>
+    <!-- Glass -->
+    <div class="card" data-tool="glass">
+      <div class="preview">
+        <div class="prev-glass"><div class="txt"><span>INNOVATE</span><span>WITH</span><span>PURPOSE</span></div><i></i></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">18</span> Glass Studio</h3>
+        <p data-i18n="glassDesc">Upload an SVG and get a 3D liquid-glass object: the outline is extruded, rounded and puffed up, then real refraction bends whatever is behind it — a big-type poster, your photo, a color or a gradient. IOR, RGB dispersion, frost, tint, Fresnel, highlights and soft shadow; 10 seamless motions (spins, sway, precession, tumble, pendulum, flip); PNG / JPG / MP4 / WebM.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
     <!-- Halo -->
     <div class="card" data-tool="halo">
       <div class="preview">
         <div class="prev-halo"><span><i>d</i><i>o</i><i>o</i><i>f</i></span></div>
       </div>
       <div class="body">
-        <h3><span class="idx">18</span> Halo Studio</h3>
+        <h3><span class="idx">19</span> Halo Studio</h3>
         <p data-i18n="haloDesc">Neon glow typography from a reference: a defocus wave rolls through your word or logo (SVG / PNG), and a gradient map turns every level of the blurred alpha into a ring of color. 14 variations — from the center, linear, letter by letter, noise, spiral, breathing, focus ring, liquid chrome, prism — 12 gradient maps with an editor, halo, RGB split, bloom, seamless loops, PNG / JPG / MP4 / WebM export.</p>
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
@@ -604,6 +667,18 @@
     <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg> <span data-i18n="strip2">No installs, no dependencies</span></div>
     <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> <span data-i18n="strip3">Export PNG · SVG · MP4</span></div>
   </div>
+
+  <!-- Similar sites: other studios with browser effect tools (cards rendered from REFS below) -->
+  <section id="refs">
+    <div class="sec-head">
+      <div>
+        <div class="kicker" data-i18n="refsKicker">Inspiration</div>
+        <h2 data-i18n="refsTitle">Other effect studios</h2>
+      </div>
+      <p data-i18n="refsLede">Sites that also build browser tools for visual effects — for references and ideas.</p>
+    </div>
+    <div class="refs" id="refsList"></div>
+  </section>
 </div>
 
 <!-- ==================== TOOL VIEW ==================== -->
@@ -624,7 +699,7 @@
       title: "Klik Tools — Creative Studio Toolkit",
       tagline: "In-house studio tools",
       heroTitle: 'Creative tools by <span class="green">Klik</span> — right in your browser.',
-      lede: "Eighteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video and defocus-wave neon type. No installs, no server — everything runs locally.",
+      lede: "Nineteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos and defocus-wave neon type. No installs, no server — everything runs locally.",
       lumaDesc: "CellMap · PixelSynth · ASCII. Turns photos and videos into luminance-driven grids: clip tiles, color zones or classic ASCII art with export.",
       sphereDesc: "A 3D glowing-sphere generator on WebGL: noise, glow, orbiting particles, presets and MP4 recording — all in real time.",
       xrayDesc: "Photo → x-ray: Canny contour detection, thin 1px lines, Wireframe / Blueprint / Neon styles and export to PNG or vector SVG.",
@@ -642,8 +717,14 @@
       echoDesc: "The After Effects text-echo recipe: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Nested glowing rings from any digits, word or your own shape (PNG / SVG / logo), anchor and drift stairs, 8 gradient maps, seamless outward / inward / breathing loops, PNG / JPG / MP4 / WebM export.",
       sweepDesc: "The After Effects text-reveal recipe in three effects: CC Light Sweep → CC Radial Fast Blur → Colorama. A light band sweeps across black text or your logo, the zoom blur turns it into rays, Colorama paints violet → orange → cream and wraps the hottest spots back to black. Animated sweep and blur centers, 8 output cycles, seamless loops, PNG / JPG / MP4 / WebM export.",
       morphDesc: "The After Effects gradient-morph recipe: Levels → Colorama → Mosaic. Your video, photo or webcam: Levels blows out the bright wall, Colorama maps shadows → blue → white and loops the background to black, Mosaic 1300 × 30 with Sharp Colors smears every row into a gradient bar. Built-in 3D demo head, 8 palettes, pulse and drift, frame-exact MP4 export.",
+      glassDesc: "Upload an SVG and get a 3D liquid-glass object: the outline is extruded, rounded and puffed up, then real refraction bends whatever is behind it — a big-type poster, your photo, a color or a gradient. IOR, RGB dispersion, frost, tint, Fresnel, highlights and soft shadow; 10 seamless motions (spins, sway, precession, tumble, pendulum, flip); PNG / JPG / MP4 / WebM.",
       haloDesc: "Neon glow typography from a reference: a defocus wave rolls through your word or logo (SVG / PNG), and a gradient map turns every level of the blurred alpha into a ring of color. 14 variations — from the center, linear, letter by letter, noise, spiral, breathing, focus ring, liquid chrome, prism — 12 gradient maps with an editor, halo, RGB split, bloom, seamless loops, PNG / JPG / MP4 / WebM export.",
       open: "Open studio",
+      navRefs: "Similar sites",
+      refsKicker: "Inspiration",
+      refsTitle: "Other effect studios",
+      refsLede: "Sites that also build browser tools for visual effects — for references and ideas.",
+      refsVisit: "Visit site",
       strip1: "Private — files never leave your browser",
       strip2: "No installs, no dependencies",
       strip3: "Export PNG · SVG · MP4",
@@ -653,7 +734,7 @@
       title: "Klik Tools — внутренние студии",
       tagline: "Внутренние инструменты студии",
       heroTitle: 'Креативные тулы <span class="green">Klik</span> — прямо в браузере.',
-      lede: "Восемнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света, градиент-морф видео и неоновый текст с волной расфокуса. Без установок и сервера — всё локально.",
+      lede: "Девятнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света, градиент-морф видео, 3D-логотипы из жидкого стекла и неоновый текст с волной расфокуса. Без установок и сервера — всё локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото и видео → сетки по яркости, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) с палитрами, неоновые капсулы, стек glow/glitch пост-эффектов.",
       sphereDesc: "3D генератор световых сфер на WebGL: шум, свечение, орбитальные частицы, пресеты и запись в MP4 — всё в реальном времени.",
       xrayDesc: "Фото → рентген: детекция контуров Canny, тонкие 1px-линии, стили Wireframe / Blueprint / Neon и экспорт в PNG или вектор SVG.",
@@ -671,8 +752,14 @@
       echoDesc: "Рецепт текст-эхо из After Effects: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Вложенные светящиеся кольца из любых цифр, слова или своей фигуры (PNG / SVG / логотип), anchor и дрейф-ступеньки, 8 градиент-карт, бесшовные лупы наружу / внутрь / дыхание, экспорт PNG / JPG / MP4 / WebM.",
       sweepDesc: "Рецепт текст-ревила из After Effects в три эффекта: CC Light Sweep → CC Radial Fast Blur → Colorama. Полоса света проходит по чёрному тексту или логотипу, зум-блюр превращает её в лучи, Colorama красит фиолетовый → оранжевый → крем и заворачивает самые яркие места обратно в чёрный. Анимированные центры света и блюра, 8 циклов цвета, бесшовные лупы, экспорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градиент-морфа из After Effects: Levels → Colorama → Mosaic. Твоё видео, фото или камера: Levels выжигает светлую стену, Colorama красит тени → синий → белый и заворачивает фон в чёрный, Mosaic 1300 × 30 с Sharp Colors растягивает каждую строку в градиентную полосу. Встроенная 3D-демо-голова, 8 палитр, пульсация и дрейф, покадровый экспорт MP4.",
+      glassDesc: "Загрузи SVG — и получи 3D-объект из жидкого стекла: контур выдавливается, скругляется и «надувается», а настоящая рефракция гнёт всё, что за ним, — постер с большим текстом, твоё фото, цвет или градиент. IOR, RGB-дисперсия, матовость, оттенок, Fresnel, блики и мягкая тень; 10 бесшовных движений (обороты, покачивание, прецессия, кульбит, маятник, флип); PNG / JPG / MP4 / WebM.",
       haloDesc: "Неоновая типографика по референсу: волна расфокуса прокатывается по слову или логотипу (SVG / PNG), а градиент-карта превращает каждый уровень размытой альфы в кольцо своего цвета. 14 вариаций — от центра, линейная, по буквам, шум, спираль, дыхание, кольцо фокуса, жидкий хром, призма, — 12 градиент-карт с редактором, ореол, RGB-расщепление, bloom, бесшовные лупы, экспорт PNG / JPG / MP4 / WebM.",
       open: "Открыть студию",
+      navRefs: "Похожие сайты",
+      refsKicker: "Вдохновение",
+      refsTitle: "Другие студии эффектов",
+      refsLede: "Сайты, которые тоже делают браузерные тулы для визуальных эффектов — для референсов и идей.",
+      refsVisit: "Открыть сайт",
       strip1: "Приватно — файлы не покидают браузер",
       strip2: "Без установок и зависимостей",
       strip3: "Экспорт PNG · SVG · MP4",
@@ -682,7 +769,7 @@
       title: "Klik Tools — внутрішні студії",
       tagline: "Внутрішні інструменти студії",
       heroTitle: 'Креативні тули <span class="green">Klik</span> — прямо у браузері.',
-      lede: "Вісімнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла, градієнт-морф відео й неоновий текст із хвилею розфокусу. Без інсталяцій, без сервера — все локально.",
+      lede: "Девʼятнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла, градієнт-морф відео, 3D-логотипи з рідкого скла й неоновий текст із хвилею розфокусу. Без інсталяцій, без сервера — все локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото й відео → сітки за яскравістю, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) з палітрами, неонові капсули, стек glow/glitch пост-ефектів.",
       sphereDesc: "3D генератор світлових сфер на WebGL: шум, ґлоу, орбітальні частинки, пресети та запис у MP4 — все в реальному часі.",
       xrayDesc: "Фото → рентген: детекція контурів Canny, тонкі 1px-лінії, стилі Wireframe / Blueprint / Neon і експорт у PNG або вектор SVG.",
@@ -700,8 +787,14 @@
       echoDesc: "Рецепт текст-відлуння з After Effects: Inner Glow → Scale → Echo (Composite In Back) → Colorama → CC Radial Fast Blur. Вкладені кільця, що світяться, з будь-яких цифр, слова чи своєї фігури (PNG / SVG / логотип), anchor і дрейф-сходинки, 8 градієнт-мап, безшовні лупи назовні / всередину / дихання, експорт PNG / JPG / MP4 / WebM.",
       sweepDesc: "Рецепт текст-ревілу з After Effects у три ефекти: CC Light Sweep → CC Radial Fast Blur → Colorama. Смуга світла проходить по чорному тексту чи логотипу, зум-блюр робить з неї промені, Colorama фарбує фіолет → помаранч → крем і загортає найяскравіші місця назад у чорний. Анімовані центри світла й блюру, 8 циклів кольору, безшовні лупи, експорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градієнт-морфу з After Effects: Levels → Colorama → Mosaic. Твоє відео, фото чи камера: Levels випалює світлу стіну, Colorama фарбує тіні → синій → білий і загортає фон у чорний, Mosaic 1300 × 30 із Sharp Colors розтягує кожен рядок у градієнтну смугу. Вбудована 3D-демо-голова, 8 палітр, пульсація й дрейф, покадровий експорт MP4.",
+      glassDesc: "Завантаж SVG — і отримай 3D-обʼєкт із рідкого скла: контур видавлюється, заокруглюється й «надувається», а справжня рефракція гне все, що за ним, — постер з великим текстом, твоє фото, колір чи градієнт. IOR, RGB-дисперсія, матовість, відтінок, Fresnel, бліки й мʼяка тінь; 10 безшовних рухів (оберти, гойдання, прецесія, кульбіт, маятник, фліп); PNG / JPG / MP4 / WebM.",
       haloDesc: "Неонова типографіка за референсом: хвиля розфокусу прокочується словом чи логотипом (SVG / PNG), а градієнт-мапа робить кожен рівень розмитої альфи кільцем свого кольору. 14 варіацій — від центру, лінійна, по літерах, шум, спіраль, дихання, кільце фокусу, рідкий хром, призма, — 12 градієнт-мап з редактором, ореол, RGB-розщеплення, bloom, безшовні лупи, експорт PNG / JPG / MP4 / WebM.",
       open: "Відкрити студію",
+      navRefs: "Схожі сайти",
+      refsKicker: "Натхнення",
+      refsTitle: "Інші студії ефектів",
+      refsLede: "Сайти, які теж роблять браузерні тули для візуальних ефектів — для референсів та ідей.",
+      refsVisit: "Відкрити сайт",
       strip1: "Приватно — файли не покидають браузер",
       strip2: "Без інсталяцій та залежностей",
       strip3: "Експорт PNG · SVG · MP4",
@@ -719,6 +812,7 @@
     document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = d[el.dataset.i18n]; });
     document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = d[el.dataset.i18nHtml]; });
     document.querySelectorAll("#langs button").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
+    renderRefs();
     updateTitle();
   }
 
@@ -750,8 +844,53 @@
     echo:     { src: "tools/echo-studio.html",     title: "Echo Studio" },
     sweep:    { src: "tools/sweep-studio.html",    title: "Sweep Studio" },
     morph:    { src: "tools/morph-studio.html",    title: "Morph Studio" },
+    glass:    { src: "tools/glass-studio.html",    title: "Glass Studio" },
     halo:     { src: "tools/halo-studio.html",     title: "Halo Studio" },
   };
+
+  /* ---------------- similar sites ----------------
+     Зовнішні сайти з подібними студіями ефектів. Новий сайт = ще один об'єкт тут:
+     url, name, art (HTML превʼю), tags, desc {en, ru, uk}. Відкриваються в новій вкладці. */
+  const nth = (k, fn) => Array.from({ length: k }, (_, n) => fn(n)).join("");
+  const REFS = [
+    {
+      url: "https://experiments.uninspired.studio/",
+      name: "Uninspired Experiments",
+      art: `<div class="prev-slice">${nth(9, n => `<i style="--n:${n}"><b></b></i>`)}</div>`,
+      tags: ["Grid", "Particle", "Slice", "Fragments", "Shift"],
+      desc: {
+        en: "Playful browser experiments from Uninspired Studio, the makers of Momentum: small interactive animation tools — grids, particles, slices, fragments and shifts — focused on simplicity, interactivity and a bit of weirdness.",
+        ru: "Игровые браузерные эксперименты от Uninspired Studio (авторы Momentum): маленькие интерактивные анимационные тулы — сетки, частицы, слайсы, фрагменты и сдвиги — с упором на простоту, интерактивность и немного странности.",
+        uk: "Грайливі браузерні експерименти від Uninspired Studio (автори Momentum): маленькі інтерактивні анімаційні тули — сітки, частинки, слайси, фрагменти й зсуви — з акцентом на простоту, інтерактивність і трохи дивацтва.",
+      },
+    },
+    {
+      url: "https://www.designminis.com/",
+      name: "Design Minis",
+      art: `<div class="prev-minis">${nth(8, n => `<i style="--n:${n}">${n === 3 ? "Aa" : ""}</i>`)}</div>`,
+      tags: ["Ditther", "Grainrad", "Mozayk", "Shader Lab", "TextLab", "Durves"],
+      desc: {
+        en: "A curated directory of small tools made by designers, each doing one job properly: colour, type, motion, icons — plus dithering, grain, mosaics and shaders. 100+ tools, free, freemium and paid.",
+        ru: "Кураторский каталог маленьких тулов от дизайнеров — каждый делает одну вещь, но хорошо: цвет, типографика, моушн, иконки, а ещё дизеринг, зерно, мозаики и шейдеры. 100+ инструментов — бесплатные, freemium и платные.",
+        uk: "Кураторський каталог маленьких тулів від дизайнерів — кожен робить одну річ, але добре: колір, типографіка, моушн, іконки, а ще дизеринг, зерно, мозаїки й шейдери. 100+ інструментів — безкоштовні, freemium і платні.",
+      },
+    },
+  ];
+
+  function renderRefs(){
+    const d = I18N[lang];
+    document.getElementById("refsList").innerHTML = REFS.map(r => `
+      <a class="card ref" href="${r.url}" target="_blank" rel="noopener noreferrer">
+        <div class="preview">${r.art}</div>
+        <div class="body">
+          <span class="domain">${new URL(r.url).hostname.replace(/^www\./, "")}</span>
+          <h3>${r.name}</h3>
+          <p>${r.desc[lang] || r.desc.en}</p>
+          <div class="tags">${r.tags.map(t => `<span>${t}</span>`).join("")}</div>
+          <span class="open"><span>${d.refsVisit}</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+        </div>
+      </a>`).join("");
+  }
 
   const toolview = document.getElementById("toolview");
   const frames = {}; // створюємо iframe раз і тримаємо живим — стан не губиться при перемиканні
@@ -786,13 +925,27 @@
     }
   }
 
+  const refsTab = document.querySelector('nav .tab[data-route="refs"]');
+
   function route(){
     const m = location.hash.match(/^#\/(\w+)/);
-    show(m ? m[1] : null);
+    const r = m ? m[1] : null;
+    if (r === "refs"){
+      // «Схожі сайти» — не iframe, а секція на головній: показуємо home і скролимо до неї
+      show(null);
+      refsTab.classList.add("active");
+      document.getElementById("refs").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    show(r);
+    if (!r) window.scrollTo(0, 0);
   }
 
   document.querySelectorAll("[data-tool]").forEach(el =>
     el.addEventListener("click", () => { location.hash = "#/" + el.dataset.tool; }));
+  refsTab.addEventListener("click", () => {
+    if (location.hash === "#/refs") route(); else location.hash = "#/refs";
+  });
   document.getElementById("brandHome").addEventListener("click", e => { e.preventDefault(); location.hash = "#/"; });
   document.querySelectorAll("#langs button").forEach(b =>
     b.addEventListener("click", () => setLang(b.dataset.lang)));
