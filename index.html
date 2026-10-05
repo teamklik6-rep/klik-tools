@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klik Tools — Creative Studio Toolkit</title>
-<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph, Glass. Everything runs locally in your browser." />
+<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph, Glass, Trace. Everything runs locally in your browser." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23bbff32'/%3E%3Cpath d='M10 7v18M10 16l9-9M10 16l9 9' stroke='%23060612' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -270,6 +270,15 @@
   @keyframes glasssway{from{transform:rotateY(-38deg) rotateZ(-7deg)}to{transform:rotateY(38deg) rotateZ(7deg)}}
   @keyframes morphrow{from{transform:translateX(-14px);filter:hue-rotate(0deg)}to{transform:translateX(14px);filter:hue-rotate(-45deg)}}
 
+  /* preview art: trace (pixel contour on graph paper, stepped gallop) */
+  .prev-trace{position:absolute;inset:0;background:#ebe8e2}
+  .prev-trace svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .prev-trace g path{opacity:0;animation:trpose 1.32s step-end infinite}
+  .prev-trace g path:nth-child(2){animation-delay:.33s}
+  .prev-trace g path:nth-child(3){animation-delay:.66s}
+  .prev-trace g path:nth-child(4){animation-delay:.99s}
+  @keyframes trpose{0%{opacity:1}25%{opacity:0}100%{opacity:0}}
+
   /* preview art: orbit */
   .prev-orbit{position:absolute;inset:0;background:#e9e9e6;overflow:hidden}
   .prev-orbit i{position:absolute;border-radius:2px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
@@ -390,6 +399,7 @@
     <div class="tab" data-tool="sweep">Sweep</div>
     <div class="tab" data-tool="morph">Morph</div>
     <div class="tab" data-tool="glass">Glass</div>
+    <div class="tab" data-tool="trace">Trace</div>
     <div class="tab" data-route="refs" data-i18n="navRefs">Similar sites</div>
   </nav>
 
@@ -412,7 +422,7 @@
     <div class="glow"></div>
     <div class="tagline"><span class="pulse"></span> <span data-i18n="tagline">In-house studio tools</span></div>
     <h1 data-i18n-html="heroTitle">Creative tools by <span class="green">Klik</span> — right in your browser.</h1>
-    <p class="lede" data-i18n="lede">Eighteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video and liquid-glass 3D logos. No installs, no server — everything runs locally.</p>
+    <p class="lede" data-i18n="lede">Nineteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos and pixel-contour animation. No installs, no server — everything runs locally.</p>
   </div>
 
   <div class="cards">
@@ -637,6 +647,17 @@
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
     </div>
+    <!-- Trace -->
+    <div class="card" data-tool="trace">
+      <div class="preview">
+        <div class="prev-trace"><svg viewBox="0 0 68 24" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><pattern id="trGrid" width="2" height="2" patternUnits="userSpaceOnUse"><path d="M2 0H0V2" fill="none" stroke="#8f8c86" stroke-opacity=".55" stroke-width=".07"/></pattern></defs><rect x="-200" y="-200" width="468" height="424" fill="url(#trGrid)"/><g fill="none" stroke="#2b28a8" stroke-width=".42"><path d="M35 2H36V6H37V7H35V9H37V7H40V6H42V5H43V6H45V7H47V8H48V10H46V9H42V10H41V12H40V13H43V16H42V17H41V18H39V17H37V16H31V18H30V19H32V20H34V21H31V20H29V21H28V20H27V19H26V17H27V13H26V12H23V13H20V12H22V11H24V10H32V9H33V5H34V3H35ZM29 21H31V22H29Z"/><path d="M35 2H37V4H36V5H37V7H36V9H37V7H41V6H45V7H46V8H48V11H47V10H45V9H42V10H41V12H40V13H41V15H42V16H43V17H44V18H45V20H46V21H43V20H44V19H43V18H42V19H41V18H40V17H39V15H37V16H32V15H29V16H28V17H27V18H26V19H25V20H24V21H23V19H24V18H23V17H24V16H25V15H26V11H22V10H24V9H26V10H32V9H33V6H34V4H35ZM20 11H22V12H21V13H20Z"/><path d="M36 3H38V5H37V7H39V8H36V10H38V9H39V8H40V9H42V8H45V9H46V10H47V12H48V14H46V13H45V12H43V11H42V12H41V13H40V16H41V17H42V20H41V23H40V20H39V21H37V20H38V19H39V18H38V17H37V16H31V15H29V16H26V17H24V18H23V19H20V18H22V17H23V14H24V13H26V11H25V10H22V11H20V10H21V9H28V10H33V8H34V6H35V5H36ZM36 21H37V23H36Z"/><path d="M35 2H36V3H37V4H36V6H37V7H36V9H37V7H41V6H44V7H46V8H47V9H48V11H46V10H43V9H42V10H41V12H40V14H39V15H38V16H37V17H36V18H34V20H32V19H29V18H26V17H27V15H28V14H27V12H26V11H22V12H20V11H21V10H25V9H26V10H32V9H33V6H34V4H35ZM31 15V18H33V17H34V16H32V15Z"/></g></svg></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">19</span> Trace Studio</h3>
+        <p data-i18n="traceDesc">Pixel-contour animation: a silhouette snapped to a grid and traced along the cell edges — stepped ink outlines in a stop-motion rhythm. A galloping horse with rider (Muybridge's 11 poses, 4 gaits), greyhound, runner, bird, any text or your own PNG / GIF / video / sprite sheet. Pose trails, color per pose, echo rings, pen tracing, hand-drawn boil, hatching and pixel fills, 8 styles, PNG / SVG / animated SVG / GIF / pose sheet / MP4 / WebM export.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
   </div>
 
   <div class="strip">
@@ -676,7 +697,7 @@
       title: "Klik Tools — Creative Studio Toolkit",
       tagline: "In-house studio tools",
       heroTitle: 'Creative tools by <span class="green">Klik</span> — right in your browser.',
-      lede: "Eighteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video and liquid-glass 3D logos. No installs, no server — everything runs locally.",
+      lede: "Nineteen studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos and pixel-contour animation. No installs, no server — everything runs locally.",
       lumaDesc: "CellMap · PixelSynth · ASCII. Turns photos and videos into luminance-driven grids: clip tiles, color zones or classic ASCII art with export.",
       sphereDesc: "A 3D glowing-sphere generator on WebGL: noise, glow, orbiting particles, presets and MP4 recording — all in real time.",
       xrayDesc: "Photo → x-ray: Canny contour detection, thin 1px lines, Wireframe / Blueprint / Neon styles and export to PNG or vector SVG.",
@@ -695,6 +716,7 @@
       sweepDesc: "The After Effects text-reveal recipe in three effects: CC Light Sweep → CC Radial Fast Blur → Colorama. A light band sweeps across black text or your logo, the zoom blur turns it into rays, Colorama paints violet → orange → cream and wraps the hottest spots back to black. Animated sweep and blur centers, 8 output cycles, seamless loops, PNG / JPG / MP4 / WebM export.",
       morphDesc: "The After Effects gradient-morph recipe: Levels → Colorama → Mosaic. Your video, photo or webcam: Levels blows out the bright wall, Colorama maps shadows → blue → white and loops the background to black, Mosaic 1300 × 30 with Sharp Colors smears every row into a gradient bar. Built-in 3D demo head, 8 palettes, pulse and drift, frame-exact MP4 export.",
       glassDesc: "Upload an SVG and get a 3D liquid-glass object: the outline is extruded, rounded and puffed up, then real refraction bends whatever is behind it — a big-type poster, your photo, a color or a gradient. IOR, RGB dispersion, frost, tint, Fresnel, highlights and soft shadow; 10 seamless motions (spins, sway, precession, tumble, pendulum, flip); PNG / JPG / MP4 / WebM.",
+      traceDesc: "Pixel-contour animation: a silhouette snapped to a grid and traced along the cell edges — stepped ink outlines in a stop-motion rhythm. A galloping horse with rider (Muybridge's 11 poses, 4 gaits), greyhound, runner, bird, any text or your own PNG / GIF / video / sprite sheet. Pose trails, color per pose, echo rings, pen tracing, hand-drawn boil, hatching and pixel fills, 8 styles, PNG / SVG / animated SVG / GIF / pose sheet / MP4 / WebM export.",
       open: "Open studio",
       navRefs: "Similar sites",
       refsKicker: "Inspiration",
@@ -710,7 +732,7 @@
       title: "Klik Tools — внутренние студии",
       tagline: "Внутренние инструменты студии",
       heroTitle: 'Креативные тулы <span class="green">Klik</span> — прямо в браузере.',
-      lede: "Восемнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света, градиент-морф видео и 3D-логотипы из жидкого стекла. Без установок и сервера — всё локально.",
+      lede: "Девятнадцать студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света, градиент-морф видео, 3D-логотипы из жидкого стекла и анимация пиксельного контура. Без установок и сервера — всё локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото и видео → сетки по яркости, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) с палитрами, неоновые капсулы, стек glow/glitch пост-эффектов.",
       sphereDesc: "3D генератор световых сфер на WebGL: шум, свечение, орбитальные частицы, пресеты и запись в MP4 — всё в реальном времени.",
       xrayDesc: "Фото → рентген: детекция контуров Canny, тонкие 1px-линии, стили Wireframe / Blueprint / Neon и экспорт в PNG или вектор SVG.",
@@ -729,6 +751,7 @@
       sweepDesc: "Рецепт текст-ревила из After Effects в три эффекта: CC Light Sweep → CC Radial Fast Blur → Colorama. Полоса света проходит по чёрному тексту или логотипу, зум-блюр превращает её в лучи, Colorama красит фиолетовый → оранжевый → крем и заворачивает самые яркие места обратно в чёрный. Анимированные центры света и блюра, 8 циклов цвета, бесшовные лупы, экспорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градиент-морфа из After Effects: Levels → Colorama → Mosaic. Твоё видео, фото или камера: Levels выжигает светлую стену, Colorama красит тени → синий → белый и заворачивает фон в чёрный, Mosaic 1300 × 30 с Sharp Colors растягивает каждую строку в градиентную полосу. Встроенная 3D-демо-голова, 8 палитр, пульсация и дрейф, покадровый экспорт MP4.",
       glassDesc: "Загрузи SVG — и получи 3D-объект из жидкого стекла: контур выдавливается, скругляется и «надувается», а настоящая рефракция гнёт всё, что за ним, — постер с большим текстом, твоё фото, цвет или градиент. IOR, RGB-дисперсия, матовость, оттенок, Fresnel, блики и мягкая тень; 10 бесшовных движений (обороты, покачивание, прецессия, кульбит, маятник, флип); PNG / JPG / MP4 / WebM.",
+      traceDesc: "Анимация пиксельного контура: силуэт квантуется по сетке и обводится по рёбрам клеток — ступенчатые линии чернилами в покадровом ритме. Скачущий конь со всадником (11 поз Мейбриджа, 4 аллюра), борзая, бегун, птица, любой текст или свой PNG / GIF / видео / спрайт-лист. Шлейф поз, цвет по позам, эхо-кольца, обводка пером, «кипение» линии, штриховка и пиксельная заливка, 8 стилей, экспорт PNG / SVG / SVG-анимация / GIF / таблица поз / MP4 / WebM.",
       open: "Открыть студию",
       navRefs: "Похожие сайты",
       refsKicker: "Вдохновение",
@@ -744,7 +767,7 @@
       title: "Klik Tools — внутрішні студії",
       tagline: "Внутрішні інструменти студії",
       heroTitle: 'Креативні тули <span class="green">Klik</span> — прямо у браузері.',
-      lede: "Вісімнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла, градієнт-морф відео й 3D-логотипи з рідкого скла. Без інсталяцій, без сервера — все локально.",
+      lede: "Девʼятнадцять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла, градієнт-морф відео, 3D-логотипи з рідкого скла й анімація піксельного контуру. Без інсталяцій, без сервера — все локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото й відео → сітки за яскравістю, ретро-дизеринг (Floyd–Steinberg, Bayer, halftone) з палітрами, неонові капсули, стек glow/glitch пост-ефектів.",
       sphereDesc: "3D генератор світлових сфер на WebGL: шум, ґлоу, орбітальні частинки, пресети та запис у MP4 — все в реальному часі.",
       xrayDesc: "Фото → рентген: детекція контурів Canny, тонкі 1px-лінії, стилі Wireframe / Blueprint / Neon і експорт у PNG або вектор SVG.",
@@ -763,6 +786,7 @@
       sweepDesc: "Рецепт текст-ревілу з After Effects у три ефекти: CC Light Sweep → CC Radial Fast Blur → Colorama. Смуга світла проходить по чорному тексту чи логотипу, зум-блюр робить з неї промені, Colorama фарбує фіолет → помаранч → крем і загортає найяскравіші місця назад у чорний. Анімовані центри світла й блюру, 8 циклів кольору, безшовні лупи, експорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градієнт-морфу з After Effects: Levels → Colorama → Mosaic. Твоє відео, фото чи камера: Levels випалює світлу стіну, Colorama фарбує тіні → синій → білий і загортає фон у чорний, Mosaic 1300 × 30 із Sharp Colors розтягує кожен рядок у градієнтну смугу. Вбудована 3D-демо-голова, 8 палітр, пульсація й дрейф, покадровий експорт MP4.",
       glassDesc: "Завантаж SVG — і отримай 3D-обʼєкт із рідкого скла: контур видавлюється, заокруглюється й «надувається», а справжня рефракція гне все, що за ним, — постер з великим текстом, твоє фото, колір чи градієнт. IOR, RGB-дисперсія, матовість, відтінок, Fresnel, бліки й мʼяка тінь; 10 безшовних рухів (оберти, гойдання, прецесія, кульбіт, маятник, фліп); PNG / JPG / MP4 / WebM.",
+      traceDesc: "Анімація піксельного контуру: силует квантується по сітці й обводиться по ребрах клітинок — сходинкові лінії чорнилом у покадровому ритмі. Кінь у галопі з вершником (11 поз Мейбриджа, 4 алюри), хорт, бігун, птах, будь-який текст або свій PNG / GIF / відео / спрайт-лист. Шлейф поз, колір за позою, кільця відлуння, обведення пером, «кипіння» лінії, штрихування й піксельна заливка, 8 стилів, експорт PNG / SVG / SVG-анімація / GIF / таблиця поз / MP4 / WebM.",
       open: "Відкрити студію",
       navRefs: "Схожі сайти",
       refsKicker: "Натхнення",
@@ -819,6 +843,7 @@
     sweep:    { src: "tools/sweep-studio.html",    title: "Sweep Studio" },
     morph:    { src: "tools/morph-studio.html",    title: "Morph Studio" },
     glass:    { src: "tools/glass-studio.html",    title: "Glass Studio" },
+    trace:    { src: "tools/trace-studio.html",    title: "Trace Studio" },
   };
 
   /* ---------------- similar sites ----------------
