@@ -274,6 +274,46 @@
   .prev-orbit i:nth-child(9){left:34%;top:56%;width:104px;height:76px;background:#8fa9bd;transform:rotate(2deg)}
   .prev-orbit b{position:absolute;left:38%;top:44%;font-size:13px;font-weight:800;color:#fff;letter-spacing:.01em;text-shadow:0 2px 10px rgba(0,0,0,.2)}
 
+  /* ---------------- similar sites (external effect studios) ---------------- */
+  #refs{margin-top:88px;scroll-margin-top:84px}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 40px;flex-wrap:wrap;margin-bottom:26px}
+  .sec-head .kicker{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .sec-head h2{font-size:clamp(28px,3.6vw,40px);font-weight:800;line-height:1.08;letter-spacing:-.025em}
+  .sec-head p{font-size:15px;line-height:1.6;color:var(--muted);max-width:440px}
+  .refs{display:flex;flex-direction:column;gap:20px}
+  .card.ref{flex-direction:row;text-decoration:none;color:inherit}
+  .ref .preview{height:auto;min-height:220px;width:40%;flex:none;border-bottom:0;border-right:1px solid var(--border)}
+  .ref .domain{font-size:12.5px;font-weight:600;color:var(--accent);letter-spacing:.02em}
+  .ref .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .ref .tags span{font-size:11.5px;font-weight:600;color:#ffffffb0;border:1px solid var(--border-hover);border-radius:999px;padding:3px 10px}
+  .card.ref:hover .open svg{transform:translate(3px,-3px)}
+  @media (max-width:760px){
+    .card.ref{flex-direction:column}
+    .ref .preview{width:auto;min-height:0;height:180px;border-right:0;border-bottom:1px solid var(--border)}
+  }
+  /* preview art: uninspired experiments (sliced rings shifting) */
+  .prev-slice{position:absolute;inset:0;background:#0b0b0b;overflow:hidden}
+  .prev-slice i{position:absolute;left:0;right:0;height:11.2%;top:calc(var(--n) * 11.111%);overflow:hidden;
+    animation:sliceshift 3.2s ease-in-out infinite alternate;animation-delay:calc(var(--n) * -.36s)}
+  .prev-slice i b{position:absolute;left:0;right:0;height:900%;top:calc(var(--n) * -100%);
+    background:radial-gradient(circle at 50% 50%,#fff 0 18px,#ff4d1a 18px 38px,#ffd23f 38px 56px,#2741ff 56px 76px,#0b0b0b 76px 80px,#fff 80px 82px,transparent 82px)}
+  @keyframes sliceshift{from{transform:translateX(-22px)}to{transform:translateX(22px)}}
+  /* preview art: design minis (a shelf of tiny tool tiles) */
+  .prev-minis{position:absolute;inset:0;background:#f1efe9;display:grid;place-content:center;
+    grid-template-columns:repeat(4,54px);grid-auto-rows:54px;gap:10px}
+  .prev-minis i{display:grid;place-items:center;border-radius:12px;box-shadow:0 8px 18px -10px rgba(0,0,0,.45);
+    font-style:normal;font-weight:800;font-size:19px;letter-spacing:-.02em;color:#111;
+    animation:minibob 2.8s ease-in-out infinite;animation-delay:calc(var(--n) * -.35s)}
+  .prev-minis i:nth-child(1){background:radial-gradient(circle,#fff 1.3px,transparent 1.7px) 0 0/6px 6px,#151515}
+  .prev-minis i:nth-child(2){background:linear-gradient(135deg,#ff4d1a,#ffd23f)}
+  .prev-minis i:nth-child(3){background:conic-gradient(#2741ff 25%,#151515 0 50%,#2741ff 0 75%,#151515 0) 0 0/14px 14px}
+  .prev-minis i:nth-child(4){background:#fff}
+  .prev-minis i:nth-child(5){background:radial-gradient(circle at 0 100%,transparent 60%,#151515 61% 67%,transparent 68%),#bbff32}
+  .prev-minis i:nth-child(6){background:radial-gradient(circle at 32% 30%,#e6d6ff,#7b3bff 52%,#1a0640)}
+  .prev-minis i:nth-child(7){background:repeating-linear-gradient(90deg,#151515 0 2px,#fff 2px 6px)}
+  .prev-minis i:nth-child(8){background:linear-gradient(90deg,#ff4d1a 0 25%,#ffd23f 0 50%,#2741ff 0 75%,#151515 0)}
+  @keyframes minibob{50%{transform:translateY(-5px)}}
+
   /* ---------------- footnote strip ---------------- */
   .strip{
     margin-top:56px;display:flex;flex-wrap:wrap;gap:12px 34px;align-items:center;
@@ -339,6 +379,7 @@
     <div class="tab" data-tool="echo">Echo</div>
     <div class="tab" data-tool="sweep">Sweep</div>
     <div class="tab" data-tool="morph">Morph</div>
+    <div class="tab" data-route="refs" data-i18n="navRefs">Similar sites</div>
   </nav>
 
   <div class="head-right">
@@ -581,6 +622,18 @@
     <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg> <span data-i18n="strip2">No installs, no dependencies</span></div>
     <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> <span data-i18n="strip3">Export PNG · SVG · MP4</span></div>
   </div>
+
+  <!-- Similar sites: other studios with browser effect tools (cards rendered from REFS below) -->
+  <section id="refs">
+    <div class="sec-head">
+      <div>
+        <div class="kicker" data-i18n="refsKicker">Inspiration</div>
+        <h2 data-i18n="refsTitle">Other effect studios</h2>
+      </div>
+      <p data-i18n="refsLede">Sites that also build browser tools for visual effects — for references and ideas.</p>
+    </div>
+    <div class="refs" id="refsList"></div>
+  </section>
 </div>
 
 <!-- ==================== TOOL VIEW ==================== -->
@@ -620,6 +673,11 @@
       sweepDesc: "The After Effects text-reveal recipe in three effects: CC Light Sweep → CC Radial Fast Blur → Colorama. A light band sweeps across black text or your logo, the zoom blur turns it into rays, Colorama paints violet → orange → cream and wraps the hottest spots back to black. Animated sweep and blur centers, 8 output cycles, seamless loops, PNG / JPG / MP4 / WebM export.",
       morphDesc: "The After Effects gradient-morph recipe: Levels → Colorama → Mosaic. Your video, photo or webcam: Levels blows out the bright wall, Colorama maps shadows → blue → white and loops the background to black, Mosaic 1300 × 30 with Sharp Colors smears every row into a gradient bar. Built-in 3D demo head, 8 palettes, pulse and drift, frame-exact MP4 export.",
       open: "Open studio",
+      navRefs: "Similar sites",
+      refsKicker: "Inspiration",
+      refsTitle: "Other effect studios",
+      refsLede: "Sites that also build browser tools for visual effects — for references and ideas.",
+      refsVisit: "Visit site",
       strip1: "Private — files never leave your browser",
       strip2: "No installs, no dependencies",
       strip3: "Export PNG · SVG · MP4",
@@ -648,6 +706,11 @@
       sweepDesc: "Рецепт текст-ревила из After Effects в три эффекта: CC Light Sweep → CC Radial Fast Blur → Colorama. Полоса света проходит по чёрному тексту или логотипу, зум-блюр превращает её в лучи, Colorama красит фиолетовый → оранжевый → крем и заворачивает самые яркие места обратно в чёрный. Анимированные центры света и блюра, 8 циклов цвета, бесшовные лупы, экспорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градиент-морфа из After Effects: Levels → Colorama → Mosaic. Твоё видео, фото или камера: Levels выжигает светлую стену, Colorama красит тени → синий → белый и заворачивает фон в чёрный, Mosaic 1300 × 30 с Sharp Colors растягивает каждую строку в градиентную полосу. Встроенная 3D-демо-голова, 8 палитр, пульсация и дрейф, покадровый экспорт MP4.",
       open: "Открыть студию",
+      navRefs: "Похожие сайты",
+      refsKicker: "Вдохновение",
+      refsTitle: "Другие студии эффектов",
+      refsLede: "Сайты, которые тоже делают браузерные тулы для визуальных эффектов — для референсов и идей.",
+      refsVisit: "Открыть сайт",
       strip1: "Приватно — файлы не покидают браузер",
       strip2: "Без установок и зависимостей",
       strip3: "Экспорт PNG · SVG · MP4",
@@ -676,6 +739,11 @@
       sweepDesc: "Рецепт текст-ревілу з After Effects у три ефекти: CC Light Sweep → CC Radial Fast Blur → Colorama. Смуга світла проходить по чорному тексту чи логотипу, зум-блюр робить з неї промені, Colorama фарбує фіолет → помаранч → крем і загортає найяскравіші місця назад у чорний. Анімовані центри світла й блюру, 8 циклів кольору, безшовні лупи, експорт PNG / JPG / MP4 / WebM.",
       morphDesc: "Рецепт градієнт-морфу з After Effects: Levels → Colorama → Mosaic. Твоє відео, фото чи камера: Levels випалює світлу стіну, Colorama фарбує тіні → синій → білий і загортає фон у чорний, Mosaic 1300 × 30 із Sharp Colors розтягує кожен рядок у градієнтну смугу. Вбудована 3D-демо-голова, 8 палітр, пульсація й дрейф, покадровий експорт MP4.",
       open: "Відкрити студію",
+      navRefs: "Схожі сайти",
+      refsKicker: "Натхнення",
+      refsTitle: "Інші студії ефектів",
+      refsLede: "Сайти, які теж роблять браузерні тули для візуальних ефектів — для референсів та ідей.",
+      refsVisit: "Відкрити сайт",
       strip1: "Приватно — файли не покидають браузер",
       strip2: "Без інсталяцій та залежностей",
       strip3: "Експорт PNG · SVG · MP4",
@@ -693,6 +761,7 @@
     document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = d[el.dataset.i18n]; });
     document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = d[el.dataset.i18nHtml]; });
     document.querySelectorAll("#langs button").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
+    renderRefs();
     updateTitle();
   }
 
@@ -725,6 +794,50 @@
     sweep:    { src: "tools/sweep-studio.html",    title: "Sweep Studio" },
     morph:    { src: "tools/morph-studio.html",    title: "Morph Studio" },
   };
+
+  /* ---------------- similar sites ----------------
+     Зовнішні сайти з подібними студіями ефектів. Новий сайт = ще один об'єкт тут:
+     url, name, art (HTML превʼю), tags, desc {en, ru, uk}. Відкриваються в новій вкладці. */
+  const nth = (k, fn) => Array.from({ length: k }, (_, n) => fn(n)).join("");
+  const REFS = [
+    {
+      url: "https://experiments.uninspired.studio/",
+      name: "Uninspired Experiments",
+      art: `<div class="prev-slice">${nth(9, n => `<i style="--n:${n}"><b></b></i>`)}</div>`,
+      tags: ["Grid", "Particle", "Slice", "Fragments", "Shift"],
+      desc: {
+        en: "Playful browser experiments from Uninspired Studio, the makers of Momentum: small interactive animation tools — grids, particles, slices, fragments and shifts — focused on simplicity, interactivity and a bit of weirdness.",
+        ru: "Игровые браузерные эксперименты от Uninspired Studio (авторы Momentum): маленькие интерактивные анимационные тулы — сетки, частицы, слайсы, фрагменты и сдвиги — с упором на простоту, интерактивность и немного странности.",
+        uk: "Грайливі браузерні експерименти від Uninspired Studio (автори Momentum): маленькі інтерактивні анімаційні тули — сітки, частинки, слайси, фрагменти й зсуви — з акцентом на простоту, інтерактивність і трохи дивацтва.",
+      },
+    },
+    {
+      url: "https://www.designminis.com/",
+      name: "Design Minis",
+      art: `<div class="prev-minis">${nth(8, n => `<i style="--n:${n}">${n === 3 ? "Aa" : ""}</i>`)}</div>`,
+      tags: ["Ditther", "Grainrad", "Mozayk", "Shader Lab", "TextLab", "Durves"],
+      desc: {
+        en: "A curated directory of small tools made by designers, each doing one job properly: colour, type, motion, icons — plus dithering, grain, mosaics and shaders. 100+ tools, free, freemium and paid.",
+        ru: "Кураторский каталог маленьких тулов от дизайнеров — каждый делает одну вещь, но хорошо: цвет, типографика, моушн, иконки, а ещё дизеринг, зерно, мозаики и шейдеры. 100+ инструментов — бесплатные, freemium и платные.",
+        uk: "Кураторський каталог маленьких тулів від дизайнерів — кожен робить одну річ, але добре: колір, типографіка, моушн, іконки, а ще дизеринг, зерно, мозаїки й шейдери. 100+ інструментів — безкоштовні, freemium і платні.",
+      },
+    },
+  ];
+
+  function renderRefs(){
+    const d = I18N[lang];
+    document.getElementById("refsList").innerHTML = REFS.map(r => `
+      <a class="card ref" href="${r.url}" target="_blank" rel="noopener noreferrer">
+        <div class="preview">${r.art}</div>
+        <div class="body">
+          <span class="domain">${new URL(r.url).hostname.replace(/^www\./, "")}</span>
+          <h3>${r.name}</h3>
+          <p>${r.desc[lang] || r.desc.en}</p>
+          <div class="tags">${r.tags.map(t => `<span>${t}</span>`).join("")}</div>
+          <span class="open"><span>${d.refsVisit}</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+        </div>
+      </a>`).join("");
+  }
 
   const toolview = document.getElementById("toolview");
   const frames = {}; // створюємо iframe раз і тримаємо живим — стан не губиться при перемиканні
@@ -759,13 +872,27 @@
     }
   }
 
+  const refsTab = document.querySelector('nav .tab[data-route="refs"]');
+
   function route(){
     const m = location.hash.match(/^#\/(\w+)/);
-    show(m ? m[1] : null);
+    const r = m ? m[1] : null;
+    if (r === "refs"){
+      // «Схожі сайти» — не iframe, а секція на головній: показуємо home і скролимо до неї
+      show(null);
+      refsTab.classList.add("active");
+      document.getElementById("refs").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    show(r);
+    if (!r) window.scrollTo(0, 0);
   }
 
   document.querySelectorAll("[data-tool]").forEach(el =>
     el.addEventListener("click", () => { location.hash = "#/" + el.dataset.tool; }));
+  refsTab.addEventListener("click", () => {
+    if (location.hash === "#/refs") route(); else location.hash = "#/refs";
+  });
   document.getElementById("brandHome").addEventListener("click", e => { e.preventDefault(); location.hash = "#/"; });
   document.querySelectorAll("#langs button").forEach(b =>
     b.addEventListener("click", () => setLang(b.dataset.lang)));
