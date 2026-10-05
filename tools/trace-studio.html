@@ -313,6 +313,25 @@
           </div>
         </div>
         <div class="group">
+          <h2>Колір за позою</h2>
+          <div class="presets c2" id="pcModes">
+            <div class="preset active" data-pc="off">Вимкнено</div>
+            <div class="preset" data-pc="rainbow">Веселка</div>
+            <div class="preset" data-pc="grad">Градієнт</div>
+            <div class="preset" data-pc="alt">Чергування</div>
+          </div>
+          <div id="pcOpts" style="display:none">
+            <div class="colors" id="pcColorRow" style="margin-top:10px">
+              <div class="color-field"><span>Другий колір</span><div class="color-wrap"><input type="color" id="pcColor" value="#e0563b"><span class="hex" id="hPcColor">#E0563B</span></div></div>
+            </div>
+            <div class="row mt"><label class="lbl">Період (поз)</label><span class="val" id="vPcPeriod">цикл</span></div>
+            <input type="range" id="pcPeriod" min="0" max="48" step="1" value="0">
+            <div class="switch-row"><span class="lbl">Заливка теж</span>
+              <label class="switch"><input type="checkbox" id="pcFill" checked><span class="track"></span></label></div>
+            <div class="note">Кожна поза — свій колір: веселка обертає відтінок чорнила, градієнт іде від чорнила до другого кольору й назад, чергування блимає двома кольорами. Шлейф поз бере кольори своїх поз — виходить райдужна хронофотографія. Період 0 — рівно один цикл, луп безшовний.</div>
+          </div>
+        </div>
+        <div class="group">
           <h2>Відлуння контуру</h2>
           <div class="row"><label class="lbl">Кілець</label><span class="val" id="vRings">0</span></div>
           <input type="range" id="rings" min="0" max="8" step="1" value="0">
@@ -468,6 +487,17 @@ THE HORSE</textarea>
             <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
           </div>
           <div class="note" id="durNote"></div>
+        </div>
+        <div class="group">
+          <h2>GIF</h2>
+          <div class="row"><label class="lbl">Ширина (px)</label></div>
+          <div class="presets c3" id="gifSizes">
+            <div class="preset" data-gw="1080">1080</div>
+            <div class="preset active" data-gw="540">540</div>
+            <div class="preset" data-gw="360">360</div>
+          </div>
+          <div class="btns-grid" style="margin-top:10px"><button class="btn full" id="exGif"><span id="gifLabel">GIF</span></button></div>
+          <div class="note">Один безшовний цикл, що крутиться безкінечно: по кадру на позу (з обведенням пером чи в плавному режимі — 25 fps). Палітра до 256 кольорів збирається з самих кадрів; прозорий фон дає прозорий GIF. Найлегший формат для вебу й месенджерів.</div>
           <div class="note">MP4 рендериться покадрово (WebCodecs) — рівно ціле число циклів, луп безшовний; завантажене відео проходить повністю (до 2 хв). WebM пишеться з живого превʼю, з прозорим фоном — з альфою.</div>
         </div>
         <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
@@ -916,14 +946,14 @@ THE HORSE</textarea>
     bgMode:"color", bg:"#ebe8e2",
     gridOn:true, gridStep:2, gridStyle:"lines", gridColor:"#8f8c86", gridAlpha:0.5, gridW:1.3, major:0,
     ink:"#2b28a8", lineW:0.42, corner:"sharp", cornerR:0.5, dash:"solid", dashLen:1, double:false, doubleGap:0.45,
-    rings:0, ringGap:2, ringFade:0.65,
+    rings:0, ringGap:2, ringFade:0.65, pcMode:"off", pcColor:"#e0563b", pcPeriod:0, pcFill:true,
     grain:0.2, bleed:0.4, multiply:true, wobble:0, boil:true, glow:0, glowR:1.5,
     fill:"none", fillColor:"#2b28a8", fillAlpha:0.85, hatchGap:0.7, hatchAngle:45,
     t1On:true, t1:"HAPPY NEW YEAR", t1Size:2.3, t1X:0.345, t1Y:0.39, t1Align:"center",
     t2On:true, t2:"YEAR OF 馬\nTHE HORSE", t2Size:1.8, t2X:0.54, t2Y:0.49, t2Align:"left",
     cornersOn:true, cornerTxt:"2026", cornerSize:3, cornerPad:0.07,
     tFont:"Inter Tight", tW:"800", tInk:true, tColor:"#111111",
-    aspect:"4:5", fps:30, loops:4, bitrate:12,
+    aspect:"4:5", fps:30, loops:4, bitrate:12, gifW:540,
   };
   const DEFAULTS = JSON.parse(JSON.stringify(P));
 
@@ -933,7 +963,7 @@ THE HORSE</textarea>
     cols:92, thr:0.45, inset:0, bgMode:"color", bg:"#ebe8e2",
     gridOn:true, gridStep:2, gridStyle:"lines", gridColor:"#8f8c86", gridAlpha:0.5, gridW:1.3, major:0,
     ink:"#2b28a8", lineW:0.42, corner:"sharp", cornerR:0.5, dash:"solid", dashLen:1, double:false, doubleGap:0.45,
-    rings:0, ringGap:2, ringFade:0.65,
+    rings:0, ringGap:2, ringFade:0.65, pcMode:"off", pcColor:"#e0563b", pcPeriod:0, pcFill:true,
     grain:0.2, bleed:0.4, multiply:true, wobble:0, boil:true, glow:0, glowR:1.5,
     fill:"none", fillColor:"#2b28a8", fillAlpha:0.85, hatchGap:0.7, hatchAngle:45, tInk:true,
   };
@@ -1320,12 +1350,41 @@ THE HORSE</textarea>
     }
     g.restore();
   }
-  function fillGeo(g, geo, polys){
+  /* колір за позою: веселка (обертання відтінку) / градієнт base → другий колір → base / чергування */
+  function hexToHsl(hex){
+    const [r, g, b] = hexRgb(hex).map(v => v/255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn)/2;
+    let h = 0, s = 0;
+    if(mx !== mn){
+      const d = mx - mn;
+      s = l > 0.5 ? d/(2 - mx - mn) : d/(mx + mn);
+      h = (mx === r ? (g - b)/d + (g < b ? 6 : 0) : mx === g ? (b - r)/d + 2 : (r - g)/d + 4)/6;
+    }
+    return [h, s, l];
+  }
+  function hslToHex(h, s, l){
+    const f = n => { const k = (n + h*12)%12, a = s*Math.min(l, 1 - l); return Math.round((l - a*Math.max(-1, Math.min(k - 3, 9 - k, 1)))*255); };
+    return "#" + [f(0), f(8), f(4)].map(v => v.toString(16).padStart(2, "0")).join("");
+  }
+  const mixHex = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return "#" + A.map((v, i) => Math.round(lerp(v, B[i], t)).toString(16).padStart(2, "0")).join(""); };
+  function poseColor(i, base){
+    if(P.pcMode === "off") return base;
+    if(P.pcMode === "alt") return (((i%2) + 2)%2) ? P.pcColor : base;
+    const per = P.pcPeriod > 0 ? P.pcPeriod : cycleN()*(P.motion === "travel" ? P.cross : 1);
+    const t = (((i%per) + per)%per)/per;
+    if(P.pcMode === "grad") return mixHex(base, P.pcColor, 1 - Math.abs(1 - 2*t));
+    let [h, sat, l] = hexToHsl(base);
+    if(sat < 0.15){ sat = 0.8; l = clamp(l, 0.4, 0.6); }             // сірому/чорному чорнилу даємо насиченість
+    return hslToHex(fract(h + t), sat, l);
+  }
+  const fillColorAt = i => P.pcFill ? poseColor(i, P.fillColor) : P.fillColor;
+  const onionColorAt = i => P.pcMode !== "off" ? poseColor(i, P.ink) : P.onionColor;
+
+  function fillGeo(g, geo, polys, color){
     if(P.fill === "none") return;
     const { cell, ox, oy, cols, rows } = LAT;
     g.save();
     g.globalAlpha = P.fillAlpha;
-    g.fillStyle = P.fillColor; g.strokeStyle = P.fillColor;
+    g.fillStyle = color; g.strokeStyle = color;
     if(P.fill === "cells"){
       const ins = cell*0.1;
       g.beginPath();
@@ -1454,18 +1513,19 @@ THE HORSE</textarea>
     ic.setTransform(1, 0, 0, 1, 0, 0);
     ic.globalAlpha = 1; ic.globalCompositeOperation = "source-over";
     ic.clearRect(0, 0, W, H);
-    fillGeo(ic, geo, polys);
+    const col = poseColor(pose.i, P.ink);
+    fillGeo(ic, geo, polys, fillColorAt(pose.i));
     for(let j = P.onion; j >= 1; j--){
       const pp = P.smooth ? poseAt(t - j/P.poseRate) : poseAt((pose.i - j + 0.5)/P.poseRate);
       if(isVideo()){ pp.i = pose.i - j; pp.hist = true; }
       const g2 = getGeo(pp);
-      if(g2) strokePolys(ic, polysFor(g2, pp), P.onionColor, lw*0.8, P.onionFade*Math.pow(0.72, j - 1), 1);
+      if(g2) strokePolys(ic, polysFor(g2, pp), onionColorAt(pose.i - j), lw*0.8, P.onionFade*Math.pow(0.72, j - 1), 1);
     }
     let progress = 1;
     if(P.drawOn > 0 && !P.smooth) progress = clamp((t - pose.t0)/(pose.dur*P.drawOn), 0, 1);
     for(let r = geo.rings.length; r >= 1; r--)
-      strokePolys(ic, polysFor({ loops:geo.rings[r - 1] }, pose), P.ink, lw, Math.pow(P.ringFade, r), progress);
-    strokePolys(ic, polys, P.ink, lw, 1, progress);
+      strokePolys(ic, polysFor({ loops:geo.rings[r - 1] }, pose), col, lw, Math.pow(P.ringFade, r), progress);
+    strokePolys(ic, polys, col, lw, 1, progress);
     if(P.tInk) drawTexts(ic);
     if(P.grain > 0){
       if(!grainPat) grainPat = ic.createPattern(grainC, "repeat");
@@ -1758,10 +1818,10 @@ THE HORSE</textarea>
     const dash = P.dash === "dash" ? ` stroke-dasharray="${fx(c*0.62)} ${fx(c*0.38)}"` : P.dash === "dot" ? ` stroke-dasharray="0.01 ${fx(Math.max(w*1.6, c*0.6))}"` : "";
     return `fill="none" stroke-width="${fx(w)}" stroke-linejoin="${join}" stroke-linecap="${cap}" stroke-miterlimit="4"${dash}`;
   }
-  function svgFill(geo, polys, id){
+  function svgFill(geo, polys, id, c){
     if(P.fill === "none") return { defs:"", body:"" };
     const { cell, ox, oy, cols, rows } = LAT;
-    const c = P.fillColor, a = P.fillAlpha;
+    const a = P.fillAlpha;
     if(P.fill === "cells"){
       let d = ""; const ins = cell*0.1;
       for(let y = 0; y < rows; y++) for(let x = 0; x < cols; x++)
@@ -1798,17 +1858,18 @@ THE HORSE</textarea>
   }
   function svgPoseBody(pose, idx){
     const geo = getGeo(pose), polys = polysFor(geo, pose), lw = Math.max(0.6, P.lineW*LAT.cell);
-    const fill = svgFill(geo, polys, "f" + idx);
+    const col = poseColor(pose.i, P.ink);
+    const fill = svgFill(geo, polys, "f" + idx, fillColorAt(pose.i));
     let body = fill.body;
     for(let r = geo.rings.length; r >= 1; r--)
-      body += `<path d="${polysD(polysFor({ loops:geo.rings[r - 1] }, pose))}" stroke="${P.ink}" stroke-opacity="${fx(Math.pow(P.ringFade, r))}" ${svgStrokeAttrs(lw)}/>`;
+      body += `<path d="${polysD(polysFor({ loops:geo.rings[r - 1] }, pose))}" stroke="${col}" stroke-opacity="${fx(Math.pow(P.ringFade, r))}" ${svgStrokeAttrs(lw)}/>`;
     const d = polysD(polys);
     if(P.double){
       const id = "m" + idx;
       return { defs: fill.defs + `<mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff"/><path d="${d}" stroke="#000" ${svgStrokeAttrs(lw*P.doubleGap)}/></mask>`,
-               body: body + `<path d="${d}" stroke="${P.ink}" ${svgStrokeAttrs(lw)} mask="url(#${id})"/>` };
+               body: body + `<path d="${d}" stroke="${col}" ${svgStrokeAttrs(lw)} mask="url(#${id})"/>` };
     }
-    return { defs: fill.defs, body: body + `<path d="${d}" stroke="${P.ink}" ${svgStrokeAttrs(lw)}/>` };
+    return { defs: fill.defs, body: body + `<path d="${d}" stroke="${col}" ${svgStrokeAttrs(lw)}/>` };
   }
   function svgDoc(defs, body){
     const bg = P.bgMode === "transparent" ? "" : `<rect width="${W}" height="${H}" fill="${P.bg}"/>`;
@@ -1821,7 +1882,7 @@ THE HORSE</textarea>
     let defs = "", onion = "";
     for(let j = P.onion; j >= 1; j--){
       const pp = poseAt((pose.i - j + 0.5)/P.poseRate);
-      onion += `<path d="${polysD(polysFor(getGeo(pp), pp))}" stroke="${P.onionColor}" stroke-opacity="${fx(P.onionFade*Math.pow(0.72, j - 1))}" ${svgStrokeAttrs(Math.max(0.6, P.lineW*LAT.cell)*0.8)}/>`;
+      onion += `<path d="${polysD(polysFor(getGeo(pp), pp))}" stroke="${onionColorAt(pose.i - j)}" stroke-opacity="${fx(P.onionFade*Math.pow(0.72, j - 1))}" ${svgStrokeAttrs(Math.max(0.6, P.lineW*LAT.cell)*0.8)}/>`;
     }
     const b = svgPoseBody(pose, 0);
     defs += b.defs;
@@ -1868,6 +1929,171 @@ THE HORSE</textarea>
     }
     P.drawOn = keepDraw; needRender = true;
     c.toBlob(b => { if(b) downloadBlob(b, fname("sheet.png").replace(".sheet.png", "-sheet.png")); }, "image/png");
+  });
+
+  /* ---- GIF: власний кодер GIF89a — глобальна палітра (median cut ≤ 256 з самих кадрів) + LZW ---- */
+  function gifPalette(cnt, sr, sg, sb, maxColors){
+    const bins = [];
+    for(let k = 0; k < 32768; k++) if(cnt[k]) bins.push([(k >> 10) & 31, (k >> 5) & 31, k & 31, k]);
+    let boxes = [bins];
+    while(boxes.length < maxColors){
+      let bi = -1, best = 0, ax = 0;
+      for(let j = 0; j < boxes.length; j++){
+        const b = boxes[j];
+        if(b.length < 2) continue;
+        const mn = [31, 31, 31], mx = [0, 0, 0];
+        let n = 0;
+        for(const e of b){ for(let a = 0; a < 3; a++){ if(e[a] < mn[a]) mn[a] = e[a]; if(e[a] > mx[a]) mx[a] = e[a]; } n += cnt[e[3]]; }
+        const rg = [mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]];
+        const a = rg[0] >= rg[1] && rg[0] >= rg[2] ? 0 : rg[1] >= rg[2] ? 1 : 2;
+        const score = rg[a]*Math.sqrt(n);
+        if(score > best){ best = score; bi = j; ax = a; }
+      }
+      if(bi < 0) break;
+      const b = boxes[bi].sort((p, q) => p[ax] - q[ax]);
+      let total = 0; for(const e of b) total += cnt[e[3]];
+      let acc = 0, cut = 1;
+      for(let j = 0; j < b.length - 1; j++){ acc += cnt[b[j][3]]; if(acc >= total/2){ cut = j + 1; break; } }
+      boxes.splice(bi, 1, b.slice(0, cut), b.slice(cut));
+    }
+    /* колір боксу — справжнє середнє 8-бітних пікселів, а не центр 5-бітного кошика */
+    return boxes.filter(b => b.length).map(b => {
+      let r = 0, g = 0, bl = 0, n = 0;
+      for(const e of b){ const k = e[3]; r += sr[k]; g += sg[k]; bl += sb[k]; n += cnt[k]; }
+      return [Math.round(r/n), Math.round(g/n), Math.round(bl/n)];
+    });
+  }
+  /* LZW для GIF (як в omggif): словник — типізований масив із ключем prefix·256 + k */
+  const lzwDict = new Int16Array(1 << 20).fill(-1);
+  function gifLZW(idx, bout){
+    const minCode = 8, clear = 256, eoi = 257;
+    let size = 9, next = 258, cur = 0, bits = 0;
+    const used = [];
+    const block = new Uint8Array(255); let bl = 0;
+    const put = b => { block[bl++] = b; if(bl === 255){ bout.byte(255); bout.arr(block); bl = 0; } };
+    const emit = c => { cur |= c << bits; bits += size; while(bits >= 8){ put(cur & 255); cur >>>= 8; bits -= 8; } };
+    bout.byte(minCode);
+    emit(clear);
+    let prefix = idx[0];
+    for(let i = 1; i < idx.length; i++){
+      const k = idx[i], key = (prefix << 8) | k, c = lzwDict[key];
+      if(c >= 0){ prefix = c; continue; }
+      emit(prefix);
+      if(next === 4096){
+        emit(clear);
+        for(const u of used) lzwDict[u] = -1;
+        used.length = 0; next = 258; size = 9;
+      } else {
+        if(next >= (1 << size)) size++;
+        lzwDict[key] = next++; used.push(key);
+      }
+      prefix = k;
+    }
+    emit(prefix); emit(eoi);
+    if(bits > 0) put(cur & 255);
+    for(const u of used) lzwDict[u] = -1;
+    if(bl){ bout.byte(bl); bout.arr(block.subarray(0, bl)); }
+    bout.byte(0);
+  }
+  function byteOut(){
+    const chunks = []; let buf = new Uint8Array(1 << 16), p = 0;
+    const o = {
+      byte(b){ if(p === buf.length){ chunks.push(buf); buf = new Uint8Array(1 << 16); p = 0; } buf[p++] = b; },
+      word(w){ o.byte(w & 255); o.byte((w >> 8) & 255); },
+      arr(a){ for(let i = 0; i < a.length; i++) o.byte(a[i]); },
+      str(s){ for(let i = 0; i < s.length; i++) o.byte(s.charCodeAt(i)); },
+      blob(){ chunks.push(buf.subarray(0, p)); return new Blob(chunks, { type:"image/gif" }); },
+    };
+    return o;
+  }
+  /* кадри GIF: одна безшовна петля; по кадру на позу, а з обведенням пером / в плавному режимі — 25 fps */
+  function gifTimes(){
+    if(isVideo()){
+      const n = Math.max(1, Math.min(400, Math.floor(Math.min(F.video.duration || 0, 60)*P.poseRate)));
+      return { times:Array.from({ length:n }, (_, i) => (i + 0.001)/P.poseRate), end:n/P.poseRate };
+    }
+    const span = cycleN()*(P.motion === "travel" ? P.cross : 1), loop = span/P.poseRate;
+    if(P.smooth || P.drawOn > 0){
+      const n = Math.max(1, Math.min(600, Math.round(loop*25)));
+      return { times:Array.from({ length:n }, (_, i) => i*loop/n), end:loop };
+    }
+    return { times:Array.from({ length:span }, (_, i) => (i + 0.001)/P.poseRate), end:loop };
+  }
+  let gifAbort = false;
+  $("exGif").addEventListener("click", async () => {
+    if(busy){ gifAbort = true; return; }
+    busy = true; gifAbort = false;
+    $("gifLabel").textContent = "■ Скасувати";
+    const vid = isVideo(), wasPlaying = playing;
+    if(vid) F.video.pause();
+    const gw = Math.min(P.gifW, W), gh = Math.round(H*gw/W);
+    const c = document.createElement("canvas"); c.width = gw; c.height = gh;
+    const g = c.getContext("2d", { willReadFrequently:true });
+    g.imageSmoothingQuality = "high";
+    const transparent = P.bgMode === "transparent";
+    const { times, end } = gifTimes();
+    const grab = async t => {
+      if(vid){ await seekVid(t); }
+      renderFrame(t);
+      g.clearRect(0, 0, gw, gh); g.drawImage(out, 0, 0, gw, gh);
+      return g.getImageData(0, 0, gw, gh).data;
+    };
+    try{
+      /* прохід 1: палітра з ≤16 рівномірно взятих кадрів */
+      status("GIF: палітра…", true);
+      const cnt = new Uint32Array(32768), sr = new Float64Array(32768), sg = new Float64Array(32768), sb = new Float64Array(32768);
+      const samples = Math.min(16, times.length);
+      for(let s = 0; s < samples && !gifAbort; s++){
+        const d = await grab(times[Math.floor(s*times.length/samples)]);
+        for(let i = 0; i < d.length; i += 8){
+          if(transparent && d[i+3] < 128) continue;
+          const k = ((d[i] >> 3) << 10) | ((d[i+1] >> 3) << 5) | (d[i+2] >> 3);
+          cnt[k]++; sr[k] += d[i]; sg[k] += d[i+1]; sb[k] += d[i+2];
+        }
+        await new Promise(r => setTimeout(r, 0));
+      }
+      const pal = gifPalette(cnt, sr, sg, sb, transparent ? 255 : 256);
+      if(!pal.length) pal.push([0, 0, 0]);
+      const TI = 255;                                                  // індекс прозорості
+      const near = new Int16Array(32768).fill(-1);
+      const nearest = (r, gg, b) => {
+        let bi = 0, bd = 1e9;
+        for(let j = 0; j < pal.length; j++){ const q = pal[j], dr = q[0] - r, dg = q[1] - gg, db = q[2] - b, dd = dr*dr + dg*dg + db*db; if(dd < bd){ bd = dd; bi = j; } }
+        return bi;
+      };
+      /* заголовок, глобальна палітра (256), безкінечний повтор */
+      const bo = byteOut();
+      bo.str("GIF89a"); bo.word(gw); bo.word(gh); bo.byte(0xF7); bo.byte(0); bo.byte(0);
+      for(let j = 0; j < 256; j++){ const q = pal[j] || [0, 0, 0]; bo.byte(q[0]); bo.byte(q[1]); bo.byte(q[2]); }
+      bo.byte(0x21); bo.byte(0xFF); bo.byte(11); bo.str("NETSCAPE2.0"); bo.byte(3); bo.byte(1); bo.word(0); bo.byte(0);
+      /* прохід 2: кадри */
+      const idx = new Uint8Array(gw*gh);
+      let lastCs = 0;
+      for(let f = 0; f < times.length && !gifAbort; f++){
+        const d = await grab(times[f]);
+        for(let i = 0, px = 0; px < idx.length; i += 4, px++){
+          if(transparent && d[i+3] < 128){ idx[px] = TI; continue; }
+          const k = ((d[i] >> 3) << 10) | ((d[i+1] >> 3) << 5) | (d[i+2] >> 3);
+          let v = near[k];
+          if(v < 0){ v = nearest(d[i], d[i+1], d[i+2]); near[k] = v; }
+          idx[px] = v;
+        }
+        /* затримки в сотих секунди без накопичення похибки */
+        const tNext = f + 1 < times.length ? times[f + 1] : end;
+        const cs = Math.round(tNext*100) - lastCs; lastCs += cs;
+        bo.byte(0x21); bo.byte(0xF9); bo.byte(4);
+        bo.byte(transparent ? (2 << 2) | 1 : (1 << 2)); bo.word(Math.max(2, cs)); bo.byte(transparent ? TI : 0); bo.byte(0);
+        bo.byte(0x2C); bo.word(0); bo.word(0); bo.word(gw); bo.word(gh); bo.byte(0);
+        gifLZW(idx, bo);
+        status(`GIF ${Math.round((f + 1)/times.length*100)}%`, true);
+        await new Promise(r => setTimeout(r, 0));
+      }
+      bo.byte(0x3B);
+      if(!gifAbort) downloadBlob(bo.blob(), fname("gif"));
+    }catch(e){ alert("Не вдалося зібрати GIF: " + (e.message || e)); }
+    busy = false; needRender = true;
+    if(vid && wasPlaying) F.video.play().catch(() => {});
+    $("gifLabel").textContent = "GIF"; status("");
   });
 
   /* ---- MP4 (покадрово) / WebM (живий запис) ---- */
@@ -1997,6 +2223,7 @@ THE HORSE</textarea>
     ["gridAlpha","gridAlpha",f2,0], ["gridW","gridW",f1,0], ["major","major",f0,0],
     ["lineW","lineW",f2,0], ["cornerR","cornerR",f2,0], ["dashLen","dashLen",f2,0], ["doubleGap","doubleGap",f2,0],
     ["rings","rings",f0,1], ["ringGap","ringGap",f0,1], ["ringFade","ringFade",f2,0],
+    ["pcPeriod","pcPeriod",x => +x === 0 ? "цикл" : String(Math.round(x)),0],
     ["grain","grain",f2,0], ["bleed","bleed",f2,0], ["wobble","wobble",f2,0], ["glow","glow",f2,0], ["glowR","glowR",f1,0],
     ["fillAlpha","fillAlpha",f2,0], ["hatchGap","hatchGap",f2,0], ["hatchAngle","hatchAngle",x => `${Math.round(x)}°`,0],
     ["t1Size","t1Size",f1,0], ["t2Size","t2Size",f1,0], ["cornerSize","cornerSize",f1,0], ["cornerPad","cornerPad",f2,0],
@@ -2016,7 +2243,7 @@ THE HORSE</textarea>
   function syncRanges(){
     RANGES.forEach(([id, key, fmt]) => { $(id).value = P[key]; $(vid(id)).textContent = fmt(P[key]); });
   }
-  const COLORS = [["keyColor",1],["onionColor",0],["bg",0],["gridColor",0],["ink",0],["fillColor",0],["tColor",0]];
+  const COLORS = [["keyColor",1],["onionColor",0],["bg",0],["gridColor",0],["ink",0],["fillColor",0],["tColor",0],["pcColor",0]];
   const hid = id => "h" + id[0].toUpperCase() + id.slice(1);
   COLORS.forEach(([id, geo]) => $(id).addEventListener("input", e => {
     P[id] = e.target.value; $(hid(id)).textContent = P[id].toUpperCase();
@@ -2024,7 +2251,7 @@ THE HORSE</textarea>
     markStyle();
   }));
   const SWITCHES = [["rider",1],["invert",1],["sheetOn",1],["mirror",1],["smooth",1],["fillAll",1],["diag",1],
-    ["gridOn",0],["double",0],["multiply",0],["boil",0],["t1On",0],["t2On",0],["cornersOn",0],["tInk",0]];
+    ["gridOn",0],["double",0],["multiply",0],["boil",0],["t1On",0],["t2On",0],["cornersOn",0],["tInk",0],["pcFill",0]];
   SWITCHES.forEach(([id, geo]) => $(id).addEventListener("change", e => {
     P[id] = e.target.checked;
     if(geo) invalidate(); else needRender = true;
@@ -2056,6 +2283,8 @@ THE HORSE</textarea>
   bindPresets("#tFonts", "tFont", "font", 0, p => { P.tW = p.dataset.w; ensureFonts(); });
   bindPresets("#aspects", "aspect", "aspect", 2);
   bindPresets("#fpsSel", "fps", "fps", 0);
+  bindPresets("#pcModes", "pcMode", "pc", 0);
+  bindPresets("#gifSizes", "gifW", "gw", 0);
   $("srcText").addEventListener("input", e => { P.text = e.target.value; ensureFonts(); invalidate(); });
   $("t1").addEventListener("input", e => { P.t1 = e.target.value; needRender = true; });
   $("t2").addEventListener("input", e => { P.t2 = e.target.value; needRender = true; });
@@ -2084,6 +2313,8 @@ THE HORSE</textarea>
     $("hatchRow").style.display = P.fill === "hatch" || P.fill === "dots" ? "" : "none";
     $("hatchAngleLbl").style.display = $("hatchAngle").style.display = P.fill === "hatch" ? "" : "none";
     $("tColorRow").style.display = P.tInk ? "none" : "";
+    $("pcOpts").style.display = P.pcMode === "off" ? "none" : "";
+    $("pcColorRow").style.display = P.pcMode === "grad" || P.pcMode === "alt" ? "" : "none";
     const procedural = P.src !== "file" || !F.kind || frameCount() <= 1;
     $("poses").disabled = !procedural || isVideo();
     $("exMp4").title = isVideo() ? "Покадровий рендер усього відео" : "";
@@ -2100,6 +2331,7 @@ THE HORSE</textarea>
     mark("#corners", "corner", P.corner); mark("#dashes", "dash", P.dash); mark("#fills", "fill", P.fill);
     mark("#t1Aligns", "align", P.t1Align); mark("#t2Aligns", "align", P.t2Align); mark("#tFonts", "font", P.tFont);
     mark("#aspects", "aspect", P.aspect); mark("#fpsSel", "fps", P.fps);
+    mark("#pcModes", "pc", P.pcMode); mark("#gifSizes", "gw", P.gifW);
     syncVis(); markStyle(); updateDurNote();
     needRender = true;
   }

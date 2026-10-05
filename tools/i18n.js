@@ -1298,6 +1298,21 @@
       "The pose sheet works with the built-in silhouettes, text, GIFs and frame sequences — export MP4 for video.",
       "Таблица поз работает со встроенными силуэтами, текстом, GIF и кадрами — для видео экспортируйте MP4."],
     "Відлуння контуру": ["Echo outlines", "Эхо контура"],
+    "Колір за позою": ["Color per pose", "Цвет по позам"],
+    "Вимкнено": ["Off", "Выключено"],
+    "Веселка": ["Rainbow", "Радуга"],
+    "Чергування": ["Alternate", "Чередование"],
+    "Другий колір": ["Second color", "Второй цвет"],
+    "Період (поз)": ["Period (poses)", "Период (поз)"],
+    "цикл": ["cycle", "цикл"],
+    "Заливка теж": ["Fill too", "Заливка тоже"],
+    "Кожна поза — свій колір: веселка обертає відтінок чорнила, градієнт іде від чорнила до другого кольору й назад, чергування блимає двома кольорами. Шлейф поз бере кольори своїх поз — виходить райдужна хронофотографія. Період 0 — рівно один цикл, луп безшовний.": [
+      "Each pose gets its own color: rainbow rotates the ink hue, gradient goes from the ink to the second color and back, alternate flips between two colors. The pose trail takes the colors of its poses — a rainbow chronophotograph. Period 0 = exactly one cycle, a seamless loop.",
+      "Каждая поза — свой цвет: радуга вращает оттенок чернил, градиент идёт от чернил ко второму цвету и обратно, чередование мигает двумя цветами. Шлейф поз берёт цвета своих поз — получается радужная хронофотография. Период 0 — ровно один цикл, луп бесшовный."],
+    "Один безшовний цикл, що крутиться безкінечно: по кадру на позу (з обведенням пером чи в плавному режимі — 25 fps). Палітра до 256 кольорів збирається з самих кадрів; прозорий фон дає прозорий GIF. Найлегший формат для вебу й месенджерів.": [
+      "One seamless cycle that loops forever: a frame per pose (25 fps with pen tracing or in smooth mode). The palette of up to 256 colors is built from the frames themselves; a transparent background gives a transparent GIF. The lightest format for the web and messengers.",
+      "Один бесшовный цикл, который крутится бесконечно: по кадру на позу (с обводкой пером или в плавном режиме — 25 fps). Палитра до 256 цветов собирается из самих кадров; прозрачный фон даёт прозрачный GIF. Самый лёгкий формат для веба и мессенджеров."],
+    "GIF: палітра…": ["GIF: palette…", "GIF: палитра…"],
     "Кілець": ["Rings", "Колец"],
     "Концентричні сходинкові кільця навколо силуету — сітку розширено на N клітинок і обведено знову, тож кільця теж «піксельні», як ізолінії на карті.": [
       "Concentric stepped rings around the silhouette — the grid is grown by N cells and traced again, so the rings stay “pixel” too, like contour lines on a map.",
@@ -1342,6 +1357,7 @@
     [/ · відео /, " · video ", " · видео "],
     [/^Відео: /, "Video: ", "Видео: "],
     [/^Тривалість: /, "Duration: ", "Длительность: "],
+    [/^Не вдалося зібрати GIF: /, "Couldn't build the GIF: ", "Не удалось собрать GIF: "],
     [/(\d) с( ·|$)/, "$1 s$2", "$1 с$2"]
   ];
 
