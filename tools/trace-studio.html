@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trace Studio — піксельний контур по сітці, покадрова анімація</title>
+<link rel="stylesheet" href="studio.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@700&family=Inter+Tight:wght@600;800;900&family=JetBrains+Mono:wght@700&family=Playfair+Display:wght@900&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  #out{background:#ebe8e2;touch-action:none;cursor:grab}
+  #out.drag{cursor:grabbing}
+  .tabs{grid-template-columns:repeat(3,1fr)}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+  input[type=text],textarea{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
+  textarea{resize:vertical;min-height:54px;line-height:1.35}
+  .srcname{font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:8px;word-break:break-all}
+  .sub{margin-top:12px}
+  #styles .preset{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:7px 6px 8px}
+  #styles .sw{height:26px;border-radius:5px;border:1px solid hsl(var(--border));position:relative;overflow:hidden}
+  #styles .sw i{position:absolute;inset:5px 8px;border:2px solid;border-radius:1px}
+  #fonts .preset{font-size:13px}
+  .stage-bar .badge.pose{min-width:84px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linejoin="miter">
+          <path d="M3 20V14H6V11H9V6H13V9H16V12H21V20Z"/>
+          <path d="M3 20H21" stroke-opacity=".35"/>
+        </svg>
+      </div>
+      <div><h1>Trace Studio</h1><p>pixel contour · grid trace · stop-motion</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="shape">Силует</div>
+        <div class="tab" data-tab="motion">Рух</div>
+        <div class="tab" data-tab="grid">Сітка</div>
+        <div class="tab" data-tab="line">Лінія</div>
+        <div class="tab" data-tab="text">Текст</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ SHAPE ============ -->
+      <div data-pane="shape" class="active">
+        <div class="group">
+          <h2>Стилі</h2>
+          <div class="presets c2" id="styles"></div>
+        </div>
+        <div class="group">
+          <h2>Силует</h2>
+          <div class="presets c3" id="sources">
+            <div class="preset active" data-src="horse">Кінь</div>
+            <div class="preset" data-src="dog">Хорт</div>
+            <div class="preset" data-src="runner">Бігун</div>
+            <div class="preset" data-src="bird">Птах</div>
+            <div class="preset" data-src="text">Текст</div>
+            <div class="preset" data-src="file">Свій файл</div>
+          </div>
+
+          <div id="quadGroup" class="sub">
+            <div class="presets c4" id="gaits">
+              <div class="preset active" data-gait="gallop">Галоп</div>
+              <div class="preset" data-gait="canter">Кентер</div>
+              <div class="preset" data-gait="trot">Рись</div>
+              <div class="preset" data-gait="walk">Крок</div>
+            </div>
+            <div class="switch-row" id="riderRow"><span class="lbl">Вершник</span>
+              <label class="switch"><input type="checkbox" id="rider" checked><span class="track"></span></label></div>
+            <div class="note">Процедурний риг: ноги рахуються інверсною кінематикою за справжньою схемою кроку. Галоп і 11 поз за цикл — як у фотографіях Мейбриджа (1878), з яких зроблений референс.</div>
+          </div>
+
+          <div id="textGroup" class="sub" style="display:none">
+            <textarea id="srcText" rows="2" placeholder="Свій текст…">KLIK</textarea>
+            <div class="presets c3" id="fonts" style="margin-top:8px">
+              <div class="preset active" data-font="Inter Tight" data-w="900" style="font-family:'Inter Tight';font-weight:900">Inter</div>
+              <div class="preset" data-font="Archivo Narrow" data-w="700" style="font-family:'Archivo Narrow';font-weight:700">Narrow</div>
+              <div class="preset" data-font="Silkscreen" data-w="700" style="font-family:Silkscreen;font-weight:700">Pixel</div>
+              <div class="preset" data-font="JetBrains Mono" data-w="700" style="font-family:'JetBrains Mono';font-weight:700">Mono</div>
+              <div class="preset" data-font="Playfair Display" data-w="900" style="font-family:'Playfair Display';font-weight:900">Serif</div>
+            </div>
+          </div>
+
+          <div id="fileGroup" class="sub" style="display:none">
+            <div class="btns-grid">
+              <button class="btn" id="loadImage">Фото · GIF · SVG</button>
+              <button class="btn" id="loadVideo">Відео</button>
+              <button class="btn full" id="loadSeq">Послідовність кадрів</button>
+            </div>
+            <div class="srcname" id="srcName">Файл не вибрано — поки що показується кінь.</div>
+            <div class="row mt"><label class="lbl">Ключ</label></div>
+            <div class="presets c3" id="keys">
+              <div class="preset active" data-key="auto">Авто</div>
+              <div class="preset" data-key="alpha">Альфа</div>
+              <div class="preset" data-key="dark">Темне</div>
+              <div class="preset" data-key="light">Світле</div>
+              <div class="preset" data-key="chroma">Хромакей</div>
+            </div>
+            <div id="keyThrRow">
+              <div class="row mt"><label class="lbl">Поріг ключа</label><span class="val" id="vKeyThr">0.50</span></div>
+              <input type="range" id="keyThr" min="0.02" max="0.98" step="0.01" value="0.5">
+            </div>
+            <div id="chromaRow" style="display:none">
+              <div class="colors" style="margin-top:10px">
+                <div class="color-field"><span>Колір фону</span><div class="color-wrap"><input type="color" id="keyColor" value="#00b140"><span class="hex" id="hKeyColor">#00B140</span></div></div>
+              </div>
+              <div class="row mt"><label class="lbl">Допуск</label><span class="val" id="vKeyTol">0.30</span></div>
+              <input type="range" id="keyTol" min="0.02" max="0.9" step="0.01" value="0.3">
+            </div>
+            <div class="row mt"><label class="lbl">Згладити краї</label><span class="val" id="vSoft">0.0</span></div>
+            <input type="range" id="soft" min="0" max="3" step="0.1" value="0">
+            <div class="switch-row"><span class="lbl">Інвертувати</span>
+              <label class="switch"><input type="checkbox" id="invert"><span class="track"></span></label></div>
+            <div class="switch-row"><span class="lbl">Спрайт-лист (сітка кадрів)</span>
+              <label class="switch"><input type="checkbox" id="sheetOn"><span class="track"></span></label></div>
+            <div id="sheetGroup" style="display:none">
+              <div class="row mt"><label class="lbl">Колонок</label><span class="val" id="vSheetCols">4</span></div>
+              <input type="range" id="sheetCols" min="1" max="12" step="1" value="4">
+              <div class="row mt"><label class="lbl">Рядів</label><span class="val" id="vSheetRows">3</span></div>
+              <input type="range" id="sheetRows" min="1" max="12" step="1" value="3">
+              <div class="row mt"><label class="lbl">Кадрів</label><span class="val" id="vSheetCount">12</span></div>
+              <input type="range" id="sheetCount" min="1" max="144" step="1" value="12">
+            </div>
+            <div class="note">Будь-що, що відділяється від фону: PNG з прозорістю, ч/б силует, відео на однотонному фоні чи хромакеї, анімований GIF/WebP або папка кадрів. Таблиця Мейбриджа «The Horse in Motion» (суспільне надбання) — це спрайт-лист: увімкни «Спрайт-лист» і задай сітку. Файли можна перетягнути на превʼю або вставити ⌘V.</div>
+          </div>
+
+          <div id="stillGroup" class="sub" style="display:none">
+            <div class="row"><label class="lbl">Анімація</label></div>
+            <div class="presets c3" id="stillAnims">
+              <div class="preset active" data-anim="none">Без руху</div>
+              <div class="preset" data-anim="wave">Хвиля</div>
+              <div class="preset" data-anim="type">Друк</div>
+              <div class="preset" data-anim="bounce">Стрибок</div>
+              <div class="preset" data-anim="sway">Гойдання</div>
+              <div class="preset" data-anim="pulse">Пульс</div>
+            </div>
+            <div class="row mt"><label class="lbl">Амплітуда</label><span class="val" id="vAnimAmp">1.00</span></div>
+            <input type="range" id="animAmp" min="0" max="3" step="0.05" value="1">
+            <div class="note">Навіть дрібний рух змушує клітинки перескакувати — статичний логотип чи слово «оживає» по сітці.</div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Розміщення</h2>
+          <div class="row"><label class="lbl">Розмір</label><span class="val" id="vSize">0.72</span></div>
+          <input type="range" id="size" min="0.1" max="1.6" step="0.01" value="0.72">
+          <div class="row mt"><label class="lbl">Зсув X</label><span class="val" id="vOffX">0.00</span></div>
+          <input type="range" id="offX" min="-0.6" max="0.6" step="0.005" value="0">
+          <div class="row mt"><label class="lbl">Зсув Y</label><span class="val" id="vOffY">0.00</span></div>
+          <input type="range" id="offY" min="-0.6" max="0.6" step="0.005" value="0">
+          <div class="switch-row"><span class="lbl">Дзеркально (рух ліворуч)</span>
+            <label class="switch"><input type="checkbox" id="mirror"><span class="track"></span></label></div>
+          <div class="note">Силует і написи можна тягнути мишкою прямо на превʼю.</div>
+        </div>
+      </div>
+
+      <!-- ============ MOTION ============ -->
+      <div data-pane="motion">
+        <div class="group">
+          <h2>Темп</h2>
+          <div class="row"><label class="lbl">Поз за секунду</label><span class="val" id="vPoseRate">6.5</span></div>
+          <input type="range" id="poseRate" min="0.5" max="30" step="0.5" value="6.5">
+          <div class="row mt"><label class="lbl">Поз у циклі</label><span class="val" id="vPoses">11</span></div>
+          <input type="range" id="poses" min="2" max="48" step="1" value="11">
+          <div class="switch-row"><span class="lbl">Плавно (нова поза щокадру)</span>
+            <label class="switch"><input type="checkbox" id="smooth"><span class="track"></span></label></div>
+          <div class="note" id="tempoNote">Референс: 11 поз · ≈6.5 поз/с — кожна поза тримається 4–5 кадрів при 30 fps, звідси «покадровий» ритм.</div>
+        </div>
+        <div class="group">
+          <h2>Рух у кадрі</h2>
+          <div class="presets c3" id="motions">
+            <div class="preset active" data-motion="place">На місці</div>
+            <div class="preset" data-motion="travel">Через кадр</div>
+            <div class="preset" data-motion="scroll">Фон біжить</div>
+          </div>
+          <div id="travelRow" style="display:none">
+            <div class="row mt"><label class="lbl">Перетин кадру (циклів)</label><span class="val" id="vCross">4</span></div>
+            <input type="range" id="cross" min="1" max="16" step="1" value="4">
+          </div>
+          <div id="scrollRow" style="display:none">
+            <div class="row mt"><label class="lbl">Швидкість фону (клітинок/позу)</label><span class="val" id="vScroll">2</span></div>
+            <input type="range" id="scroll" min="1" max="8" step="1" value="2">
+          </div>
+          <div class="note">«Через кадр» — силует пробігає кадр за ціле число циклів (безшовний луп). «Фон біжить» — сітка їде назустріч цілими клітинками, силует лишається в центрі.</div>
+        </div>
+        <div class="group">
+          <h2>Шлейф поз</h2>
+          <div class="row"><label class="lbl">Попередніх поз</label><span class="val" id="vOnion">0</span></div>
+          <input type="range" id="onion" min="0" max="8" step="1" value="0">
+          <div class="row mt"><label class="lbl">Видимість шлейфу</label><span class="val" id="vOnionFade">0.45</span></div>
+          <input type="range" id="onionFade" min="0.05" max="1" step="0.05" value="0.45">
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Колір шлейфу</span><div class="color-wrap"><input type="color" id="onionColor" value="#e0563b"><span class="hex" id="hOnionColor">#E0563B</span></div></div>
+          </div>
+          <div class="note">Onion skin аніматора або хронофотографія Мареї: попередні пози лишаються блідими контурами.</div>
+        </div>
+        <div class="group">
+          <h2>Обведення пером</h2>
+          <div class="row"><label class="lbl">Час на обведення</label><span class="val" id="vDrawOn">0.00</span></div>
+          <input type="range" id="drawOn" min="0" max="1" step="0.05" value="0">
+          <div class="note">Частка часу кожної пози, за яку контур «малюється» від початку до кінця, як плотером. Найкраще при 0.5–2 позах за секунду.</div>
+        </div>
+      </div>
+
+      <!-- ============ GRID ============ -->
+      <div data-pane="grid">
+        <div class="group">
+          <h2>Квантування</h2>
+          <div class="row"><label class="lbl">Клітинок по ширині</label><span class="val" id="vCols">92</span></div>
+          <input type="range" id="cols" min="16" max="220" step="1" value="92">
+          <div class="row mt"><label class="lbl">Поріг заповнення</label><span class="val" id="vThr">0.45</span></div>
+          <input type="range" id="thr" min="0.05" max="0.95" step="0.01" value="0.45">
+          <div class="row mt"><label class="lbl">Прибрати крихти до (клітинок)</label><span class="val" id="vMinIsland">2</span></div>
+          <input type="range" id="minIsland" min="1" max="40" step="1" value="2">
+          <div class="row mt"><label class="lbl">Залити дірки до (клітинок)</label><span class="val" id="vMinHole">2</span></div>
+          <input type="range" id="minHole" min="1" max="60" step="1" value="2">
+          <div class="row mt"><label class="lbl">Зсув контуру (клітинок)</label><span class="val" id="vInset">0.00</span></div>
+          <input type="range" id="inset" min="-0.5" max="0.5" step="0.05" value="0">
+          <div class="switch-row"><span class="lbl">Тільки зовнішній контур</span>
+            <label class="switch"><input type="checkbox" id="fillAll"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Зʼєднувати по діагоналі</span>
+            <label class="switch"><input type="checkbox" id="diag"><span class="track"></span></label></div>
+          <div class="note">Клітинка вмикається, коли силует покриває більше за поріг її площі; контур іде по ребрах клітинок — сходинками, як у референсі. Нижчий поріг — жирніший силует і товщі ноги.</div>
+        </div>
+        <div class="group">
+          <h2>Фон</h2>
+          <div class="presets c3" id="bgModes">
+            <div class="preset active" data-bg="color">Колір</div>
+            <div class="preset" data-bg="transparent">Прозорий</div>
+            <div class="preset" data-bg="image">Фото</div>
+          </div>
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Колір фону</span><div class="color-wrap"><input type="color" id="bg" value="#ebe8e2"><span class="hex" id="hBg">#EBE8E2</span></div></div>
+          </div>
+          <div class="btns-grid" id="bgImgRow" style="margin-top:10px;display:none">
+            <button class="btn" id="bgLoad">Завантажити фон</button>
+            <button class="btn" id="bgClear">Прибрати</button>
+          </div>
+          <div class="note">Прозорий фон — для PNG, SVG і WebM з альфою: контур кладеться поверх будь-якого макета.</div>
+        </div>
+        <div class="group">
+          <h2>Сітка фону</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Показати сітку</span>
+            <label class="switch"><input type="checkbox" id="gridOn" checked><span class="track"></span></label></div>
+          <div class="row mt"><label class="lbl">Крок сітки (клітинок контуру)</label></div>
+          <div class="presets c4" id="gridSteps">
+            <div class="preset" data-step="1">1</div>
+            <div class="preset active" data-step="2">2</div>
+            <div class="preset" data-step="3">3</div>
+            <div class="preset" data-step="4">4</div>
+          </div>
+          <div class="presets c3" id="gridStyles" style="margin-top:8px">
+            <div class="preset active" data-gstyle="lines">Лінії</div>
+            <div class="preset" data-gstyle="dots">Точки</div>
+            <div class="preset" data-gstyle="cross">Хрестики</div>
+          </div>
+          <div class="colors" style="margin-top:10px">
+            <div class="color-field"><span>Колір сітки</span><div class="color-wrap"><input type="color" id="gridColor" value="#8f8c86"><span class="hex" id="hGridColor">#8F8C86</span></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Прозорість</label><span class="val" id="vGridAlpha">0.50</span></div>
+          <input type="range" id="gridAlpha" min="0" max="1" step="0.01" value="0.5">
+          <div class="row mt"><label class="lbl">Товщина (px)</label><span class="val" id="vGridW">1.3</span></div>
+          <input type="range" id="gridW" min="0.5" max="6" step="0.1" value="1.3">
+          <div class="row mt"><label class="lbl">Жирна лінія кожні</label><span class="val" id="vMajor">0</span></div>
+          <input type="range" id="major" min="0" max="12" step="1" value="0">
+          <div class="note">У референсі клітинка зошита вдвічі більша за крок контуру — тому за замовчуванням крок 2.</div>
+        </div>
+      </div>
+
+      <!-- ============ LINE ============ -->
+      <div data-pane="line">
+        <div class="group">
+          <h2>Лінія</h2>
+          <div class="colors">
+            <div class="color-field"><span>Колір чорнила</span><div class="color-wrap"><input type="color" id="ink" value="#2b28a8"><span class="hex" id="hInk">#2B28A8</span></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Товщина (клітинок)</label><span class="val" id="vLineW">0.42</span></div>
+          <input type="range" id="lineW" min="0.05" max="1.5" step="0.01" value="0.42">
+          <div class="row mt"><label class="lbl">Кути</label></div>
+          <div class="presets c3" id="corners">
+            <div class="preset active" data-corner="sharp">Гострі</div>
+            <div class="preset" data-corner="round">Круглі</div>
+            <div class="preset" data-corner="chamfer">Фаска</div>
+          </div>
+          <div id="cornerRRow" style="display:none">
+            <div class="row mt"><label class="lbl">Радіус (клітинок)</label><span class="val" id="vCornerR">0.50</span></div>
+            <input type="range" id="cornerR" min="0.05" max="0.5" step="0.01" value="0.5">
+          </div>
+          <div class="row mt"><label class="lbl">Штрих</label></div>
+          <div class="presets c3" id="dashes">
+            <div class="preset active" data-dash="solid">Суцільний</div>
+            <div class="preset" data-dash="dash">Пунктир</div>
+            <div class="preset" data-dash="dot">Точки</div>
+          </div>
+          <div id="dashRow" style="display:none">
+            <div class="row mt"><label class="lbl">Крок штриха (клітинок)</label><span class="val" id="vDashLen">1.00</span></div>
+            <input type="range" id="dashLen" min="0.3" max="4" step="0.05" value="1">
+          </div>
+          <div class="switch-row"><span class="lbl">Подвійна лінія</span>
+            <label class="switch"><input type="checkbox" id="double"><span class="track"></span></label></div>
+          <div id="doubleRow" style="display:none">
+            <div class="row mt"><label class="lbl">Просвіт</label><span class="val" id="vDoubleGap">0.45</span></div>
+            <input type="range" id="doubleGap" min="0.15" max="0.85" step="0.01" value="0.45">
+          </div>
+        </div>
+        <div class="group">
+          <h2>Відлуння контуру</h2>
+          <div class="row"><label class="lbl">Кілець</label><span class="val" id="vRings">0</span></div>
+          <input type="range" id="rings" min="0" max="8" step="1" value="0">
+          <div class="row mt"><label class="lbl">Крок (клітинок)</label><span class="val" id="vRingGap">2</span></div>
+          <input type="range" id="ringGap" min="1" max="8" step="1" value="2">
+          <div class="row mt"><label class="lbl">Згасання</label><span class="val" id="vRingFade">0.65</span></div>
+          <input type="range" id="ringFade" min="0.1" max="1" step="0.05" value="0.65">
+          <div class="note">Концентричні сходинкові кільця навколо силуету — сітку розширено на N клітинок і обведено знову, тож кільця теж «піксельні», як ізолінії на карті.</div>
+        </div>
+        <div class="group">
+          <h2>Чорнило</h2>
+          <div class="row"><label class="lbl">Зерно</label><span class="val" id="vGrain">0.20</span></div>
+          <input type="range" id="grain" min="0" max="1" step="0.01" value="0.2">
+          <div class="row mt"><label class="lbl">Розтікання</label><span class="val" id="vBleed">0.40</span></div>
+          <input type="range" id="bleed" min="0" max="3" step="0.05" value="0.4">
+          <div class="switch-row"><span class="lbl">Множення на фон</span>
+            <label class="switch"><input type="checkbox" id="multiply" checked><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Рука</h2>
+          <div class="row"><label class="lbl">Тремтіння</label><span class="val" id="vWobble">0.00</span></div>
+          <input type="range" id="wobble" min="0" max="0.6" step="0.01" value="0">
+          <div class="switch-row"><span class="lbl">Кипіння (нова рука щопози)</span>
+            <label class="switch"><input type="checkbox" id="boil" checked><span class="track"></span></label></div>
+          <div class="note">Тремтіння прив'язане до місця на сітці: без кипіння нерухомі шматки контуру тремтять однаково з пози в позу, з кипінням — як перемальовані від руки.</div>
+        </div>
+        <div class="group">
+          <h2>Сяйво</h2>
+          <div class="row"><label class="lbl">Сила</label><span class="val" id="vGlow">0.00</span></div>
+          <input type="range" id="glow" min="0" max="2" step="0.05" value="0">
+          <div class="row mt"><label class="lbl">Радіус (клітинок)</label><span class="val" id="vGlowR">1.5</span></div>
+          <input type="range" id="glowR" min="0.2" max="6" step="0.1" value="1.5">
+        </div>
+        <div class="group">
+          <h2>Заливка</h2>
+          <div class="presets c3" id="fills">
+            <div class="preset active" data-fill="none">Немає</div>
+            <div class="preset" data-fill="solid">Суцільна</div>
+            <div class="preset" data-fill="hatch">Штрихування</div>
+            <div class="preset" data-fill="dots">Точки</div>
+            <div class="preset" data-fill="cells">Пікселі</div>
+          </div>
+          <div id="fillOpts" style="display:none">
+            <div class="colors" style="margin-top:10px">
+              <div class="color-field"><span>Колір заливки</span><div class="color-wrap"><input type="color" id="fillColor" value="#2b28a8"><span class="hex" id="hFillColor">#2B28A8</span></div></div>
+            </div>
+            <div class="row mt"><label class="lbl">Непрозорість</label><span class="val" id="vFillAlpha">0.85</span></div>
+            <input type="range" id="fillAlpha" min="0.05" max="1" step="0.01" value="0.85">
+            <div id="hatchRow">
+              <div class="row mt"><label class="lbl">Крок (клітинок)</label><span class="val" id="vHatchGap">0.70</span></div>
+              <input type="range" id="hatchGap" min="0.3" max="3" step="0.05" value="0.7">
+              <div class="row mt" id="hatchAngleLbl"><label class="lbl">Кут штриха</label><span class="val" id="vHatchAngle">45°</span></div>
+              <input type="range" id="hatchAngle" min="0" max="180" step="5" value="45">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ TEXT ============ -->
+      <div data-pane="text">
+        <div class="group">
+          <h2>Заголовок</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Показати</span>
+            <label class="switch"><input type="checkbox" id="t1On" checked><span class="track"></span></label></div>
+          <textarea id="t1" rows="1" style="margin-top:8px">HAPPY NEW YEAR</textarea>
+          <div class="row mt"><label class="lbl">Розмір</label><span class="val" id="vT1Size">2.3</span></div>
+          <input type="range" id="t1Size" min="0.6" max="14" step="0.1" value="2.3">
+          <div class="presets c3" id="t1Aligns" style="margin-top:8px">
+            <div class="preset" data-align="left">Ліво</div>
+            <div class="preset active" data-align="center">Центр</div>
+            <div class="preset" data-align="right">Право</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Підпис</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Показати</span>
+            <label class="switch"><input type="checkbox" id="t2On" checked><span class="track"></span></label></div>
+          <textarea id="t2" rows="2" style="margin-top:8px">YEAR OF 馬
+THE HORSE</textarea>
+          <div class="row mt"><label class="lbl">Розмір</label><span class="val" id="vT2Size">1.8</span></div>
+          <input type="range" id="t2Size" min="0.6" max="14" step="0.1" value="1.8">
+          <div class="presets c3" id="t2Aligns" style="margin-top:8px">
+            <div class="preset active" data-align="left">Ліво</div>
+            <div class="preset" data-align="center">Центр</div>
+            <div class="preset" data-align="right">Право</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Кутові знаки</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Показати</span>
+            <label class="switch"><input type="checkbox" id="cornersOn" checked><span class="track"></span></label></div>
+          <input type="text" id="cornerTxt" value="2026" maxlength="8" style="margin-top:8px" placeholder="4 знаки: ↖ ↗ ↙ ↘">
+          <div class="row mt"><label class="lbl">Розмір</label><span class="val" id="vCornerSize">3.0</span></div>
+          <input type="range" id="cornerSize" min="0.8" max="10" step="0.1" value="3">
+          <div class="row mt"><label class="lbl">Відступ від краю</label><span class="val" id="vCornerPad">0.07</span></div>
+          <input type="range" id="cornerPad" min="0.01" max="0.3" step="0.005" value="0.07">
+        </div>
+        <div class="group">
+          <h2>Шрифт</h2>
+          <div class="presets c3" id="tFonts">
+            <div class="preset active" data-font="Inter Tight" data-w="800" style="font-family:'Inter Tight';font-weight:800">Inter</div>
+            <div class="preset" data-font="Archivo Narrow" data-w="700" style="font-family:'Archivo Narrow';font-weight:700">Narrow</div>
+            <div class="preset" data-font="Silkscreen" data-w="400" style="font-family:Silkscreen">Pixel</div>
+            <div class="preset" data-font="JetBrains Mono" data-w="700" style="font-family:'JetBrains Mono';font-weight:700">Mono</div>
+            <div class="preset" data-font="Playfair Display" data-w="900" style="font-family:'Playfair Display';font-weight:900">Serif</div>
+          </div>
+          <div class="switch-row"><span class="lbl">Колір як у чорнила</span>
+            <label class="switch"><input type="checkbox" id="tInk" checked><span class="track"></span></label></div>
+          <div class="colors" id="tColorRow" style="margin-top:10px;display:none">
+            <div class="color-field"><span>Колір тексту</span><div class="color-wrap"><input type="color" id="tColor" value="#111111"><span class="hex" id="hTColor">#111111</span></div></div>
+          </div>
+          <div class="note">Розмір — у відсотках ширини кадру. Написи тягни мишкою прямо на превʼю; вони друкуються тим самим чорнилом (зерно, розтікання, множення).</div>
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Формат</h2>
+          <div class="presets c4" id="aspects">
+            <div class="preset" data-aspect="1:1">1:1</div>
+            <div class="preset active" data-aspect="4:5">4:5</div>
+            <div class="preset" data-aspect="9:16">9:16</div>
+            <div class="preset" data-aspect="16:9">16:9</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid">
+            <button class="btn primary" id="exPng">PNG</button>
+            <button class="btn" id="exJpg">JPG</button>
+            <button class="btn" id="exSvg">SVG</button>
+            <button class="btn" id="exSvgAnim">SVG-анімація</button>
+            <button class="btn full" id="exSheet">Таблиця поз (PNG)</button>
+          </div>
+          <div class="note">SVG — чистий вектор поточної пози: фон, сітка, заливка, контур і написи (зерно, розтікання й сяйво — лише в растрі). SVG-анімація — увесь цикл поз однією легкою векторною петлею для вебу. Таблиця поз — усі пози циклу на одному аркуші з номерами, як пластини Мейбриджа.</div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">Кадрів за секунду</label></div>
+          <div class="presets c4" id="fpsSel">
+            <div class="preset" data-fps="24">24</div>
+            <div class="preset" data-fps="25">25</div>
+            <div class="preset active" data-fps="30">30</div>
+            <div class="preset" data-fps="60">60</div>
+          </div>
+          <div class="row mt"><label class="lbl">Циклів у файлі</label><span class="val" id="vLoops">4</span></div>
+          <input type="range" id="loops" min="1" max="24" step="1" value="4">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">12</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="12">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note" id="durNote"></div>
+          <div class="note">MP4 рендериться покадрово (WebCodecs) — рівно ціле число циклів, луп безшовний; завантажене відео проходить повністю (до 2 хв). WebM пишеться з живого превʼю, з прозорим фоном — з альфою.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <input type="file" id="fileImage" accept="image/*,.svg,.gif,.webp,.apng" hidden>
+        <input type="file" id="fileVideo" accept="video/*" hidden>
+        <input type="file" id="fileSeq" accept="image/*" multiple hidden>
+        <input type="file" id="fileBg" accept="image/*" hidden>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="iconbtn" id="prevBtn" title="Попередня поза">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </div>
+          <div class="iconbtn" id="nextBtn" title="Наступна поза">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <span class="badge pose" id="poseTxt">поза 1 / 11</span>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · Silhouette → Mosaic (coverage) → Threshold → Edge Trace → Ink · покадрово · все локально</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= ядро: чисті функції (без DOM і без P) =================
+     Ріги силуетів малюють білим у власних одиницях (y догори, земля = 0);
+     квантування → чистка → трасування контуру по ребрах клітинок → полілінії. */
+  const TAU = Math.PI*2;
+  const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+  const lerp = (a, b, t) => a + (b - a)*t;
+  const fract = x => x - Math.floor(x);
+  const hash1 = n => { const s = Math.sin(n*127.1 + 311.7)*43758.5453; return s - Math.floor(s); };
+
+  /* Catmull–Rom крізь ключові точки, t ∈ [0,1] */
+  function crPath(pts, t){
+    const n = pts.length - 1, f = clamp(t, 0, 1)*n;
+    const i = Math.min(n - 1, Math.floor(f)), u = f - i;
+    const a = pts[Math.max(0, i - 1)], b = pts[i], c = pts[i + 1], d = pts[Math.min(n, i + 2)];
+    const u2 = u*u, u3 = u2*u;
+    const k = (p0, p1, p2, p3) => 0.5*(2*p1 + (p2 - p0)*u + (2*p0 - 5*p1 + 4*p2 - p3)*u2 + (3*p1 - p0 - 3*p2 + p3)*u3);
+    return [k(a[0], b[0], c[0], d[0]), k(a[1], b[1], c[1], d[1])];
+  }
+  /* замкнена гладка фігура крізь точки (Catmull–Rom → кубічні Безьє) */
+  function blob(g, pts){
+    const n = pts.length;
+    g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+    for(let i = 0; i < n; i++){
+      const p0 = pts[(i - 1 + n)%n], p1 = pts[i], p2 = pts[(i + 1)%n], p3 = pts[(i + 2)%n];
+      g.bezierCurveTo(p1[0] + (p2[0] - p0[0])/6, p1[1] + (p2[1] - p0[1])/6,
+                      p2[0] - (p3[0] - p1[0])/6, p2[1] - (p3[1] - p1[1])/6, p2[0], p2[1]);
+    }
+    g.closePath(); g.fill();
+  }
+  /* відрізок зі звуженням і круглими кінцями (кістка) */
+  function bone(g, ax, ay, bx, by, wa, wb){
+    const dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy) || 1e-6, nx = -dy/L, ny = dx/L;
+    g.beginPath();
+    g.moveTo(ax + nx*wa/2, ay + ny*wa/2); g.lineTo(bx + nx*wb/2, by + ny*wb/2);
+    g.lineTo(bx - nx*wb/2, by - ny*wb/2); g.lineTo(ax - nx*wa/2, ay - ny*wa/2);
+    g.closePath(); g.fill();
+    g.beginPath(); g.arc(ax, ay, wa/2, 0, TAU); g.fill();
+    g.beginPath(); g.arc(bx, by, wb/2, 0, TAU); g.fill();
+  }
+  function disc(g, x, y, r){ g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); }
+  /* фігура в локальній системі (початок ox,oy, кут a) */
+  function local(pts, ox, oy, a){
+    const c = Math.cos(a), s = Math.sin(a);
+    return pts.map(([x, y]) => [ox + x*c - y*s, oy + x*s + y*c]);
+  }
+  const rot = (x, y, a) => [x*Math.cos(a) - y*Math.sin(a), x*Math.sin(a) + y*Math.cos(a)];
+  /* двокісткова IK: корінь → суглоб → ціль; bend=+1 суглоб з боку CCW від напрямку корінь→ціль */
+  function ik2(rx, ry, tx, ty, a, b, bend){
+    let dx = tx - rx, dy = ty - ry, d = Math.hypot(dx, dy) || 1e-6;
+    const ux = dx/d, uy = dy/d;
+    d = clamp(d, Math.abs(a - b) + 1e-4, a + b - 1e-4);
+    const A = Math.acos(clamp((a*a + d*d - b*b)/(2*a*d), -1, 1))*bend;
+    const [jx, jy] = rot(ux, uy, A);
+    return [rx + jx*a, ry + jy*a, rx + ux*d, ry + uy*d];
+  }
+
+  /* ---------------- чотириногі: кінь і хорт (вигляд збоку, голова праворуч, висота в холці ≈ 1) ----------------
+     td — фаза постановки кожної ноги, duty — частка опори, sx/sy — розмах і висота махів,
+     dip — просідання корпусу під ногами в опорі, flex — згин спини (у хорта) */
+  const GAITS = {
+    horse:{
+      gallop:{ td:{ lh:0.00, rh:0.10, lf:0.36, rf:0.46 }, duty:0.30, sx:1.00, sy:1.00, dip:0.045, neck:0.55, flex:0 },
+      canter:{ td:{ lh:0.00, rh:0.24, lf:0.24, rf:0.46 }, duty:0.40, sx:0.90, sy:0.80, dip:0.035, neck:0.45, flex:0 },
+      trot:  { td:{ lf:0.00, rh:0.00, rf:0.50, lh:0.50 }, duty:0.44, sx:0.78, sy:0.72, dip:0.030, neck:0.20, flex:0 },
+      walk:  { td:{ lh:0.00, lf:0.25, rh:0.50, rf:0.75 }, duty:0.64, sx:0.58, sy:0.42, dip:0.012, neck:0.25, flex:0 },
+    },
+    dog:{  /* хорт: ротаційний галоп із двома фазами польоту і гнучкою спиною */
+      gallop:{ td:{ lh:0.00, rh:0.08, rf:0.42, lf:0.50 }, duty:0.26, sx:1.00, sy:1.00, dip:0.03, neck:0.40, flex:0.085, fx:0.38 },
+      canter:{ td:{ lh:0.00, rh:0.14, rf:0.40, lf:0.54 }, duty:0.34, sx:0.85, sy:0.80, dip:0.03, neck:0.35, flex:0.05, fx:0.36 },
+      trot:  { td:{ lf:0.00, rh:0.00, rf:0.50, lh:0.50 }, duty:0.44, sx:0.72, sy:0.65, dip:0.02, neck:0.15, flex:0.01, fx:0.25 },
+      walk:  { td:{ lh:0.00, lf:0.25, rh:0.50, rf:0.75 }, duty:0.64, sx:0.55, sy:0.40, dip:0.01, neck:0.15, flex:0, fx:0 },
+    },
+  };
+  /* ноги: top — лопатка/кульшовий суглоб, root — лікоть/колінна чашечка у спокої,
+     st/sw — траєкторії путового суглоба відносно кореня (x) і землі (y) в опорі й махові,
+     dist — [довжина пута, товщина пута, довжина копита/лапи, товщина копита/лапи] */
+  const QUAD = {
+    horse:{
+      legs:{
+        f:{ root:[0.33, 0.62], top:[0.40, 0.86], topLen:0.25, topA:-1.70, topW:[0.26, 0.18],
+            up:0.31, lo:0.27, bend:1, st:[0.48, -0.36],
+            sw:[[-0.36,0.10],[-0.50,0.23],[-0.32,0.42],[0.04,0.48],[0.44,0.38],[0.64,0.21],[0.48,0.10]],
+            w:[0.18, 0.095, 0.075], curl:1.9, dist:[0.09, 0.062, 0.04, 0.078] },
+        h:{ root:[-0.38, 0.66], top:[-0.42, 0.86], topLen:0.26, topA:-1.40, topW:[0.30, 0.24],
+            up:0.33, lo:0.30, bend:-1, st:[0.28, -0.62],
+            sw:[[-0.62,0.10],[-0.72,0.23],[-0.48,0.35],[-0.10,0.38],[0.26,0.29],[0.40,0.18],[0.28,0.10]],
+            w:[0.24, 0.10, 0.075], curl:1.4, dist:[0.09, 0.062, 0.04, 0.078] },
+      },
+      foot:0.12,
+      front:[[0.53,0.81],[0.48,0.64],[0.36,0.55],[0.10,0.53],[-0.10,0.54],[-0.10,0.99],[0.16,1.02],[0.31,1.06],[0.46,0.98]],
+      back:[[0.02,0.53],[-0.16,0.55],[-0.34,0.61],[-0.50,0.68],[-0.59,0.80],[-0.60,0.92],[-0.52,1.00],[-0.30,1.01],[0.02,0.99]],
+      neckAt:[0.36, 0.92], neckA:0.66, poll:[0.53, 0.01], headA:-1.22,
+      neck:[[-0.22,0.14],[0.06,0.18],[0.32,0.14],[0.52,0.09],[0.55,-0.07],[0.36,-0.11],[0.14,-0.18],[-0.04,-0.27],[-0.22,-0.13]],
+      head:[[-0.06,0.07],[0.12,0.09],[0.30,0.08],[0.44,0.055],[0.52,0.0],[0.50,-0.08],[0.40,-0.10],
+            [0.28,-0.10],[0.16,-0.15],[0.02,-0.15],[-0.07,-0.07]],
+      ear:[1.9, 0.15, 0.07],
+      tail:[[-0.55,0.95],[-0.70,0.98],[-0.86,0.96],[-1.01,0.90],[-1.15,0.83]], tailW:[0.14, 0.13, 0.11, 0.085, 0.055], tailWave:0.055,
+      box:{ x0:-1.22, x1:1.28, y0:0, y1:1.70 },
+    },
+    dog:{
+      legs:{
+        f:{ root:[0.27, 0.56], top:[0.30, 0.80], topLen:0.22, topA:-1.75, topW:[0.19, 0.12],
+            up:0.33, lo:0.15, bend:1, st:[0.46, -0.34],
+            sw:[[-0.34,0.08],[-0.52,0.22],[-0.36,0.40],[0.02,0.46],[0.46,0.36],[0.66,0.20],[0.46,0.08]],
+            w:[0.115, 0.06, 0.05], curl:1.5, dist:[0.05, 0.048, 0.065, 0.055] },
+        h:{ root:[-0.42, 0.62], top:[-0.44, 0.84], topLen:0.24, topA:-1.40, topW:[0.26, 0.17],
+            up:0.36, lo:0.23, bend:-1, st:[0.30, -0.66],
+            sw:[[-0.66,0.08],[-0.80,0.22],[-0.54,0.34],[-0.10,0.38],[0.30,0.28],[0.44,0.16],[0.30,0.08]],
+            w:[0.17, 0.065, 0.05], curl:1.3, dist:[0.05, 0.048, 0.065, 0.055] },
+      },
+      foot:0.09,
+      front:[[0.42,0.86],[0.44,0.70],[0.36,0.53],[0.18,0.47],[0.00,0.50],[-0.12,0.62],[-0.16,0.80],[-0.12,0.98],[0.10,1.02],[0.28,1.00],[0.38,0.95]],
+      back:[[0.00,0.92],[0.00,0.80],[-0.10,0.76],[-0.28,0.76],[-0.40,0.72],[-0.52,0.74],[-0.58,0.84],[-0.54,0.95],[-0.40,1.02],[-0.20,1.03],[0.00,0.99]],
+      neckAt:[0.34, 0.92], neckA:0.50, poll:[0.35, 0.0], headA:-0.55,
+      neck:[[-0.12,0.08],[0.10,0.09],[0.30,0.06],[0.36,0.035],[0.36,-0.04],[0.14,-0.08],[-0.04,-0.12],[-0.12,-0.05]],
+      head:[[-0.03,0.055],[0.10,0.06],[0.22,0.035],[0.33,0.012],[0.36,-0.005],[0.33,-0.03],[0.20,-0.045],[0.06,-0.065],[-0.03,-0.045]],
+      ear:[2.7, 0.09, 0.05],
+      tail:[[-0.54,0.93],[-0.68,0.86],[-0.80,0.74],[-0.92,0.66],[-1.04,0.67]], tailW:[0.07, 0.062, 0.056, 0.05, 0.045], tailWave:0.06,
+      box:{ x0:-1.14, x1:1.26, y0:0, y1:1.16 },
+    },
+  };
+
+  function legState(L, q, G){
+    if(q < G.duty){                                 // опора: копито на землі, нога йде назад
+      const s = q/G.duty;
+      return { x: lerp(L.st[0], L.st[1], s)*G.sx, y: 0.12 - 0.025*Math.sin(Math.PI*s), sw:0, s };
+    }
+    const s = (q - G.duty)/(1 - G.duty);              // мах: згин і винос уперед
+    const [x, y] = crPath(L.sw, s);
+    return { x: x*G.sx, y: 0.12 + (y - 0.10)*G.sy, sw:1, s };
+  }
+
+  function rigQuad(g, ph, o){
+    const Q = QUAD[o.kind] || QUAD.horse, GT = GAITS[o.kind] || GAITS.horse;
+    const G = GT[o.gait] || GT.gallop;
+    /* «просідання» від ніг в опорі → підскок корпусу, тангаж і кивок шиї */
+    const st = {};
+    let dipF = 0, dipH = 0;
+    for(const k of ["lf","rf","lh","rh"]){
+      st[k] = legState(Q.legs[k[1]], fract(ph - G.td[k]), G);
+      if(!st[k].sw){ const d = Math.sin(Math.PI*st[k].s)**2; if(k[1] === "f") dipF += d; else dipH += d; }
+    }
+    const bob = -G.dip*(dipF + dipH)*0.6 + G.dip*0.5;
+    const pitch = (dipH - dipF)*G.dip*1.6;
+    const neckA = Q.neckA - G.neck*0.18*dipF + G.neck*0.10*dipH;
+    const flex = G.flex ? G.flex*Math.cos(TAU*(ph - G.fx)) : 0;   // + витягнута спина, − зібрана
+    const C = [0, 0.8];
+    const toWorld = (x, y) => { const [rx, ry] = rot(x - C[0], y - C[1], pitch); return [rx + C[0], ry + C[1] + bob]; };
+
+    /* ноги (ліва/права — одна тінь, тож корінь спільний) */
+    for(const k of ["lf","rf","lh","rh"]){
+      const L = Q.legs[k[1]], S = st[k], shift = (k[1] === "f" ? 1 : -1)*flex/2;
+      /* лопатка/стегно гойдаються разом із ногою — корінь ходить уперед-назад */
+      const ta = L.topA + clamp(S.x/0.5, -1.4, 1.4)*0.42;
+      const [tx0, ty0] = toWorld(L.top[0] + shift, L.top[1]);
+      const rx = tx0 + Math.cos(ta)*L.topLen, ry = ty0 + Math.sin(ta)*L.topLen;
+      bone(g, tx0, ty0, rx, ry, L.topW[0], L.topW[1]);
+      const [jx, jy, ex, ey] = ik2(rx, ry, L.root[0] + shift + S.x, S.y, L.up, L.lo, L.bend);
+      bone(g, rx, ry, jx, jy, L.w[0], L.w[1]);
+      bone(g, jx, jy, ex, ey, L.w[1]*0.85, L.w[2]);
+      /* бабка й копито: в опорі пута дивиться вперед, у махові — підгинається */
+      const pa = Math.atan2(ey - jy, ex - jx) + (S.sw ? 0.5 - L.curl*Math.pow(Math.sin(Math.PI*S.s), 0.8) : 0.5);
+      const [dl, dw, hl, hw] = L.dist;
+      const px = ex + Math.cos(pa)*dl, py = ey + Math.sin(pa)*dl;
+      bone(g, ex, ey, px, py, dw, dw*0.9);
+      const ha = pa + (S.sw ? 0.25 : 0.55);
+      bone(g, px, py, px + Math.cos(ha)*hl, py + Math.sin(ha)*hl, hw, hw*0.9);
+    }
+
+    /* корпус двома половинами (у хорта вони розходяться/сходяться), шия, голова, хвіст */
+    g.save();
+    g.translate(0, bob); g.translate(C[0], C[1]); g.rotate(pitch); g.translate(-C[0], -C[1]);
+    g.save(); g.translate(-flex/2, 0); g.rotate(-flex*0.9);
+    blob(g, Q.back);
+    const tail = Q.tail.map(([x, y], i) => [x, y + Q.tailWave*(i/4)*Math.sin(TAU*(ph - i*0.12))]);
+    for(let i = 0; i < tail.length - 1; i++) bone(g, tail[i][0], tail[i][1], tail[i+1][0], tail[i+1][1], Q.tailW[i], Q.tailW[i+1]);
+    g.restore();
+    g.save(); g.translate(flex/2, 0);
+    blob(g, Q.front);
+    const np = Q.neckAt;
+    blob(g, local(Q.neck, np[0], np[1], neckA));
+    const [pxl, pyl] = rot(Q.poll[0], Q.poll[1], neckA);
+    const poll = [np[0] + pxl, np[1] + pyl];
+    const headA = neckA + Q.headA + 0.06*Math.sin(TAU*ph);
+    blob(g, local(Q.head, poll[0], poll[1], headA));
+    const ea = headA + Q.ear[0];                          // вухо
+    g.beginPath();
+    g.moveTo(poll[0] - 0.02, poll[1] + 0.02);
+    g.lineTo(poll[0] + Math.cos(ea)*Q.ear[1], poll[1] + Math.sin(ea)*Q.ear[1]);
+    g.lineTo(poll[0] + Q.ear[2], poll[1] + 0.03);
+    g.closePath(); g.fill();
+    g.restore();
+    if(o.rider && o.kind !== "dog") rigRider(g, ph, bob);
+    g.restore();
+  }
+
+  /* вершник (жокей) у системі корпусу коня */
+  function rigRider(g, ph, bob){
+    const lean = 0.30 + 0.06*Math.sin(TAU*(ph - 0.25));
+    const hx = 0.02, hy = 1.06 - bob*0.6;
+    const sx = hx + Math.sin(lean)*0.38, sy = hy + Math.cos(lean)*0.38;
+    bone(g, hx, hy, sx, sy, 0.22, 0.19);                       // тулуб
+    bone(g, sx + 0.01, sy + 0.05, sx + 0.04, sy + 0.10, 0.07, 0.07);
+    disc(g, sx + 0.06, sy + 0.15, 0.08);                       // голова
+    const ex = sx + 0.12, ey = sy - 0.16, wx = sx + 0.32, wy = sy - 0.21;
+    bone(g, sx + 0.02, sy - 0.03, ex, ey, 0.085, 0.072);        // плече
+    bone(g, ex, ey, wx, wy, 0.072, 0.062);                      // передпліччя до повода
+    const kx = hx + 0.22, ky = hy - 0.12, ax = kx - 0.05, ay = ky - 0.23;
+    bone(g, hx, hy, kx, ky, 0.14, 0.10);                        // стегно
+    bone(g, kx, ky, ax, ay, 0.085, 0.065);                      // гомілка
+    bone(g, ax, ay, ax + 0.09, ay - 0.01, 0.055, 0.05);         // стопа
+  }
+
+  /* ---------------- бігун (висота ≈ 1, обличчям праворуч) ----------------
+     кути від вертикалі вниз, «+» — уперед; ключі на 11 фаз: опора 0…0.35, мах 0.35…1 */
+  const RUN = {
+    thigh:[0.35, 0.15, -0.10, -0.40, -0.55, -0.30, 0.20, 0.70, 0.90, 0.70, 0.35],
+    knee: [0.30, 0.45, 0.40, 0.42, 0.85, 1.80, 2.20, 1.70, 0.90, 0.40, 0.30],
+    toe:  [0.00, 0.00, 0.05, 0.25, 0.60, 0.50, 0.20, 0.00, -0.15, -0.10, 0.00],
+    box:{ x0:-0.55, x1:0.62, y0:0, y1:1.12 },
+  };
+  const loopKey = (arr, q) => { const n = arr.length - 1, f = fract(q)*n, i = Math.floor(f); return lerp(arr[i], arr[i + 1], f - i); };
+  function rigRunner(g, ph){
+    const lean = 0.2;
+    const legs = [0, 0.5].map(off => {
+      const q = fract(ph + off), th = loopKey(RUN.thigh, q), kn = loopKey(RUN.knee, q), tp = loopKey(RUN.toe, q);
+      const k = [Math.sin(th)*0.26, -Math.cos(th)*0.26];
+      const sa = th - kn;
+      const a = [k[0] + Math.sin(sa)*0.26, k[1] - Math.cos(sa)*0.26];
+      const fa = sa - tp;
+      const t = [a[0] + Math.cos(fa)*0.13, a[1] + Math.sin(fa)*0.13];
+      return { q, k, a, t, low: Math.min(a[1] - 0.03, t[1] - 0.02) };
+    });
+    /* таз: базове підстрибування, але стопа в опорі не провалюється під землю */
+    const hipY = Math.max(0.53 + 0.03*Math.cos(TAU*2*(ph - 0.18)), -Math.min(legs[0].low, legs[1].low));
+    const hx = 0;
+    const nx = hx + Math.sin(lean)*0.31, ny = hipY + Math.cos(lean)*0.31;
+    for(const L of legs){
+      bone(g, hx, hipY, hx + L.k[0], hipY + L.k[1], 0.125, 0.085);
+      bone(g, hx + L.k[0], hipY + L.k[1], hx + L.a[0], hipY + L.a[1], 0.08, 0.055);
+      bone(g, hx + L.a[0], hipY + L.a[1], hx + L.t[0], hipY + L.t[1], 0.055, 0.04);
+    }
+    bone(g, hx, hipY, nx, ny, 0.13, 0.165);                                 // тулуб
+    bone(g, nx, ny, nx + 0.03, ny + 0.06, 0.07, 0.07);
+    disc(g, nx + 0.045, ny + 0.115, 0.068);                                 // голова
+    for(const off of [0.5, 0]){                                             // руки — протифаза ногам
+      const q = fract(ph + off);
+      const ua = -0.85*Math.cos(TAU*(q - 0.8)) + 0.1;
+      const fa2 = ua + 1.55;
+      const sx = nx - 0.01, sy = ny - 0.03;
+      const ex = sx + Math.sin(ua)*0.17, ey = sy - Math.cos(ua)*0.17;
+      const wx = ex + Math.sin(fa2)*0.15, wy = ey - Math.cos(fa2)*0.15;
+      bone(g, sx, sy, ex, ey, 0.075, 0.062);
+      bone(g, ex, ey, wx, wy, 0.06, 0.05);
+      disc(g, wx, wy, 0.037);
+    }
+  }
+
+  /* ---------------- птах (спереду, махає крилами) ---------------- */
+  const BIRD_BOX = { x0:-1.0, x1:1.0, y0:0, y1:1.1 };
+  function rigBird(g, ph){
+    const cy = 0.55, a = Math.sin(TAU*ph), b = Math.sin(TAU*ph - 1.0);
+    const bodyY = cy - 0.05*a;
+    for(const s of [1, -1]){
+      const sx = s*0.06, sy = bodyY + 0.06;
+      const wx = s*0.44, wy = sy + 0.36*a;
+      const tx = s*0.98, ty = wy + 0.40*b - 0.04;
+      bone(g, sx, sy, wx, wy, 0.16, 0.13);
+      bone(g, wx, wy, tx, ty, 0.13, 0.03);
+      /* розчепірені махові пера на кінчику */
+      const ang = Math.atan2(ty - wy, tx - wx);
+      for(let i = -1; i <= 1; i++){
+        const fa = ang + i*0.22*s, px = lerp(wx, tx, 0.7), py = lerp(wy, ty, 0.7);
+        bone(g, px, py, px + Math.cos(fa)*0.2, py + Math.sin(fa)*0.2, 0.05, 0.015);
+      }
+    }
+    g.beginPath(); g.ellipse(0, bodyY, 0.085, 0.17, 0, 0, TAU); g.fill();   // тіло
+    disc(g, 0, bodyY + 0.2, 0.065);                                          // голова
+    g.beginPath(); g.moveTo(-0.025, bodyY + 0.17); g.lineTo(0, bodyY + 0.09); g.lineTo(0.025, bodyY + 0.17); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(-0.07, bodyY - 0.12); g.lineTo(-0.10, bodyY - 0.32); g.lineTo(0.10, bodyY - 0.32); g.lineTo(0.07, bodyY - 0.12); g.closePath(); g.fill();
+  }
+
+  /* ---------------- квантування → чистка → контур ---------------- */
+  /* покриття клітинки = середня альфа SS×SS семплів; клітинка ввімкнена, якщо покриття > thr */
+  function quantize(data, cols, rows, ss, thr){
+    const occ = new Uint8Array(cols*rows), W = cols*ss, lim = thr*255*ss*ss;
+    for(let cy = 0; cy < rows; cy++)
+      for(let cx = 0; cx < cols; cx++){
+        let sum = 0;
+        for(let y = 0; y < ss; y++){
+          let i = ((cy*ss + y)*W + cx*ss)*4 + 3;
+          for(let x = 0; x < ss; x++, i += 4) sum += data[i];
+        }
+        if(sum > lim) occ[cy*cols + cx] = 1;
+      }
+    return occ;
+  }
+  /* компоненти зв'язності: прибрати острівці < minIsland, залити дірки < minHole (fillAll — всі дірки) */
+  function cleanup(occ, cols, rows, minIsland, minHole, fillAll, diag){
+    const N = cols*rows, lab = new Int32Array(N).fill(-1), stack = new Int32Array(N);
+    const pass = (val, maxSize, fillWith, keepBorder) => {
+      lab.fill(-1);
+      for(let s = 0; s < N; s++){
+        if(occ[s] !== val || lab[s] !== -1) continue;
+        let sp = 0, n = 0, border = false; stack[sp++] = s; lab[s] = s;
+        const comp = [];
+        while(sp){
+          const c = stack[--sp]; comp.push(c); n++;
+          const x = c%cols, y = (c - x)/cols;
+          if(x === 0 || y === 0 || x === cols - 1 || y === rows - 1) border = true;
+          for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){
+            if(!dx && !dy) continue;
+            if(dx && dy && !(val === 1 ? diag : !diag)) continue;
+            const nx = x + dx, ny = y + dy;
+            if(nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+            const ni = ny*cols + nx;
+            if(occ[ni] === val && lab[ni] === -1){ lab[ni] = s; stack[sp++] = ni; }
+          }
+        }
+        if(n < maxSize && !(keepBorder && border)) for(const c of comp) occ[c] = fillWith;
+      }
+    };
+    if(minIsland > 1) pass(1, minIsland, 0, false);
+    if(fillAll || minHole > 1) pass(0, fillAll ? Infinity : minHole, 1, true);
+    return occ;
+  }
+  /* контур по ребрах клітинок: орієнтовані ребра (заливка праворуч), склеєні в петлі.
+     У «защипі» (дві клітинки торкаються кутом) diag=true переходить на сусідню клітинку — 8-зв'язність.
+     Петля — масив [x0,y0,x1,y1,…] лише з кутів, у координатах решітки. */
+  function traceLoops(occ, cols, rows, diag){
+    const VW = cols + 1, VH = rows + 1;
+    const on = (x, y) => x >= 0 && y >= 0 && x < cols && y < rows && occ[y*cols + x] === 1;
+    const out = new Int8Array(VW*VH*2).fill(-1);             // до 2 вихідних ребер на вершину
+    const add = (x, y, d) => { const v = (y*VW + x)*2; if(out[v] < 0) out[v] = d; else out[v + 1] = d; };
+    for(let y = 0; y < rows; y++) for(let x = 0; x < cols; x++){
+      if(occ[y*cols + x] !== 1) continue;
+      if(!on(x, y - 1)) add(x, y, 0);          // верх  → схід
+      if(!on(x + 1, y)) add(x + 1, y, 1);      // право → південь
+      if(!on(x, y + 1)) add(x + 1, y + 1, 2);  // низ   → захід
+      if(!on(x - 1, y)) add(x, y + 1, 3);      // ліво  → північ
+    }
+    const DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];
+    const take = (v, dir) => { if(out[v] === dir){ out[v] = out[v + 1]; out[v + 1] = -1; } else if(out[v + 1] === dir) out[v + 1] = -1; };
+    const loops = [];
+    for(let s = 0; s < out.length; s += 2){
+      while(out[s] >= 0){
+        const vi = s >> 1, sx = vi%VW, sy = (vi - sx)/VW, startD = out[s];
+        take(s, startD);
+        const pts = [sx, sy];
+        let x = sx, y = sy, d = startD, guard = 0;
+        for(;;){
+          x += DX[d]; y += DY[d];
+          const v = (y*VW + x)*2, atStart = x === sx && y === sy;
+          let a = out[v], b = out[v + 1];
+          if(atStart){ if(a < 0) a = startD; else if(b < 0) b = startD; }
+          let nd;
+          if(a >= 0 && b >= 0){ const want = diag ? (d + 3)%4 : (d + 1)%4; nd = (a === want || b === want) ? want : a; }
+          else nd = a >= 0 ? a : b;
+          if(nd < 0) break;
+          if(atStart && nd === startD){ if(d === startD) pts.splice(0, 2); break; }
+          take(v, nd);
+          if(nd !== d) pts.push(x, y);
+          d = nd;
+          if(++guard > 4e6) break;
+        }
+        if(pts.length >= 8) loops.push(pts);
+      }
+    }
+    return loops;
+  }
+  /* розширення сітки на d клітинок (квадратне, Чебишев) — для кілець «відлуння» */
+  function dilate(src, cols, rows, d){
+    const tmp = new Uint8Array(cols*rows), res = new Uint8Array(cols*rows);
+    for(let y = 0; y < rows; y++){
+      const o = y*cols;
+      let last = -1e9;
+      for(let x = 0; x < cols; x++){ if(src[o + x]) last = x; if(x - last <= d) tmp[o + x] = 1; }
+      last = 1e9;
+      for(let x = cols - 1; x >= 0; x--){ if(src[o + x]) last = x; if(last - x <= d) tmp[o + x] = 1; }
+    }
+    for(let x = 0; x < cols; x++){
+      let last = -1e9;
+      for(let y = 0; y < rows; y++){ if(tmp[y*cols + x]) last = y; if(y - last <= d) res[y*cols + x] = 1; }
+      last = 1e9;
+      for(let y = rows - 1; y >= 0; y--){ if(tmp[y*cols + x]) last = y; if(last - y <= d) res[y*cols + x] = 1; }
+    }
+    return res;
+  }
+  /* знакова площа петлі (>0 — зовнішній контур, <0 — дірка; екранні координати) */
+  function loopArea(p){
+    let a = 0; const n = p.length/2;
+    for(let i = 0; i < n; i++){ const j = (i + 1)%n; a += p[i*2]*p[j*2 + 1] - p[j*2]*p[i*2 + 1]; }
+    return a/2;
+  }
+
+  /* ================= params ================= */
+  const P = {
+    src:"horse", gait:"gallop", rider:true,
+    text:"KLIK", font:"Inter Tight", fw:"900",
+    anim:"none", animAmp:1,
+    key:"auto", keyThr:0.5, keyColor:"#00b140", keyTol:0.3, soft:0, invert:false,
+    sheetOn:false, sheetCols:4, sheetRows:3, sheetCount:12,
+    size:0.72, offX:0, offY:0, mirror:false,
+    poseRate:6.5, poses:11, smooth:false,
+    motion:"place", cross:4, scroll:2,
+    onion:0, onionFade:0.45, onionColor:"#e0563b", drawOn:0,
+    cols:92, thr:0.45, minIsland:2, minHole:2, inset:0, fillAll:false, diag:false,
+    bgMode:"color", bg:"#ebe8e2",
+    gridOn:true, gridStep:2, gridStyle:"lines", gridColor:"#8f8c86", gridAlpha:0.5, gridW:1.3, major:0,
+    ink:"#2b28a8", lineW:0.42, corner:"sharp", cornerR:0.5, dash:"solid", dashLen:1, double:false, doubleGap:0.45,
+    rings:0, ringGap:2, ringFade:0.65,
+    grain:0.2, bleed:0.4, multiply:true, wobble:0, boil:true, glow:0, glowR:1.5,
+    fill:"none", fillColor:"#2b28a8", fillAlpha:0.85, hatchGap:0.7, hatchAngle:45,
+    t1On:true, t1:"HAPPY NEW YEAR", t1Size:2.3, t1X:0.345, t1Y:0.39, t1Align:"center",
+    t2On:true, t2:"YEAR OF 馬\nTHE HORSE", t2Size:1.8, t2X:0.54, t2Y:0.49, t2Align:"left",
+    cornersOn:true, cornerTxt:"2026", cornerSize:3, cornerPad:0.07,
+    tFont:"Inter Tight", tW:"800", tInk:true, tColor:"#111111",
+    aspect:"4:5", fps:30, loops:4, bitrate:12,
+  };
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  /* стилі змінюють лише вигляд і ритм — не джерело, не тексти й не формат */
+  const LOOK = {
+    poseRate:6.5, smooth:false, motion:"place", onion:0, onionFade:0.45, onionColor:"#e0563b", drawOn:0,
+    cols:92, thr:0.45, inset:0, bgMode:"color", bg:"#ebe8e2",
+    gridOn:true, gridStep:2, gridStyle:"lines", gridColor:"#8f8c86", gridAlpha:0.5, gridW:1.3, major:0,
+    ink:"#2b28a8", lineW:0.42, corner:"sharp", cornerR:0.5, dash:"solid", dashLen:1, double:false, doubleGap:0.45,
+    rings:0, ringGap:2, ringFade:0.65,
+    grain:0.2, bleed:0.4, multiply:true, wobble:0, boil:true, glow:0, glowR:1.5,
+    fill:"none", fillColor:"#2b28a8", fillAlpha:0.85, hatchGap:0.7, hatchAngle:45, tInk:true,
+  };
+  const STYLES = [
+    { name:"Зошит", p:{} },
+    { name:"Креслення", p:{ bg:"#183c8c", ink:"#f2f6ff", gridColor:"#ffffff", gridAlpha:0.22, gridStep:1, gridW:1, major:4,
+        lineW:0.3, grain:0, bleed:0.15, multiply:false } },
+    { name:"Неон", p:{ bg:"#07070c", ink:"#bbff32", gridColor:"#ffffff", gridAlpha:0.07, lineW:0.3, grain:0, bleed:0,
+        multiply:false, glow:1.1, glowR:1.6, corner:"round", cornerR:0.3, rings:2, ringGap:3, ringFade:0.45 } },
+    { name:"Маркер", p:{ bg:"#ffffff", ink:"#111111", gridOn:false, lineW:0.85, corner:"round", cornerR:0.5, grain:0.12, bleed:0.7, cols:70 } },
+    { name:"Плотер", p:{ bg:"#f4efe3", ink:"#d43b2a", gridStyle:"dots", gridColor:"#6d6a64", gridAlpha:0.55, gridW:2.2,
+        lineW:0.24, poseRate:1.2, drawOn:0.85, grain:0.05, bleed:0.25 } },
+    { name:"Хронофото", p:{ bg:"#0b0b0b", ink:"#f4f1ea", gridColor:"#ffffff", gridAlpha:0.16, gridStep:4, gridW:1.2,
+        lineW:0.32, grain:0.1, bleed:0.3, multiply:false, onion:4, onionFade:0.5, onionColor:"#8a8a8a", motion:"travel", poseRate:5 } },
+    { name:"Піксель-арт", p:{ bg:"#f3f3ef", ink:"#141414", fill:"cells", fillColor:"#141414", fillAlpha:1, gridStep:1,
+        gridAlpha:0.25, lineW:0.18, grain:0, bleed:0, cols:64 } },
+    { name:"Гравюра", p:{ bg:"#efe9dc", ink:"#1d1a17", fill:"hatch", fillColor:"#1d1a17", fillAlpha:0.9, hatchGap:0.6, hatchAngle:45,
+        lineW:0.36, wobble:0.12, boil:true, grain:0.25, bleed:0.5, gridAlpha:0.3 } },
+  ];
+  const ASPECTS = { "1:1":[1080,1080], "4:5":[1080,1350], "9:16":[1080,1920], "16:9":[1920,1080] };
+
+  const $ = id => document.getElementById(id);
+  const out = $("out"), ctx = out.getContext("2d");
+  let W = 1080, H = 1350, SC = 1;
+  const SS = 4;                                   // семплів на клітинку по кожній осі
+  const mk = document.createElement("canvas"), mg = mk.getContext("2d", { willReadFrequently:true });
+  const inkC = document.createElement("canvas"), ic = inkC.getContext("2d");
+  let LAT = { cols:92, rows:115, cell:W/92, ox:0, oy:0 };
+
+  /* зерно чорнила: статична «пористість паперу» (крапки, що вибиваються з лінії) */
+  const grainC = document.createElement("canvas");
+  (() => {
+    grainC.width = grainC.height = 256;
+    const g = grainC.getContext("2d"), im = g.createImageData(256, 256);
+    let s = 1234567;
+    const rnd = () => (s = (s*16807)%2147483647)/2147483647;
+    for(let i = 0; i < im.data.length; i += 4){
+      const v = Math.pow(rnd(), 2.6);
+      im.data[i] = im.data[i+1] = im.data[i+2] = 0; im.data[i+3] = Math.round(v*255);
+    }
+    g.putImageData(im, 0, 0);
+  })();
+  let grainPat = null;
+
+  function resize(){
+    [W, H] = ASPECTS[P.aspect] || ASPECTS["4:5"];
+    SC = Math.min(W, H)/1080;
+    out.width = W; out.height = H;
+    inkC.width = W; inkC.height = H;
+    grainPat = null;
+    relattice();
+  }
+  function relattice(){
+    const cols = P.cols, cell = W/cols, rows = Math.ceil(H/cell - 1e-6);
+    LAT = { cols, rows, cell, ox:0, oy:(H - rows*cell)/2 };
+    mk.width = cols*SS; mk.height = rows*SS;
+    $("dims").textContent = `${W}×${H} · ${cols}×${rows}`;
+    invalidate();
+  }
+
+  /* ================= джерела-файли ================= */
+  const F = { kind:null, name:"", frames:[], durs:[], video:null, auto:"dark", vURL:null };
+  let bgImg = null;
+
+  /* ================= поза: час → індекс, фаза, позиція ================= */
+  function cycleN(){
+    if(P.src === "file" && F.kind === "frames" && frameCount() > 1) return frameCount();
+    return P.poses;
+  }
+  function frameCount(){
+    if(F.kind !== "frames") return 1;
+    if(P.sheetOn && F.frames.length === 1) return Math.max(1, Math.min(P.sheetCount, P.sheetCols*P.sheetRows));
+    return F.frames.length;
+  }
+  const isVideo = () => P.src === "file" && F.kind === "video" && F.video && F.video.readyState >= 2;
+  function poseAt(t){
+    const N = cycleN(), rate = P.poseRate, K = P.motion === "travel" ? P.cross : 1;
+    if(P.smooth && !isVideo()){
+      const cyc = t*rate/N;                            // цикли (дробові)
+      return { i: Math.floor(t*rate + 1e-6), phase: fract(cyc), u: fract(cyc/K), t0: t, dur: 1/rate, key: null, smooth:true, t };
+    }
+    const i = Math.floor(t*rate + 1e-6);
+    const span = N*K;
+    return { i, phase: (((i%N) + N)%N)/N, u: (((i%span) + span)%span)/span, t0: i/rate, dur: 1/rate,
+             key: isVideo() ? null : (((i%span) + span)%span), smooth:false, t };
+  }
+
+  /* ================= розміщення силуету в кадрі ================= */
+  function placement(bw, bh, pose){
+    const k = Math.min(P.size*W/bw, 1.6*H/bh);
+    const dir = P.mirror ? -1 : 1;
+    let cx = W/2 + P.offX*W;
+    const cy = H/2 + P.offY*H;
+    if(P.motion === "travel"){
+      const D = W + bw*k;
+      cx = dir > 0 ? -bw*k/2 + pose.u*D : W + bw*k/2 - pose.u*D;
+    }
+    return { k, cx, cy, dir };
+  }
+  /* анімація статики (текст / одиночне фото): фаза пози → зсув, нахил, масштаб */
+  function stillTransform(g, pose, k){
+    const a = P.animAmp, ph = pose.phase, cell = LAT.cell;
+    if(P.anim === "bounce") g.translate(0, -Math.abs(Math.sin(Math.PI*ph))*cell*3*a);
+    else if(P.anim === "sway") g.rotate(Math.sin(TAU*ph)*0.12*a);
+    else if(P.anim === "pulse"){ const s = 1 + 0.08*a*Math.sin(TAU*ph); g.scale(s, s); }
+  }
+
+  const fontStr = (w, px, fam) => `${w} ${px}px "${fam}", "Inter Tight", Inter, Arial, sans-serif`;
+  function drawTextSource(g, pose){
+    const lines = (P.text || "KLIK").split("\n");
+    g.font = fontStr(P.fw, 100, P.font);
+    let mw = 1;
+    for(const ln of lines) mw = Math.max(mw, g.measureText(ln).width);
+    const lh = 1.05;
+    const bw = mw/100, bh = lines.length*lh;
+    const pl = placement(bw, bh, pose);
+    const fs = pl.k;                                  // 1 одиниця = 1 кегль
+    g.save();
+    g.translate(pl.cx, pl.cy); g.scale(pl.dir, 1);
+    stillTransform(g, pose, pl.k);
+    g.font = fontStr(P.fw, fs, P.font);
+    g.textBaseline = "middle"; g.textAlign = "left";
+    const perChar = P.anim === "wave" || P.anim === "type";
+    const total = lines.reduce((s, l) => s + [...l].length, 0);
+    const shown = P.anim === "type" ? Math.floor(pose.phase*(total + 3)) : Infinity;
+    let ci = 0;
+    lines.forEach((ln, li) => {
+      const lw = g.measureText(ln).width, x = -lw/2;
+      const y = (li - (lines.length - 1)/2)*lh*fs;
+      if(!perChar){ g.fillText(ln, x, y); return; }
+      /* хвиля / друк — по літері; зсув літери = ширина префікса (зберігає кернінг пар) */
+      const chars = [...ln];
+      let pre = "";
+      chars.forEach(ch => {
+        const dy = P.anim === "wave" ? Math.sin(TAU*(pose.phase - ci*0.07))*LAT.cell*2.2*P.animAmp : 0;
+        if(ci < shown) g.fillText(ch, x + g.measureText(pre).width, y + dy);
+        pre += ch; ci++;
+      });
+    });
+    g.restore();
+  }
+
+  /* кадр файлу: {src, sx, sy, sw, sh} */
+  function fileFrame(pose){
+    if(F.kind === "video" && F.video) return { src:F.video, sx:0, sy:0, sw:F.video.videoWidth, sh:F.video.videoHeight };
+    if(F.kind === "frames" && F.frames.length){
+      if(P.sheetOn && F.frames.length === 1){
+        const im = F.frames[0], iw = im.width || im.naturalWidth, ih = im.height || im.naturalHeight;
+        const n = frameCount(), j = ((pose.i%n) + n)%n;
+        const cw = iw/P.sheetCols, ch = ih/P.sheetRows;
+        return { src:im, sx:(j%P.sheetCols)*cw, sy:Math.floor(j/P.sheetCols)*ch, sw:cw, sh:ch };
+      }
+      const n = F.frames.length, j = P.smooth ? Math.floor(pose.phase*n) : ((pose.i%n) + n)%n;
+      const im = F.frames[j];
+      return { src:im, sx:0, sy:0, sw:im.width || im.naturalWidth, sh:im.height || im.naturalHeight };
+    }
+    return null;
+  }
+  /* матування файлу на проміжній масці (≤512 px): альфа / темне на світлому / світле на темному / хромакей,
+     інверсія працює в усіх режимах (прозоре всередині кадру теж стає силуетом) */
+  const mt = document.createElement("canvas"), mtg = mt.getContext("2d", { willReadFrequently:true });
+  function hexRgb(h){ const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function keyMode(){ return P.key === "auto" ? (F.auto || "dark") : P.key; }
+  function matteOf(fr, k){
+    const sc = Math.min(1, 512/Math.max(fr.sw, fr.sh));
+    const w = Math.max(1, Math.round(fr.sw*sc)), h = Math.max(1, Math.round(fr.sh*sc));
+    const blurPx = P.soft*LAT.cell*w/Math.max(1, k);     // «згладити» задано в клітинках контуру
+    if(mt.width !== w || mt.height !== h){ mt.width = w; mt.height = h; }
+    mtg.clearRect(0, 0, w, h);
+    if(blurPx > 0.05) mtg.filter = `blur(${blurPx.toFixed(2)}px)`;
+    mtg.drawImage(fr.src, fr.sx, fr.sy, fr.sw, fr.sh, 0, 0, w, h);
+    mtg.filter = "none";
+    const im = mtg.getImageData(0, 0, w, h), d = im.data;
+    const mode = keyMode(), kt = P.keyThr*255, inv = P.invert;
+    const kc = hexRgb(P.keyColor), tol2 = Math.pow(P.keyTol*441.7, 2);
+    for(let i = 0; i < d.length; i += 4){
+      const a = d[i+3]/255;
+      let v;
+      if(mode === "alpha") v = a;
+      else {
+        const r = d[i], g = d[i+1], b = d[i+2];
+        if(mode === "dark") v = (0.2126*r + 0.7152*g + 0.0722*b) < kt ? a : 0;
+        else if(mode === "light") v = (0.2126*r + 0.7152*g + 0.0722*b) > kt ? a : 0;
+        else { const dr = r - kc[0], dg = g - kc[1], db = b - kc[2]; v = (dr*dr + dg*dg + db*db) > tol2 ? a : 0; }
+      }
+      if(inv) v = 1 - v;
+      d[i] = d[i+1] = d[i+2] = 255; d[i+3] = Math.round(v*255);
+    }
+    mtg.putImageData(im, 0, 0);
+    return mt;
+  }
+  function drawFileSource(g, pose, fr){
+    if(!fr.sw || !fr.sh) return;
+    const bw = 1, bh = fr.sh/fr.sw;
+    const pl = placement(bw, bh, pose);
+    const m = matteOf(fr, pl.k);
+    g.save();
+    g.translate(pl.cx, pl.cy); g.scale(pl.dir, 1);
+    if(frameCount() <= 1 && F.kind !== "video") stillTransform(g, pose, pl.k);
+    g.drawImage(m, -pl.k/2, -pl.k*bh/2, pl.k, pl.k*bh);
+    g.restore();
+  }
+  function drawRig(g, pose){
+    let box, fn;
+    if(P.src === "runner"){ box = RUN.box; fn = ph => rigRunner(g, ph); }
+    else if(P.src === "bird"){ box = BIRD_BOX; fn = ph => rigBird(g, ph); }
+    else { const kind = P.src === "dog" ? "dog" : "horse"; box = QUAD[kind].box; fn = ph => rigQuad(g, ph, { kind, gait:P.gait, rider:P.rider }); }
+    const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+    const pl = placement(bw, bh, pose);
+    const ucx = (box.x0 + box.x1)/2, vcy = (box.y0 + box.y1)/2;
+    g.save();
+    g.transform(pl.dir*pl.k, 0, 0, -pl.k, pl.cx - pl.dir*pl.k*ucx, pl.cy + pl.k*vcy);
+    fn(pose.phase);
+    g.restore();
+  }
+
+  /* ================= геометрія пози (кеш) ================= */
+  const geoCache = new Map();
+  const vidHist = new Map();               // відео не кешується (кадр живий), але останні пози пам'ятаємо — для шлейфу
+  function invalidate(){ geoCache.clear(); vidHist.clear(); needRender = true; }
+
+  function buildGeo(pose){
+    const { cols, rows, cell, ox, oy } = LAT;
+    const m = SS/cell;
+    mg.setTransform(1, 0, 0, 1, 0, 0);
+    mg.clearRect(0, 0, mk.width, mk.height);
+    mg.setTransform(m, 0, 0, m, -ox*m, -oy*m);
+    mg.fillStyle = "#fff";
+    if(P.src === "text") drawTextSource(mg, pose);
+    else if(P.src === "file" && F.kind){
+      if(F.kind === "video" && !F.auto) F.auto = detectKey(F.video, F.video.videoWidth, F.video.videoHeight, false);
+      const fr = fileFrame(pose);
+      if(fr) drawFileSource(mg, pose, fr);
+    } else drawRig(mg, pose);
+    if(P.src === "file" && !F.kind) drawRig(mg, pose);
+    mg.setTransform(1, 0, 0, 1, 0, 0);
+    const data = mg.getImageData(0, 0, mk.width, mk.height).data;
+    const occ = quantize(data, cols, rows, SS, P.thr);
+    cleanup(occ, cols, rows, P.minIsland, P.minHole, P.fillAll, P.diag);
+    const loops = traceLoops(occ, cols, rows, P.diag);
+    /* кільця відлуння: розширена сітка, лише зовнішній контур */
+    const rings = [];
+    for(let r = 1; r <= P.rings; r++){
+      const o2 = dilate(occ, cols, rows, r*P.ringGap);
+      cleanup(o2, cols, rows, 1, 1, true, true);
+      rings.push(traceLoops(o2, cols, rows, true));
+    }
+    return { occ, loops, rings };
+  }
+  function getGeo(pose){
+    if(isVideo()){
+      if(pose.hist){                         // попередні пози; на початку кліпу — з кінця попереднього проходу
+        const n = Math.max(1, Math.ceil((F.video.duration || 0)*P.poseRate));
+        return vidHist.get(pose.i) || vidHist.get(pose.i + n) || null;
+      }
+      const g = buildGeo(pose);
+      vidHist.set(pose.i, g);
+      if(vidHist.size > 24) vidHist.delete(vidHist.keys().next().value);
+      return g;
+    }
+    if(pose.key == null) return buildGeo(pose);
+    let g = geoCache.get(pose.key);
+    if(!g){
+      g = buildGeo(pose);
+      if(geoCache.size > 400) geoCache.clear();
+      geoCache.set(pose.key, g);
+    }
+    return g;
+  }
+
+  /* ================= контур → полілінії в пікселях ================= */
+  /* зсув контуру: кожна вершина прямокутної петлі йде вздовж внутрішніх нормалей сусідніх ребер */
+  function loopPx(loop){
+    const { cell, ox, oy } = LAT, n = loop.length/2, o = P.inset, pts = new Array(n*2);
+    for(let i = 0; i < n; i++){
+      let x = loop[i*2], y = loop[i*2 + 1];
+      if(o){
+        const pi = (i - 1 + n)%n, ni = (i + 1)%n;
+        const d1x = Math.sign(x - loop[pi*2]), d1y = Math.sign(y - loop[pi*2 + 1]);
+        const d2x = Math.sign(loop[ni*2] - x), d2y = Math.sign(loop[ni*2 + 1] - y);
+        x += o*(-d1y - d2y); y += o*(d1x + d2x);
+      }
+      pts[i*2] = ox + x*cell; pts[i*2 + 1] = oy + y*cell;
+    }
+    return pts;
+  }
+  /* кути: гострі / круглі (дуга) / фаска */
+  function cornerPoly(pts){
+    if(P.corner === "sharp") return pts;
+    const n = pts.length/2, r = P.cornerR*LAT.cell, res = [];
+    for(let i = 0; i < n; i++){
+      const px = pts[((i - 1 + n)%n)*2], py = pts[((i - 1 + n)%n)*2 + 1];
+      const cx = pts[i*2], cy = pts[i*2 + 1];
+      const nx = pts[((i + 1)%n)*2], ny = pts[((i + 1)%n)*2 + 1];
+      const l1 = Math.hypot(px - cx, py - cy), l2 = Math.hypot(nx - cx, ny - cy);
+      if(l1 < 1e-6 || l2 < 1e-6){ res.push(cx, cy); continue; }
+      const rr = Math.min(r, l1/2, l2/2);
+      const d1x = (px - cx)/l1, d1y = (py - cy)/l1, d2x = (nx - cx)/l2, d2y = (ny - cy)/l2;
+      const ax = cx + d1x*rr, ay = cy + d1y*rr, bx = cx + d2x*rr, by = cy + d2y*rr;
+      if(P.corner === "chamfer"){ res.push(ax, ay, bx, by); continue; }
+      const ccx = cx + (d1x + d2x)*rr, ccy = cy + (d1y + d2y)*rr;
+      let a0 = Math.atan2(ay - ccy, ax - ccx), a1 = Math.atan2(by - ccy, bx - ccx);
+      let da = a1 - a0;
+      while(da > Math.PI) da -= TAU;
+      while(da < -Math.PI) da += TAU;
+      const steps = 6;
+      for(let s = 0; s <= steps; s++){
+        const a = a0 + da*s/steps;
+        res.push(ccx + Math.cos(a)*rr, ccy + Math.sin(a)*rr);
+      }
+    }
+    return res;
+  }
+  /* тремтіння руки: гладкий шум, прив'язаний до місця на сітці (seed змінюється при кипінні) */
+  function vnoise(x, y, s){
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const h = (a, b) => hash1(a*12.9898 + b*78.233 + s*37.719);
+    const u = xf*xf*(3 - 2*xf), v = yf*yf*(3 - 2*yf);
+    return lerp(lerp(h(xi, yi), h(xi + 1, yi), u), lerp(h(xi, yi + 1), h(xi + 1, yi + 1), u), v);
+  }
+  function wobblePoly(pts, seed){
+    const amp = P.wobble*LAT.cell;
+    if(amp <= 0) return pts;
+    const { cell, ox, oy } = LAT, n = pts.length/2, res = [], step = cell*0.5, f = 0.55;
+    for(let i = 0; i < n; i++){
+      const ax = pts[i*2], ay = pts[i*2 + 1], bx = pts[((i + 1)%n)*2], by = pts[((i + 1)%n)*2 + 1];
+      const segs = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay)/step));
+      for(let s = 0; s < segs; s++){
+        const x = lerp(ax, bx, s/segs), y = lerp(ay, by, s/segs);
+        const u = (x - ox)/cell*f, v = (y - oy)/cell*f;
+        res.push(x + (vnoise(u, v, seed) - 0.5)*2*amp, y + (vnoise(u + 31.7, v - 17.3, seed + 5) - 0.5)*2*amp);
+      }
+    }
+    return res;
+  }
+  function polysFor(geo, pose){
+    const seed = P.boil ? (pose.i%997) + 1 : 0;
+    return geo.loops.map(L => wobblePoly(cornerPoly(loopPx(L)), seed));
+  }
+  function tracePolys(g, polys){
+    for(const p of polys){
+      g.moveTo(p[0], p[1]);
+      for(let j = 2; j < p.length; j += 2) g.lineTo(p[j], p[j + 1]);
+      g.closePath();
+    }
+  }
+  const polyLen = p => { let s = 0; const n = p.length/2; for(let i = 0; i < n; i++){ const j = (i + 1)%n; s += Math.hypot(p[j*2] - p[i*2], p[j*2 + 1] - p[i*2 + 1]); } return s; };
+
+  /* ================= малювання ================= */
+  function lineStyle(g, w){
+    g.lineWidth = w;
+    g.lineJoin = P.corner === "round" ? "round" : P.corner === "chamfer" ? "bevel" : "miter";
+    g.miterLimit = 4;
+    g.lineCap = P.dash === "dot" ? "round" : P.corner === "round" ? "round" : "butt";
+    const c = LAT.cell*P.dashLen;
+    if(P.dash === "dash") g.setLineDash([c*0.62, c*0.38]);
+    else if(P.dash === "dot") g.setLineDash([0.001, Math.max(w*1.6, c*0.6)]);
+    else g.setLineDash([]);
+  }
+  function strokePolys(g, polys, color, w, alpha, progress){
+    g.save();
+    g.globalAlpha = alpha;
+    g.strokeStyle = color;
+    lineStyle(g, w);
+    const drawAll = (gc, ww) => {
+      if(progress >= 1){ gc.beginPath(); tracePolys(gc, polys); gc.stroke(); return; }
+      /* обведення пером: петлі по черзі, остання — частково */
+      const lens = polys.map(polyLen), total = lens.reduce((a, b) => a + b, 0);
+      let left = total*progress;
+      gc.setLineDash([]);
+      for(let k = 0; k < polys.length && left > 0; k++){
+        gc.beginPath(); tracePolys(gc, [polys[k]]);
+        if(left < lens[k]){ gc.setLineDash([left, lens[k] + ww*4]); gc.lineCap = "round"; }
+        gc.stroke(); gc.setLineDash([]);
+        left -= lens[k];
+      }
+    };
+    drawAll(g, w);
+    if(P.double){
+      g.globalCompositeOperation = "destination-out";
+      g.globalAlpha = 1;
+      lineStyle(g, w*P.doubleGap);
+      drawAll(g, w*P.doubleGap);
+    }
+    g.restore();
+  }
+  function fillGeo(g, geo, polys){
+    if(P.fill === "none") return;
+    const { cell, ox, oy, cols, rows } = LAT;
+    g.save();
+    g.globalAlpha = P.fillAlpha;
+    g.fillStyle = P.fillColor; g.strokeStyle = P.fillColor;
+    if(P.fill === "cells"){
+      const ins = cell*0.1;
+      g.beginPath();
+      for(let y = 0; y < rows; y++) for(let x = 0; x < cols; x++)
+        if(geo.occ[y*cols + x]) g.rect(ox + x*cell + ins, oy + y*cell + ins, cell - ins*2, cell - ins*2);
+      g.fill();
+      g.restore(); return;
+    }
+    g.beginPath(); tracePolys(g, polys);
+    if(P.fill === "solid"){ g.fill("evenodd"); g.restore(); return; }
+    g.clip("evenodd");
+    const gap = P.hatchGap*cell;
+    if(P.fill === "hatch"){
+      const a = P.hatchAngle*Math.PI/180, R = Math.hypot(W, H);
+      g.lineWidth = Math.max(1, P.lineW*cell*0.45);
+      g.beginPath();
+      const cx = W/2, cy = H/2, dx = Math.cos(a), dy = Math.sin(a);
+      for(let d = -R; d <= R; d += gap){
+        const px = cx - dy*d, py = cy + dx*d;
+        g.moveTo(px - dx*R, py - dy*R); g.lineTo(px + dx*R, py + dy*R);
+      }
+      g.stroke();
+    } else if(P.fill === "dots"){
+      const r = Math.max(0.8, Math.min(gap*0.32, P.lineW*cell*0.6));
+      g.beginPath();
+      for(let y = oy + gap/2; y < H; y += gap) for(let x = ox + gap/2; x < W; x += gap){ g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU); }
+      g.fill();
+    }
+    g.restore();
+  }
+
+  /* сітка фону: лінії / точки / хрестики на межах клітинок контуру */
+  function gridLines(scrollCells){
+    const { cell, ox, oy, cols, rows } = LAT, st = P.gridStep;
+    const xs = [], ys = [];
+    const sx = ((scrollCells%st) + st)%st;
+    for(let k = -st; k <= cols + st; k += st){ const c = k + sx; const x = ox + c*cell; if(x >= -1 && x <= W + 1) xs.push({ x, c }); }
+    for(let k = 0; k <= rows; k += st){ const y = oy + k*cell; if(y >= -1 && y <= H + 1) ys.push({ y, c:k }); }
+    return { xs, ys };
+  }
+  const isMajor = (c, scroll) => P.major > 0 && (((Math.round(c - scroll)/P.gridStep)%P.major) + P.major)%P.major === 0;
+  function drawGrid(g, scrollCells){
+    if(!P.gridOn || P.gridAlpha <= 0) return;
+    const { xs, ys } = gridLines(scrollCells);
+    const w = P.gridW*SC, snap = v => Math.round(v) + (Math.round(w)%2 ? 0.5 : 0);
+    g.save();
+    g.globalAlpha = P.gridAlpha;
+    g.strokeStyle = g.fillStyle = P.gridColor;
+    if(P.gridStyle === "lines"){
+      for(const pass of [0, 1]){
+        g.lineWidth = pass ? w*2.2 : w;
+        g.beginPath();
+        for(const { x, c } of xs) if(isMajor(c, scrollCells) === !!pass){ g.moveTo(snap(x), 0); g.lineTo(snap(x), H); }
+        for(const { y, c } of ys) if(isMajor(c, 0) === !!pass){ g.moveTo(0, snap(y)); g.lineTo(W, snap(y)); }
+        g.stroke();
+      }
+    } else {
+      const r = w*0.9, arm = LAT.cell*P.gridStep*0.18 + w;
+      g.beginPath();
+      for(const { x, c } of xs) for(const { y, c:cy } of ys){
+        const big = isMajor(c, scrollCells) && isMajor(cy, 0) ? 1.8 : 1;
+        if(P.gridStyle === "dots"){ g.moveTo(x + r*big, y); g.arc(x, y, r*big, 0, TAU); }
+        else { g.rect(x - arm*big, y - w/2, arm*2*big, w); g.rect(x - w/2, y - arm*big, w, arm*2*big); }
+      }
+      g.fill();
+    }
+    g.restore();
+  }
+
+  /* написи: заголовок, підпис і кутові знаки (хітбокси — для перетягування) */
+  let hits = [];
+  function drawTexts(g){
+    hits = [];
+    const col = P.tInk ? P.ink : P.tColor;
+    g.save();
+    g.fillStyle = col;
+    g.textBaseline = "middle";
+    const block = (id, txt, x, y, size, align) => {
+      const lines = txt.split("\n");
+      const fs = size/100*W, lh = fs*1.06;
+      g.font = fontStr(P.tW, fs, P.tFont);
+      g.textAlign = align;
+      let mw = 0;
+      lines.forEach((ln, i) => { g.fillText(ln, x*W, y*H + (i - (lines.length - 1)/2)*lh); mw = Math.max(mw, g.measureText(ln).width); });
+      const hx = align === "center" ? x*W - mw/2 : align === "right" ? x*W - mw : x*W;
+      hits.push({ id, x0:hx - 8, y0:y*H - lines.length*lh/2 - 8, x1:hx + mw + 8, y1:y*H + lines.length*lh/2 + 8 });
+    };
+    if(P.t1On && P.t1.trim()) block("t1", P.t1, P.t1X, P.t1Y, P.t1Size, P.t1Align);
+    if(P.t2On && P.t2.trim()) block("t2", P.t2, P.t2X, P.t2Y, P.t2Size, P.t2Align);
+    if(P.cornersOn && P.cornerTxt.trim()){
+      const ch = [...P.cornerTxt.replace(/\s+/g, "")];
+      const fs = P.cornerSize/100*W, pad = P.cornerPad*Math.min(W, H);
+      g.font = fontStr(P.tW, fs, P.tFont);
+      const pos = [[pad, pad, "left", "top"], [W - pad, pad, "right", "top"], [pad, H - pad, "left", "bottom"], [W - pad, H - pad, "right", "bottom"]];
+      ch.slice(0, 4).forEach((c, i) => { g.textAlign = pos[i][2]; g.textBaseline = pos[i][3]; g.fillText(c, pos[i][0], pos[i][1]); });
+    }
+    g.restore();
+  }
+
+  function scrollAt(pose){
+    if(P.motion !== "scroll") return 0;
+    const dir = P.mirror ? 1 : -1;
+    return P.smooth ? dir*P.scroll*pose.t*P.poseRate : dir*P.scroll*pose.i;
+  }
+
+  /* головний рендер одного кадру */
+  function renderFrame(t){
+    const pose = poseAt(t);
+    const geo = getGeo(pose);
+    const polys = polysFor(geo, pose);
+    const cell = LAT.cell, lw = Math.max(0.6, P.lineW*cell);
+
+    /* 1 · фон */
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over"; ctx.filter = "none";
+    ctx.clearRect(0, 0, W, H);
+    if(P.bgMode === "color"){ ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H); }
+    else if(P.bgMode === "image"){
+      ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H);
+      if(bgImg){ const iw = bgImg.naturalWidth, ih = bgImg.naturalHeight, k = Math.max(W/iw, H/ih); ctx.drawImage(bgImg, (W - iw*k)/2, (H - ih*k)/2, iw*k, ih*k); }
+    }
+    /* 2 · сітка */
+    drawGrid(ctx, scrollAt(pose));
+
+    /* 3 · шар чорнила: заливка → шлейф поз → контур → написи */
+    ic.setTransform(1, 0, 0, 1, 0, 0);
+    ic.globalAlpha = 1; ic.globalCompositeOperation = "source-over";
+    ic.clearRect(0, 0, W, H);
+    fillGeo(ic, geo, polys);
+    for(let j = P.onion; j >= 1; j--){
+      const pp = P.smooth ? poseAt(t - j/P.poseRate) : poseAt((pose.i - j + 0.5)/P.poseRate);
+      if(isVideo()){ pp.i = pose.i - j; pp.hist = true; }
+      const g2 = getGeo(pp);
+      if(g2) strokePolys(ic, polysFor(g2, pp), P.onionColor, lw*0.8, P.onionFade*Math.pow(0.72, j - 1), 1);
+    }
+    let progress = 1;
+    if(P.drawOn > 0 && !P.smooth) progress = clamp((t - pose.t0)/(pose.dur*P.drawOn), 0, 1);
+    for(let r = geo.rings.length; r >= 1; r--)
+      strokePolys(ic, polysFor({ loops:geo.rings[r - 1] }, pose), P.ink, lw, Math.pow(P.ringFade, r), progress);
+    strokePolys(ic, polys, P.ink, lw, 1, progress);
+    if(P.tInk) drawTexts(ic);
+    if(P.grain > 0){
+      if(!grainPat) grainPat = ic.createPattern(grainC, "repeat");
+      ic.save();
+      ic.globalCompositeOperation = "destination-out";
+      ic.globalAlpha = Math.min(1, P.grain*1.4);
+      ic.setTransform(SC*1.2, 0, 0, SC*1.2, 0, 0);
+      ic.fillStyle = grainPat; ic.fillRect(0, 0, W/(SC*1.2) + 2, H/(SC*1.2) + 2);
+      ic.restore();
+    }
+
+    /* 4 · композит: сяйво під лінією, далі чорнило (множення на папір + розтікання) */
+    if(P.glow > 0){
+      ctx.save();
+      ctx.filter = `blur(${(P.glowR*cell).toFixed(1)}px)`;
+      ctx.globalCompositeOperation = P.multiply && P.bgMode !== "transparent" ? "multiply" : "source-over";
+      let a = P.glow;
+      while(a > 0){ ctx.globalAlpha = Math.min(1, a); ctx.drawImage(inkC, 0, 0); a -= 1; }
+      ctx.restore();
+    }
+    ctx.save();
+    if(P.bleed > 0) ctx.filter = `blur(${(P.bleed*SC).toFixed(2)}px)`;
+    ctx.globalCompositeOperation = P.multiply && P.bgMode !== "transparent" ? "multiply" : "source-over";
+    ctx.drawImage(inkC, 0, 0);
+    ctx.restore();
+    if(!P.tInk) drawTexts(ctx);
+
+    const N = cycleN();
+    $("poseTxt").textContent = isVideo() ? `поза ${pose.i + 1}` : `поза ${(((pose.i%N) + N)%N) + 1} / ${N}`;
+  }
+
+  /* ================= цикл ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, t0 = now(), tPause = 0, needRender = true, busy = false;
+  let lastKey = "";
+  const clock = () => isVideo() && playing ? F.video.currentTime : (playing ? now() - t0 : tPause);
+  function tick(){
+    requestAnimationFrame(tick);
+    if(busy) return;
+    const t = clock();
+    const pose = poseAt(t);
+    const drawing = P.drawOn > 0 && !P.smooth && (t - pose.t0) < pose.dur*P.drawOn + 0.05;
+    const key = P.smooth ? Math.floor(t*P.fps) : pose.i;
+    /* під час запису WebM малюємо кожен кадр — інакше потік виходить зі змінною частотою */
+    if(needRender || key !== lastKey || drawing || webmRec){
+      needRender = false; lastKey = key;
+      renderFrame(t);
+    }
+  }
+  function setPlaying(v){
+    if(v === playing) return;
+    if(playing){ tPause = isVideo() ? F.video.currentTime : now() - t0; if(F.video) F.video.pause(); }
+    else { t0 = now() - tPause; if(isVideo()) F.video.play().catch(() => {}); }
+    playing = v;
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+    needRender = true;
+  }
+  $("playBtn").addEventListener("click", () => setPlaying(!playing));
+  function stepPose(d){
+    setPlaying(false);
+    if(isVideo()){ F.video.currentTime = clamp(F.video.currentTime + d/P.poseRate, 0, F.video.duration || 0); tPause = F.video.currentTime; needRender = true; return; }
+    const cur = Math.floor(tPause*P.poseRate + 1e-6);
+    tPause = (cur + d + 0.5)/P.poseRate;
+    needRender = true;
+  }
+  $("prevBtn").addEventListener("click", () => stepPose(-1));
+  $("nextBtn").addEventListener("click", () => stepPose(1));
+  /* пробіл — пауза, ← → — покроково по позах (поза полем вводу) */
+  window.addEventListener("keydown", e => {
+    const tag = (document.activeElement && document.activeElement.tagName) || "";
+    if(tag === "TEXTAREA" || (tag === "INPUT" && document.activeElement.type === "text") || e.metaKey || e.ctrlKey || e.altKey) return;
+    if(e.code === "Space"){ e.preventDefault(); setPlaying(!playing); }
+    else if(e.code === "ArrowLeft" && tag !== "INPUT"){ e.preventDefault(); stepPose(-1); }
+    else if(e.code === "ArrowRight" && tag !== "INPUT"){ e.preventDefault(); stepPose(1); }
+  });
+
+  /* ================= файли ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+  function freeFile(){
+    if(F.video){ try{ F.video.pause(); }catch(e){} F.video.removeAttribute("src"); F.video.load(); }
+    if(F.vURL) URL.revokeObjectURL(F.vURL);
+    F.frames.forEach(f => { if(f.close) try{ f.close(); }catch(e){} });
+    Object.assign(F, { kind:null, name:"", frames:[], durs:[], video:null, vURL:null });
+  }
+  /* ключ «Авто»: прозорість → «альфа», інакше світла рамка → «темне на світлому»;
+     null — кадр ще не намальований (відео до першого кадру), спробуємо пізніше */
+  function detectKey(src, w, h, allowAlpha){
+    if(!w || !h) return null;
+    const c = document.createElement("canvas"), s = 64;
+    c.width = s; c.height = Math.max(1, Math.round(s*h/w));
+    const g = c.getContext("2d", { willReadFrequently:true });
+    try{ g.drawImage(src, 0, 0, c.width, c.height); }catch(e){ return null; }
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let transp = 0, drawn = 0, edge = 0, en = 0;
+    for(let y = 0; y < c.height; y++) for(let x = 0; x < c.width; x++){
+      const i = (y*c.width + x)*4;
+      if(d[i+3] > 0) drawn++;
+      if(d[i+3] < 200) transp++;
+      if(x === 0 || y === 0 || x === c.width - 1 || y === c.height - 1){ edge += 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2]; en++; }
+    }
+    if(!drawn) return null;
+    if(allowAlpha && transp > c.width*c.height*0.02) return "alpha";
+    return edge/en > 127 ? "dark" : "light";
+  }
+  function useFrames(frames, durs, name){
+    freeFile();
+    Object.assign(F, { kind:"frames", frames, durs, name });
+    const f0 = frames[0];
+    F.auto = detectKey(f0, f0.width || f0.naturalWidth, f0.height || f0.naturalHeight, true) || "dark";
+    if(frames.length > 1){
+      const avg = durs.length ? durs.reduce((a, b) => a + b, 0)/durs.length : 0;
+      if(avg > 0) P.poseRate = clamp(Math.round(2/avg)/2, 0.5, 30);
+    }
+    $("srcName").textContent = `${name} · ${frames.length > 1 ? frames.length + " кадрів" : "одне зображення"}`;
+    setSource("file");
+    syncUI(); invalidate();
+  }
+  async function loadImageFile(file){
+    if(!file) return;
+    const isAnim = /gif|webp|png/i.test(file.type) && "ImageDecoder" in window;
+    if(isAnim){
+      try{
+        const dec = new ImageDecoder({ data: await file.arrayBuffer(), type: file.type });
+        await dec.tracks.ready;
+        const n = Math.min(dec.tracks.selectedTrack.frameCount || 1, 400);
+        if(n > 1){
+          status("Декодування…", true);
+          const frames = [], durs = [];
+          for(let i = 0; i < n; i++){
+            const { image } = await dec.decode({ frameIndex:i });
+            frames.push(await createImageBitmap(image));
+            durs.push((image.duration || 100000)/1e6);
+            image.close();
+          }
+          dec.close(); status("");
+          useFrames(frames, durs, file.name);
+          return;
+        }
+        dec.close();
+      }catch(e){ status(""); }
+    }
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = async () => {
+      let fr = im;
+      if(!im.naturalWidth || !im.naturalHeight){
+        /* SVG без власних розмірів — растеризуємо в 1024 × 1024 */
+        fr = document.createElement("canvas"); fr.width = fr.height = 1024;
+        try{ fr.getContext("2d").drawImage(im, 0, 0, 1024, 1024); }catch(e){}
+      } else {
+        try{ fr = await createImageBitmap(im); }catch(e){ fr = im; }
+      }
+      if(fr !== im) URL.revokeObjectURL(url);
+      useFrames([fr], [], file.name);
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); alert("Не вдалося відкрити файл як зображення."); };
+    im.src = url;
+  }
+  async function loadSequence(files){
+    const list = [...files].filter(f => /^image\//.test(f.type)).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric:true }));
+    if(!list.length) return;
+    if(list.length === 1){ loadImageFile(list[0]); return; }
+    status("Завантаження кадрів…", true);
+    const frames = [];
+    for(const f of list.slice(0, 400)){
+      const url = URL.createObjectURL(f);
+      try{ const im = new Image(); im.src = url; await im.decode(); frames.push(await createImageBitmap(im)); }
+      catch(e){} finally { URL.revokeObjectURL(url); }
+    }
+    status("");
+    if(frames.length) useFrames(frames, [], `${list[0].name} … (${frames.length})`);
+  }
+  function loadVideoFile(file){
+    if(!file) return;
+    freeFile();
+    const v = document.createElement("video");
+    v.muted = true; v.loop = true; v.playsInline = true;
+    F.vURL = URL.createObjectURL(file);
+    status("Завантаження відео…", true);
+    v.onloadeddata = () => {
+      v.onloadeddata = null;
+      Object.assign(F, { kind:"video", video:v, name:file.name });
+      F.auto = detectKey(v, v.videoWidth, v.videoHeight, false);
+      $("srcName").textContent = `${file.name} · відео ${v.videoWidth}×${v.videoHeight}`;
+      status("");
+      setSource("file");
+      if(playing) v.play().catch(() => {});
+      syncUI(); invalidate();
+    };
+    v.onerror = () => { status(""); alert("Не вдалося відкрити відео. Спробуйте MP4 (H.264) або WebM."); };
+    v.src = F.vURL;
+  }
+  function loadAny(files){
+    if(!files || !files.length) return;
+    if(files.length > 1) return loadSequence(files);
+    const f = files[0];
+    if(/^video\//.test(f.type)) return loadVideoFile(f);
+    if(/^image\//.test(f.type) || /\.svg$/i.test(f.name)) return loadImageFile(f);
+  }
+  $("loadImage").addEventListener("click", () => $("fileImage").click());
+  $("loadVideo").addEventListener("click", () => $("fileVideo").click());
+  $("loadSeq").addEventListener("click", () => $("fileSeq").click());
+  $("fileImage").addEventListener("change", e => { loadImageFile(e.target.files[0]); e.target.value = ""; });
+  $("fileVideo").addEventListener("change", e => { loadVideoFile(e.target.files[0]); e.target.value = ""; });
+  $("fileSeq").addEventListener("change", e => { loadSequence(e.target.files); e.target.value = ""; });
+  $("bgLoad").addEventListener("click", () => $("fileBg").click());
+  $("fileBg").addEventListener("change", e => {
+    const f = e.target.files[0]; e.target.value = "";
+    if(!f) return;
+    const url = URL.createObjectURL(f), im = new Image();
+    im.onload = () => { bgImg = im; P.bgMode = "image"; syncUI(); needRender = true; };
+    im.onerror = () => { URL.revokeObjectURL(url); alert("Не вдалося відкрити файл як зображення."); };
+    im.src = url;
+  });
+  $("bgClear").addEventListener("click", () => { if(bgImg) URL.revokeObjectURL(bgImg.src); bgImg = null; P.bgMode = "color"; syncUI(); needRender = true; });
+  const stage = $("stage");
+  ["dragenter","dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => { if(e.dataTransfer) loadAny(e.dataTransfer.files); });
+  window.addEventListener("paste", e => {
+    const tag = (document.activeElement && document.activeElement.tagName) || "";
+    if(tag === "TEXTAREA" || tag === "INPUT") return;
+    const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith("image/"));
+    if(it){ e.preventDefault(); loadImageFile(it.getAsFile()); }
+  });
+
+  /* ================= перетягування силуету й написів ================= */
+  let drag = null;
+  const toCanvas = e => { const r = out.getBoundingClientRect(); return [(e.clientX - r.left)*W/r.width, (e.clientY - r.top)*H/r.height]; };
+  out.addEventListener("pointerdown", e => {
+    const [x, y] = toCanvas(e);
+    const h = [...hits].reverse().find(b => x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1);
+    drag = h ? { id:h.id, x, y, ox:P[h.id + "X"], oy:P[h.id + "Y"] } : { id:"shape", x, y, ox:P.offX, oy:P.offY };
+    out.setPointerCapture(e.pointerId); out.classList.add("drag");
+  });
+  out.addEventListener("pointermove", e => {
+    if(!drag) return;
+    const [x, y] = toCanvas(e), dx = (x - drag.x)/W, dy = (y - drag.y)/H;
+    if(drag.id === "shape"){ P.offX = clamp(drag.ox + dx, -0.6, 0.6); P.offY = clamp(drag.oy + dy, -0.6, 0.6); invalidate(); syncRanges(); }
+    else { P[drag.id + "X"] = clamp(drag.ox + dx, 0, 1); P[drag.id + "Y"] = clamp(drag.oy + dy, 0, 1); needRender = true; }
+  });
+  const endDrag = () => { drag = null; out.classList.remove("drag"); };
+  out.addEventListener("pointerup", endDrag);
+  out.addEventListener("pointercancel", endDrag);
+
+  /* ================= експорт ================= */
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  const fname = ext => `trace-${P.src}-${P.cols}.${ext}`;
+  const curT = () => clock();
+  $("exPng").addEventListener("click", () => { renderFrame(curT()); out.toBlob(b => { if(b) downloadBlob(b, fname("png")); }, "image/png"); });
+  $("exJpg").addEventListener("click", () => {
+    renderFrame(curT());
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d"); g.fillStyle = P.bgMode === "transparent" ? "#ffffff" : P.bg; g.fillRect(0, 0, W, H); g.drawImage(out, 0, 0);
+    c.toBlob(b => { if(b) downloadBlob(b, fname("jpg")); }, "image/jpeg", 0.95);
+  });
+
+  /* ---- SVG ---- */
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const fx = v => Math.round(v*100)/100;
+  function polysD(polys){
+    let d = "";
+    for(const p of polys){
+      d += `M${fx(p[0])} ${fx(p[1])}`;
+      for(let j = 2; j < p.length; j += 2) d += `L${fx(p[j])} ${fx(p[j + 1])}`;
+      d += "Z";
+    }
+    return d;
+  }
+  function svgGrid(scroll){
+    if(!P.gridOn || P.gridAlpha <= 0) return "";
+    const { xs, ys } = gridLines(scroll), w = P.gridW*SC;
+    let d = "", dm = "";
+    if(P.gridStyle === "lines"){
+      for(const { x, c } of xs){ const s = `M${fx(x)} 0V${H}`; if(isMajor(c, scroll)) dm += s; else d += s; }
+      for(const { y, c } of ys){ const s = `M0 ${fx(y)}H${W}`; if(isMajor(c, 0)) dm += s; else d += s; }
+      return `<g stroke="${P.gridColor}" stroke-opacity="${P.gridAlpha}" fill="none"><path d="${d}" stroke-width="${fx(w)}"/>${dm ? `<path d="${dm}" stroke-width="${fx(w*2.2)}"/>` : ""}</g>`;
+    }
+    const r = w*0.9, arm = LAT.cell*P.gridStep*0.18 + w;
+    for(const { x } of xs) for(const { y } of ys){
+      if(P.gridStyle === "dots") d += `M${fx(x - r)} ${fx(y)}a${fx(r)} ${fx(r)} 0 1 0 ${fx(r*2)} 0a${fx(r)} ${fx(r)} 0 1 0 ${fx(-r*2)} 0`;
+      else d += `M${fx(x - arm)} ${fx(y - w/2)}h${fx(arm*2)}v${fx(w)}h${fx(-arm*2)}zM${fx(x - w/2)} ${fx(y - arm)}h${fx(w)}v${fx(arm*2)}h${fx(-w)}z`;
+    }
+    return `<path d="${d}" fill="${P.gridColor}" fill-opacity="${P.gridAlpha}"/>`;
+  }
+  function svgStrokeAttrs(w){
+    const join = P.corner === "round" ? "round" : P.corner === "chamfer" ? "bevel" : "miter";
+    const cap = P.dash === "dot" || P.corner === "round" ? "round" : "butt";
+    const c = LAT.cell*P.dashLen;
+    const dash = P.dash === "dash" ? ` stroke-dasharray="${fx(c*0.62)} ${fx(c*0.38)}"` : P.dash === "dot" ? ` stroke-dasharray="0.01 ${fx(Math.max(w*1.6, c*0.6))}"` : "";
+    return `fill="none" stroke-width="${fx(w)}" stroke-linejoin="${join}" stroke-linecap="${cap}" stroke-miterlimit="4"${dash}`;
+  }
+  function svgFill(geo, polys, id){
+    if(P.fill === "none") return { defs:"", body:"" };
+    const { cell, ox, oy, cols, rows } = LAT;
+    const c = P.fillColor, a = P.fillAlpha;
+    if(P.fill === "cells"){
+      let d = ""; const ins = cell*0.1;
+      for(let y = 0; y < rows; y++) for(let x = 0; x < cols; x++)
+        if(geo.occ[y*cols + x]) d += `M${fx(ox + x*cell + ins)} ${fx(oy + y*cell + ins)}h${fx(cell - ins*2)}v${fx(cell - ins*2)}h${fx(ins*2 - cell)}z`;
+      return { defs:"", body:`<path d="${d}" fill="${c}" fill-opacity="${a}"/>` };
+    }
+    const dd = polysD(polys);
+    if(P.fill === "solid") return { defs:"", body:`<path d="${dd}" fill="${c}" fill-opacity="${a}" fill-rule="evenodd"/>` };
+    const gap = P.hatchGap*cell;
+    let pat;
+    if(P.fill === "hatch") pat = `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${fx(gap)}" height="${fx(gap)}" patternTransform="rotate(${P.hatchAngle})"><line x1="0" y1="${fx(gap/2)}" x2="${fx(gap)}" y2="${fx(gap/2)}" stroke="${c}" stroke-width="${fx(Math.max(1, P.lineW*cell*0.45))}"/></pattern>`;
+    else { const r = Math.max(0.8, Math.min(gap*0.32, P.lineW*cell*0.6)); pat = `<pattern id="${id}" patternUnits="userSpaceOnUse" x="${fx(ox)}" y="${fx(oy)}" width="${fx(gap)}" height="${fx(gap)}"><circle cx="${fx(gap/2)}" cy="${fx(gap/2)}" r="${fx(r)}" fill="${c}"/></pattern>`; }
+    return { defs:pat, body:`<path d="${dd}" fill="url(#${id})" fill-opacity="${a}" fill-rule="evenodd"/>` };
+  }
+  function svgTexts(){
+    const col = P.tInk ? P.ink : P.tColor;
+    const fam = `'${P.tFont}', 'Inter Tight', Inter, Arial, sans-serif`;
+    let s = "";
+    const anchor = a => a === "center" ? "middle" : a === "right" ? "end" : "start";
+    const block = (txt, x, y, size, align) => {
+      const lines = txt.split("\n"), fs = size/100*W, lh = fs*1.06;
+      lines.forEach((ln, i) => {
+        s += `<text x="${fx(x*W)}" y="${fx(y*H + (i - (lines.length - 1)/2)*lh)}" dominant-baseline="central" text-anchor="${anchor(align)}" font-family="${esc(fam)}" font-weight="${P.tW}" font-size="${fx(fs)}" fill="${col}">${esc(ln)}</text>`;
+      });
+    };
+    if(P.t1On && P.t1.trim()) block(P.t1, P.t1X, P.t1Y, P.t1Size, P.t1Align);
+    if(P.t2On && P.t2.trim()) block(P.t2, P.t2X, P.t2Y, P.t2Size, P.t2Align);
+    if(P.cornersOn && P.cornerTxt.trim()){
+      const ch = [...P.cornerTxt.replace(/\s+/g, "")].slice(0, 4), fs = P.cornerSize/100*W, pad = P.cornerPad*Math.min(W, H);
+      const pos = [[pad, pad + fs*0.36, "start"], [W - pad, pad + fs*0.36, "end"], [pad, H - pad - fs*0.36, "start"], [W - pad, H - pad - fs*0.36, "end"]];
+      ch.forEach((c, i) => { s += `<text x="${fx(pos[i][0])}" y="${fx(pos[i][1])}" dominant-baseline="central" text-anchor="${pos[i][2]}" font-family="${esc(fam)}" font-weight="${P.tW}" font-size="${fx(fs)}" fill="${col}">${esc(c)}</text>`; });
+    }
+    return s;
+  }
+  function svgPoseBody(pose, idx){
+    const geo = getGeo(pose), polys = polysFor(geo, pose), lw = Math.max(0.6, P.lineW*LAT.cell);
+    const fill = svgFill(geo, polys, "f" + idx);
+    let body = fill.body;
+    for(let r = geo.rings.length; r >= 1; r--)
+      body += `<path d="${polysD(polysFor({ loops:geo.rings[r - 1] }, pose))}" stroke="${P.ink}" stroke-opacity="${fx(Math.pow(P.ringFade, r))}" ${svgStrokeAttrs(lw)}/>`;
+    const d = polysD(polys);
+    if(P.double){
+      const id = "m" + idx;
+      return { defs: fill.defs + `<mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff"/><path d="${d}" stroke="#000" ${svgStrokeAttrs(lw*P.doubleGap)}/></mask>`,
+               body: body + `<path d="${d}" stroke="${P.ink}" ${svgStrokeAttrs(lw)} mask="url(#${id})"/>` };
+    }
+    return { defs: fill.defs, body: body + `<path d="${d}" stroke="${P.ink}" ${svgStrokeAttrs(lw)}/>` };
+  }
+  function svgDoc(defs, body){
+    const bg = P.bgMode === "transparent" ? "" : `<rect width="${W}" height="${H}" fill="${P.bg}"/>`;
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">` +
+      `<defs><style>@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(P.tFont).replace(/%20/g, "+")}:wght@${P.tW}&amp;display=swap');</style>${defs}</defs>` +
+      bg + svgGrid(0) + body + svgTexts() + `</svg>`;
+  }
+  $("exSvg").addEventListener("click", () => {
+    const t = curT(), pose = poseAt(t);
+    let defs = "", onion = "";
+    for(let j = P.onion; j >= 1; j--){
+      const pp = poseAt((pose.i - j + 0.5)/P.poseRate);
+      onion += `<path d="${polysD(polysFor(getGeo(pp), pp))}" stroke="${P.onionColor}" stroke-opacity="${fx(P.onionFade*Math.pow(0.72, j - 1))}" ${svgStrokeAttrs(Math.max(0.6, P.lineW*LAT.cell)*0.8)}/>`;
+    }
+    const b = svgPoseBody(pose, 0);
+    defs += b.defs;
+    downloadBlob(new Blob([svgDoc(defs, onion + b.body)], { type:"image/svg+xml" }), fname("svg"));
+  });
+  $("exSvgAnim").addEventListener("click", () => {
+    if(P.src === "file" && F.kind === "video"){ alert("SVG-анімація працює з вбудованими силуетами, текстом, GIF і кадрами — для відео експортуйте MP4."); return; }
+    const N = cycleN(), K = P.motion === "travel" ? P.cross : 1, total = N*K;
+    if(total > 240){ alert("Забагато поз для SVG-анімації (понад 240). Зменште «Поз у циклі» або «Перетин кадру»."); return; }
+    const dur = total/P.poseRate;
+    let defs = "", body = "";
+    for(let i = 0; i < total; i++){
+      const pose = poseAt((i + 0.5)/P.poseRate);
+      const b = svgPoseBody(pose, i);
+      defs += b.defs;
+      body += `<g class="p" style="animation-delay:${fx(i*dur/total)}s">${b.body}</g>`;
+    }
+    const css = `<style>.p{opacity:0;animation:tr ${fx(dur)}s step-end infinite}@keyframes tr{0%{opacity:1}${fx(100/total)}%{opacity:0}100%{opacity:0}}</style>`;
+    const svg = svgDoc(defs, body).replace("<defs>", "<defs>" + css);
+    downloadBlob(new Blob([svg], { type:"image/svg+xml" }), fname("anim.svg").replace(".anim.svg", "-anim.svg"));
+  });
+
+  /* ---- таблиця поз: увесь цикл на одному аркуші з номерами (як пластини Мейбриджа) ---- */
+  $("exSheet").addEventListener("click", () => {
+    if(isVideo()){ alert("Таблиця поз працює з вбудованими силуетами, текстом, GIF і кадрами — для відео експортуйте MP4."); return; }
+    const n = Math.min(cycleN(), 48);
+    const cols = Math.max(1, Math.min(n, Math.round(Math.sqrt(n*1.5*H/W))));
+    const rows = Math.ceil(n/cols);
+    const s = Math.min(0.5, 3600/(cols*W));
+    const tw = Math.round(W*s), th = Math.round(H*s), gut = Math.round(Math.max(tw, th)*0.06), lab = Math.round(gut*1.6);
+    const c = document.createElement("canvas");
+    c.width = cols*tw + (cols + 1)*gut; c.height = rows*(th + lab) + gut;
+    const g = c.getContext("2d");
+    g.fillStyle = P.bgMode === "transparent" ? "#ffffff" : P.bg; g.fillRect(0, 0, c.width, c.height);
+    const keepDraw = P.drawOn; P.drawOn = 0;
+    for(let i = 0; i < n; i++){
+      renderFrame((i + 0.001)/P.poseRate);
+      const x = gut + (i%cols)*(tw + gut), y = gut + Math.floor(i/cols)*(th + lab);
+      g.drawImage(out, x, y, tw, th);
+      g.fillStyle = P.tInk ? P.ink : P.tColor;
+      g.font = fontStr(P.tW, Math.round(lab*0.5), P.tFont);
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText(String(i + 1), x + tw/2, y + th + lab*0.45);
+    }
+    P.drawOn = keepDraw; needRender = true;
+    c.toBlob(b => { if(b) downloadBlob(b, fname("sheet.png").replace(".sheet.png", "-sheet.png")); }, "image/png");
+  });
+
+  /* ---- MP4 (покадрово) / WebM (живий запис) ---- */
+  function exportDur(){
+    if(isVideo()) return Math.min(F.video.duration || 0, 120);
+    const K = P.motion === "travel" ? P.cross : 1;
+    return P.loops*K*cycleN()/P.poseRate;
+  }
+  function updateDurNote(){
+    const d = exportDur();
+    $("durNote").textContent = isVideo() ? `Відео: ${d.toFixed(1)} с` : `Тривалість: ${d.toFixed(2)} с · ${Math.round(d*P.fps)} кадрів`;
+  }
+  function seekVid(t){
+    return new Promise(res => {
+      let done = false;
+      const v = F.video, on = () => { if(done) return; done = true; v.removeEventListener("seeked", on); res(); };
+      v.addEventListener("seeked", on);
+      try{ v.currentTime = t; }catch(e){ on(); }
+      setTimeout(on, 1500);
+    });
+  }
+  let mp4Abort = false;
+  $("exMp4").addEventListener("click", async () => {
+    if(busy){ mp4Abort = true; return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    const vid = isVideo();
+    busy = true; mp4Abort = false;
+    $("mp4Label").textContent = "■ Скасувати";
+    const wasPlaying = playing;
+    if(vid) F.video.pause();
+    const fps = P.fps, total = Math.max(1, Math.round(exportDur()*fps));
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:W, height:H }, fastStart:"in-memory" });
+    let err = null;
+    const enc = new VideoEncoder({ output:(c, m) => muxer.addVideoChunk(c, m), error:e => { err = e; } });
+    enc.configure({ codec: W*H > 1500000 ? "avc1.640033" : "avc1.640028", width:W, height:H, bitrate:P.bitrate*1e6, framerate:fps });
+    let lastPi = null;
+    try{
+      for(let f = 0; f < total && !err && !mp4Abort; f++){
+        const t = f/fps;
+        if(vid){
+          const pi = P.smooth ? f : Math.floor(t*P.poseRate + 1e-6);
+          if(pi !== lastPi){ await seekVid(P.smooth ? t : pi/P.poseRate); geoCache.clear(); lastPi = pi; }
+        }
+        renderFrame(t);
+        const fr = new VideoFrame(out, { timestamp: Math.round(f*1e6/fps), duration: Math.round(1e6/fps) });
+        enc.encode(fr, { keyFrame: f%(fps*2) === 0 }); fr.close();
+        if(enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 0));
+        if(f%6 === 0){ status(`Рендер ${Math.round(f/total*100)}%`, true); await new Promise(r => setTimeout(r, 0)); }
+      }
+      if(!err && !mp4Abort){
+        status("Кодування…", true);
+        await enc.flush(); muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer], { type:"video/mp4" }), fname("mp4"));
+      }
+      enc.close();
+    }catch(e){ err = err || e; }
+    if(err) alert("Помилка кодування MP4: " + (err.message || err));
+    busy = false; needRender = true;
+    if(vid && wasPlaying) F.video.play().catch(() => {});
+    $("mp4Label").textContent = "MP4"; status("");
+  });
+
+  let webmRec = null;
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    setPlaying(true);
+    t0 = now();
+    if(isVideo()){ F.video.currentTime = 0; F.video.play().catch(() => {}); }
+    needRender = true;
+    const chunks = [];
+    const mime = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find(m => MediaRecorder.isTypeSupported(m)) || "video/webm";
+    try{ webmRec = new MediaRecorder(out.captureStream(P.fps), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+    webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop = () => { if(chunks.length) downloadBlob(new Blob(chunks, { type:"video/webm" }), fname("webm")); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    setTimeout(() => { if(webmRec) webmRec.stop(); }, exportDur()*1000 + 120);
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  /* картки стилів: мініатюра фону, сітки й лінії */
+  const stylesEl = $("styles");
+  STYLES.forEach((s, i) => {
+    const L = Object.assign({}, LOOK, s.p);
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.i = i;
+    const grid = L.gridOn ? `background-image:linear-gradient(${L.gridColor}55 1px,transparent 1px),linear-gradient(90deg,${L.gridColor}55 1px,transparent 1px);background-size:7px 7px;` : "";
+    const fill = L.fill !== "none" ? `background:${L.fillColor}${L.fill === "solid" || L.fill === "cells" ? "" : "33"};` : "";
+    const glow = L.glow ? `box-shadow:0 0 8px ${L.ink};` : "";
+    el.innerHTML = `<div class="sw" style="background-color:${L.bg};${grid}"><i style="border-color:${L.ink};border-radius:${L.corner === "round" ? 5 : 1}px;${fill}${glow}"></i></div><span>${s.name}</span>`;
+    el.addEventListener("click", () => { Object.assign(P, JSON.parse(JSON.stringify(LOOK)), JSON.parse(JSON.stringify(s.p))); relattice(); syncUI(); });
+    stylesEl.appendChild(el);
+  });
+  function markStyle(){
+    stylesEl.querySelectorAll(".preset").forEach(el => {
+      const L = Object.assign({}, LOOK, STYLES[+el.dataset.i].p);
+      el.classList.toggle("active", Object.keys(LOOK).every(k => JSON.stringify(P[k]) === JSON.stringify(L[k])));
+    });
+  }
+
+  function setSource(s){
+    P.src = s;
+    syncUI(); invalidate();
+  }
+  document.querySelectorAll("#sources .preset").forEach(p => p.addEventListener("click", () => {
+    if(p.dataset.src === "file" && !F.kind){ setSource("file"); $("fileImage").click(); return; }
+    setSource(p.dataset.src);
+  }));
+
+  /* прив'язка контролів: [id, ключ, формат, чи змінює геометрію] */
+  const f2 = x => (+x).toFixed(2), f1 = x => (+x).toFixed(1), f0 = x => String(Math.round(x));
+  const RANGES = [
+    ["keyThr","keyThr",f2,1], ["keyTol","keyTol",f2,1], ["soft","soft",f1,1],
+    ["sheetCols","sheetCols",f0,1], ["sheetRows","sheetRows",f0,1], ["sheetCount","sheetCount",f0,1],
+    ["animAmp","animAmp",f2,1],
+    ["size","size",f2,1], ["offX","offX",f2,1], ["offY","offY",f2,1],
+    ["poseRate","poseRate",f1,1], ["poses","poses",f0,1], ["cross","cross",f0,1], ["scroll","scroll",f0,0],
+    ["onion","onion",f0,0], ["onionFade","onionFade",f2,0], ["drawOn","drawOn",f2,0],
+    ["cols","cols",f0,2], ["thr","thr",f2,1], ["minIsland","minIsland",f0,1], ["minHole","minHole",f0,1], ["inset","inset",f2,0],
+    ["gridAlpha","gridAlpha",f2,0], ["gridW","gridW",f1,0], ["major","major",f0,0],
+    ["lineW","lineW",f2,0], ["cornerR","cornerR",f2,0], ["dashLen","dashLen",f2,0], ["doubleGap","doubleGap",f2,0],
+    ["rings","rings",f0,1], ["ringGap","ringGap",f0,1], ["ringFade","ringFade",f2,0],
+    ["grain","grain",f2,0], ["bleed","bleed",f2,0], ["wobble","wobble",f2,0], ["glow","glow",f2,0], ["glowR","glowR",f1,0],
+    ["fillAlpha","fillAlpha",f2,0], ["hatchGap","hatchGap",f2,0], ["hatchAngle","hatchAngle",x => `${Math.round(x)}°`,0],
+    ["t1Size","t1Size",f1,0], ["t2Size","t2Size",f1,0], ["cornerSize","cornerSize",f1,0], ["cornerPad","cornerPad",f2,0],
+    ["loops","loops",f0,0], ["bitrate","bitrate",f0,0],
+  ];
+  const vid = id => "v" + id[0].toUpperCase() + id.slice(1);
+  RANGES.forEach(([id, key, fmt, geo]) => {
+    const el = $(id);
+    el.addEventListener("input", () => {
+      P[key] = parseFloat(el.value);
+      $(vid(id)).textContent = fmt(P[key]);
+      if(geo === 2) relattice(); else if(geo) invalidate(); else needRender = true;
+      if(key === "poseRate" || key === "poses" || key === "cross" || key === "loops") updateDurNote();
+      markStyle();
+    });
+  });
+  function syncRanges(){
+    RANGES.forEach(([id, key, fmt]) => { $(id).value = P[key]; $(vid(id)).textContent = fmt(P[key]); });
+  }
+  const COLORS = [["keyColor",1],["onionColor",0],["bg",0],["gridColor",0],["ink",0],["fillColor",0],["tColor",0]];
+  const hid = id => "h" + id[0].toUpperCase() + id.slice(1);
+  COLORS.forEach(([id, geo]) => $(id).addEventListener("input", e => {
+    P[id] = e.target.value; $(hid(id)).textContent = P[id].toUpperCase();
+    if(geo) invalidate(); else needRender = true;
+    markStyle();
+  }));
+  const SWITCHES = [["rider",1],["invert",1],["sheetOn",1],["mirror",1],["smooth",1],["fillAll",1],["diag",1],
+    ["gridOn",0],["double",0],["multiply",0],["boil",0],["t1On",0],["t2On",0],["cornersOn",0],["tInk",0]];
+  SWITCHES.forEach(([id, geo]) => $(id).addEventListener("change", e => {
+    P[id] = e.target.checked;
+    if(geo) invalidate(); else needRender = true;
+    syncVis(); markStyle(); updateDurNote();
+  }));
+  function bindPresets(sel, key, attr, geo, after){
+    document.querySelectorAll(sel + " .preset").forEach(p => p.addEventListener("click", () => {
+      const v = p.dataset[attr];
+      P[key] = /^-?\d+(\.\d+)?$/.test(v) ? +v : v;
+      document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x === p));
+      if(after) after(p);
+      if(geo === 2) resize(); else if(geo) invalidate(); else needRender = true;
+      syncVis(); markStyle(); updateDurNote();
+    }));
+  }
+  bindPresets("#gaits", "gait", "gait", 1);
+  bindPresets("#fonts", "font", "font", 1, p => { P.fw = p.dataset.w; ensureFonts(); });
+  bindPresets("#keys", "key", "key", 1);
+  bindPresets("#stillAnims", "anim", "anim", 1);
+  bindPresets("#motions", "motion", "motion", 1);
+  bindPresets("#bgModes", "bgMode", "bg", 0, p => { if(p.dataset.bg === "image" && !bgImg) $("fileBg").click(); });
+  bindPresets("#gridSteps", "gridStep", "step", 0);
+  bindPresets("#gridStyles", "gridStyle", "gstyle", 0);
+  bindPresets("#corners", "corner", "corner", 0);
+  bindPresets("#dashes", "dash", "dash", 0);
+  bindPresets("#fills", "fill", "fill", 0);
+  bindPresets("#t1Aligns", "t1Align", "align", 0);
+  bindPresets("#t2Aligns", "t2Align", "align", 0);
+  bindPresets("#tFonts", "tFont", "font", 0, p => { P.tW = p.dataset.w; ensureFonts(); });
+  bindPresets("#aspects", "aspect", "aspect", 2);
+  bindPresets("#fpsSel", "fps", "fps", 0);
+  $("srcText").addEventListener("input", e => { P.text = e.target.value; ensureFonts(); invalidate(); });
+  $("t1").addEventListener("input", e => { P.t1 = e.target.value; needRender = true; });
+  $("t2").addEventListener("input", e => { P.t2 = e.target.value; needRender = true; });
+  $("cornerTxt").addEventListener("input", e => { P.cornerTxt = e.target.value; needRender = true; });
+
+  function syncVis(){
+    const quad = P.src === "horse" || P.src === "dog";
+    $("quadGroup").style.display = quad ? "" : "none";
+    $("riderRow").style.display = P.src === "horse" ? "" : "none";
+    $("textGroup").style.display = P.src === "text" ? "" : "none";
+    $("fileGroup").style.display = P.src === "file" ? "" : "none";
+    const still = P.src === "text" || (P.src === "file" && F.kind === "frames" && frameCount() <= 1);
+    $("stillGroup").style.display = still ? "" : "none";
+    document.querySelectorAll('#stillAnims [data-anim="wave"], #stillAnims [data-anim="type"]').forEach(el => el.style.display = P.src === "text" ? "" : "none");
+    const km = keyMode();
+    $("keyThrRow").style.display = km === "dark" || km === "light" ? "" : "none";
+    $("chromaRow").style.display = km === "chroma" ? "" : "none";
+    $("sheetGroup").style.display = P.sheetOn ? "" : "none";
+    $("travelRow").style.display = P.motion === "travel" ? "" : "none";
+    $("scrollRow").style.display = P.motion === "scroll" ? "" : "none";
+    $("bgImgRow").style.display = P.bgMode === "image" ? "" : "none";
+    $("cornerRRow").style.display = P.corner === "sharp" ? "none" : "";
+    $("dashRow").style.display = P.dash === "solid" ? "none" : "";
+    $("doubleRow").style.display = P.double ? "" : "none";
+    $("fillOpts").style.display = P.fill === "none" ? "none" : "";
+    $("hatchRow").style.display = P.fill === "hatch" || P.fill === "dots" ? "" : "none";
+    $("hatchAngleLbl").style.display = $("hatchAngle").style.display = P.fill === "hatch" ? "" : "none";
+    $("tColorRow").style.display = P.tInk ? "none" : "";
+    const procedural = P.src !== "file" || !F.kind || frameCount() <= 1;
+    $("poses").disabled = !procedural || isVideo();
+    $("exMp4").title = isVideo() ? "Покадровий рендер усього відео" : "";
+  }
+  function syncUI(){
+    syncRanges();
+    COLORS.forEach(([id]) => { $(id).value = P[id]; $(hid(id)).textContent = P[id].toUpperCase(); });
+    SWITCHES.forEach(([id]) => { $(id).checked = P[id]; });
+    $("srcText").value = P.text; $("t1").value = P.t1; $("t2").value = P.t2; $("cornerTxt").value = P.cornerTxt;
+    const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", String(x.dataset[attr]) === String(val)));
+    mark("#sources", "src", P.src); mark("#gaits", "gait", P.gait); mark("#fonts", "font", P.font);
+    mark("#keys", "key", P.key); mark("#stillAnims", "anim", P.anim); mark("#motions", "motion", P.motion);
+    mark("#bgModes", "bg", P.bgMode); mark("#gridSteps", "step", P.gridStep); mark("#gridStyles", "gstyle", P.gridStyle);
+    mark("#corners", "corner", P.corner); mark("#dashes", "dash", P.dash); mark("#fills", "fill", P.fill);
+    mark("#t1Aligns", "align", P.t1Align); mark("#t2Aligns", "align", P.t2Align); mark("#tFonts", "font", P.tFont);
+    mark("#aspects", "aspect", P.aspect); mark("#fpsSel", "fps", P.fps);
+    syncVis(); markStyle(); updateDurNote();
+    needRender = true;
+  }
+  $("reset").addEventListener("click", () => {
+    Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
+    bgImg = null;
+    resize(); syncUI(); ensureFonts();
+  });
+
+  /* шрифти: текст-силует і написи малюються лише після завантаження гарнітури */
+  function ensureFonts(){
+    if(!document.fonts) return;
+    Promise.all([
+      document.fonts.load(fontStr(P.fw, 64, P.font), P.text || "KLIK"),
+      document.fonts.load(fontStr(P.tW, 64, P.tFont), (P.t1 + P.t2 + P.cornerTxt) || "A"),
+    ]).then(() => invalidate()).catch(() => {});
+  }
+
+  /* ================= boot ================= */
+  resize(); syncUI(); ensureFonts();
+  if(document.fonts) document.fonts.ready.then(() => invalidate());
+  tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
