@@ -75,6 +75,8 @@ tools/
   mp4-muxer.js          ← спільний MP4-муксер
   postfx.js             ← універсальна плаваюча FX-панель (усі студії)
   i18n.js               ← EN/RU-переклад студій (UA — оригінал)
+concepts/
+  farseer/index.html    ← Farseer: hero-концепт лендінгу (хедер, слоган, CTA «App coming soon», анімоване око)
 ```
 
 ## Локальний запуск

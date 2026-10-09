@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farseer — Meme the future</title>
+<meta name="description" content="Launch a memecoin on any Polymarket outcome. Its price tracks the odds along a bonding curve — then it graduates to Uniswap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter+Tight:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* Farseer — hero concept. Identity: Figma «Work» section (Frame 2 / Frame 4 / Frame 74).
+     All sizes are design px of the 1920×1080 frame, multiplied by --s. */
+  :root {
+    --blue: #1171ff;
+    --ink: #060708;
+    --chip: rgba(255, 255, 255, .12);
+    --s: min(calc(100vw / 1920), calc(100vh / 1080));
+    --pad: calc(56 * var(--s));
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter Tight", Inter, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ink); color: #fff; }
+  body { font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; }
+
+  .hero {
+    position: relative; isolation: isolate; overflow: hidden;
+    min-height: 100vh; min-height: 100svh;
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(2 * var(--pad));
+    padding: var(--pad);
+  }
+
+  /* background: gradient + dot grid + grain (grain sits above the left column, below the card) */
+  .bg, .dots, .grain { position: absolute; inset: 0; pointer-events: none; }
+  .bg {
+    z-index: -3;
+    background:
+      radial-gradient(55% 42% at 16% 40%, rgba(22, 64, 255, .85), transparent 72%),
+      radial-gradient(70% 55% at 78% 30%, rgba(8, 28, 205, .8), transparent 70%),
+      linear-gradient(180deg, #010106 0%, #030c45 13%, #0822b8 32%, #0a2ad8 50%, #2552e4 68%, #8fa5e6 87%, #d8ddee 100%);
+  }
+  .dots {
+    z-index: -2;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, .55) calc(1.6 * var(--s)), transparent calc(2.1 * var(--s)));
+    background-size: calc(33.24 * var(--s)) calc(22 * var(--s));
+    background-position: calc(-23 * var(--s)) calc(-1 * var(--s));
+    -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, .55) 45%, #000 85%);
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, .55) 45%, #000 85%);
+    opacity: .5;
+  }
+  .grain {
+    z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay; opacity: .55;
+  }
+
+  /* left column */
+  .left {
+    position: relative; z-index: 0;
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+    gap: calc(40 * var(--s));
+    min-width: 0;
+  }
+
+  .box, .chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: calc(56 * var(--s)); border-radius: calc(4 * var(--s));
+    background: var(--chip);
+  }
+  .box { width: calc(56 * var(--s)); flex: none; }
+  .chip {
+    padding: 0 calc(16 * var(--s));
+    font: 400 calc(24 * var(--s)) / 1 var(--mono); text-transform: uppercase; white-space: nowrap;
+  }
+
+  .top { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: calc(24 * var(--s)); }
+  .logo { display: inline-flex; gap: calc(8 * var(--s)); }
+  .logo .mark { width: calc(36 * var(--s)); height: auto; fill: #fff; }
+  .nav { display: flex; align-items: center; gap: calc(8 * var(--s)); }
+  .nav a:not(.box) {
+    padding: calc(16 * var(--s));
+    font: 400 calc(20 * var(--s)) / 1 var(--mono); text-transform: uppercase; color: rgba(255, 255, 255, .72);
+    transition: color .2s;
+  }
+  .nav a:not(.box):hover, .nav a:not(.box):focus-visible { color: #fff; }
+  .nav .box { transition: background .2s; }
+  .nav .box:hover, .nav .box:focus-visible { background: rgba(255, 255, 255, .22); }
+  .nav .box svg { width: calc(20 * var(--s)); height: calc(20 * var(--s)); fill: #fff; }
+
+  .welcome {
+    width: 100%; max-width: calc(848 * var(--s));
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    gap: calc(48 * var(--s));
+  }
+  .eyebrow { margin: 0; display: inline-flex; gap: calc(8 * var(--s)); }
+  .eyebrow svg { width: calc(34 * var(--s)); height: calc(34 * var(--s)); }
+  .title { display: flex; flex-direction: column; align-items: center; gap: calc(28 * var(--s)); }
+  h1 {
+    margin: 0;
+    font: 500 calc(168 * var(--s)) / .92 var(--sans); letter-spacing: -.04em;
+  }
+  .sub {
+    margin: 0; max-width: calc(620 * var(--s));
+    font: 500 calc(24 * var(--s)) / 1.18 var(--sans); letter-spacing: -.04em;
+    color: rgba(255, 255, 255, .82);
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: calc(16 * var(--s));
+    padding: calc(28 * var(--s)) calc(72 * var(--s));
+    border: 0; border-radius: calc(4 * var(--s)); background: #fff; color: var(--blue);
+    font: 600 calc(28 * var(--s)) / 1.02 var(--sans); letter-spacing: -.04em;
+    cursor: pointer; transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s;
+  }
+  .cta i { width: calc(10 * var(--s)); height: calc(10 * var(--s)); background: var(--blue); animation: pulse 1.6s ease-in-out infinite; }
+  .cta:hover, .cta:focus-visible { transform: translateY(calc(-2 * var(--s))); box-shadow: 0 calc(16 * var(--s)) calc(40 * var(--s)) rgba(6, 7, 8, .25); }
+  .cta:focus-visible, .nav a:focus-visible, .logo:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+  .steps {
+    width: 100%; margin: 0; padding: 0; list-style: none;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(8 * var(--s));
+  }
+  .steps li {
+    display: flex; flex-direction: column; gap: calc(28 * var(--s));
+    padding: calc(20 * var(--s)); border-radius: calc(4 * var(--s)); background: var(--blue);
+    font: 400 calc(20 * var(--s)) / 1.2 var(--mono); text-transform: uppercase;
+  }
+  .steps span { line-height: 1; color: rgba(255, 255, 255, .6); }
+
+  /* right card — the eye (motion proposal, the artwork itself is untouched) */
+  .card {
+    position: relative; z-index: 2; overflow: hidden;
+    background: #fff; border-radius: calc(12 * var(--s));
+    color: var(--blue);
+    --r: calc(260 * var(--s));
+  }
+  .card .sq { position: absolute; width: calc(16 * var(--s)); height: calc(16 * var(--s)); background: var(--blue); }
+  .sq.tl { top: calc(69 * var(--s)); left: calc(69 * var(--s)); }
+  .sq.tr { top: calc(69 * var(--s)); right: calc(69 * var(--s)); }
+  .sq.bl { bottom: calc(69 * var(--s)); left: calc(69 * var(--s)); }
+  .sq.br { bottom: calc(69 * var(--s)); right: calc(69 * var(--s)); }
+  .card .line { position: absolute; left: 50%; width: 1px; height: calc(50% - var(--r)); background: rgba(17, 113, 255, .6); }
+  .line.t { top: 0; } .line.b { bottom: 0; }
+  .card .lbl {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    padding: 0 calc(6 * var(--s)); background: #fff;
+    font: 400 calc(32 * var(--s)) / calc(42 * var(--s)) var(--mono);
+  }
+  .lbl.t { top: calc(56 * var(--s)); } .lbl.b { bottom: calc(56 * var(--s)); }
+
+  .orbit, .ring, .pulse { position: absolute; left: 50%; top: 50%; width: calc(2 * var(--r)); height: calc(2 * var(--r)); margin: calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius: 50%; }
+  .ring { border: 1px solid rgba(17, 113, 255, .75); }
+  .pulse { border: 1px solid rgba(17, 113, 255, .5); animation: ripple 4.8s cubic-bezier(.2, .6, .3, 1) infinite; }
+  .orbit { animation: spin 28s linear infinite; }
+  .orbit::before {
+    content: ""; position: absolute; left: 50%; top: 0;
+    width: calc(12 * var(--s)); height: calc(12 * var(--s)); margin: calc(-6 * var(--s)) 0 0 calc(-6 * var(--s));
+    background: var(--blue);
+  }
+  .eye {
+    position: absolute; left: 50%; top: 50%;
+    width: calc(230 * var(--s)); height: auto; fill: var(--blue); overflow: visible;
+    translate: calc(-50% + var(--lx, 0) * 18 * var(--s)) calc(-50% + var(--ly, 0) * 10 * var(--s));
+  }
+  .lid { transform-box: fill-box; transform-origin: 50% 50%; }
+  .lid.blink { animation: blink .26s cubic-bezier(.6, 0, .4, 1); }
+
+  @keyframes blink { 0%, 100% { transform: scaleY(1); } 42%, 58% { transform: scaleY(.07); } }
+  @keyframes spin { to { transform: rotate(1turn); } }
+  @keyframes ripple { 0% { transform: scale(1); opacity: .9; } 70%, 100% { transform: scale(1.32); opacity: 0; } }
+  @keyframes pulse { 50% { opacity: .25; } }
+
+  /* stacked: tablets / portrait */
+  @media (max-width: 1100px), (max-aspect-ratio: 1/1) {
+    :root { --s: calc(100vw / 1000); }
+    .hero { grid-template-columns: 1fr; row-gap: calc(2 * var(--pad)); }
+    .left { min-height: calc(100svh - 2 * var(--pad)); }
+    .card { aspect-ratio: 848 / 965; }
+  }
+  /* phones: 16px gutter, readable minimums */
+  @media (max-width: 600px) {
+    :root { --s: calc((100vw - 32px) / 640); --pad: 16px; }
+    .nav a:not(.box) { display: none; }
+    h1 { font-size: calc((100vw - 32px) / 4.4); }
+    .chip { font-size: 13px; }
+    .eyebrow .chip { font-size: 11px; }
+    .sub { font-size: 16px; max-width: none; }
+    .cta { font-size: 18px; padding: 16px 36px; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .steps li { font-size: 12px; gap: 16px; padding: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse, .orbit, .cta i { animation: none; }
+    .pulse { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<main class="hero">
+  <div class="bg" aria-hidden="true"></div>
+  <div class="dots" aria-hidden="true"></div>
+
+  <section class="left">
+    <header class="top">
+      <a class="logo" href="./" aria-label="Farseer — home">
+        <span class="box"><svg class="mark" viewBox="0 0 530 291" aria-hidden="true"><use href="#eye"/></svg></span>
+        <span class="chip">Farseer</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#markets">Markets</a>
+        <a href="#docs">Docs</a>
+        <a class="box" href="#x" aria-label="Farseer on X">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+      </nav>
+    </header>
+
+    <div class="welcome">
+      <p class="eyebrow">
+        <span class="box"><svg viewBox="0 0 34 34" fill="none" stroke="#fff" stroke-width="1.5" aria-hidden="true"><circle cx="17" cy="17" r="14"/><ellipse cx="17" cy="17" rx="5.5" ry="14"/><path d="M3 17h28"/></svg></span>
+        <span class="chip">Prediction markets × memecoins</span>
+      </p>
+      <div class="title">
+        <h1>Meme the<br>future.</h1>
+        <p class="sub">Launch a memecoin on any Polymarket outcome. Its price tracks the odds along a bonding curve — then it graduates to Uniswap.</p>
+      </div>
+      <button class="cta" type="button" aria-live="polite"><i aria-hidden="true"></i><span>App coming soon</span></button>
+    </div>
+
+    <ol class="steps" id="how" aria-label="How it works">
+      <li><span>01</span>Pick an<br>outcome</li>
+      <li><span>02</span>Launch<br>a memecoin</li>
+      <li><span>03</span>Ride the<br>bonding curve</li>
+      <li><span>04</span>Graduate<br>to Uniswap</li>
+    </ol>
+  </section>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <aside class="card" aria-label="Predictions and markets">
+    <span class="sq tl"></span><span class="sq tr"></span><span class="sq bl"></span><span class="sq br"></span>
+    <span class="line t"></span><span class="line b"></span>
+    <span class="lbl t">PREDICTIONS</span>
+    <span class="lbl b">MARKETS</span>
+    <span class="pulse" aria-hidden="true"></span>
+    <span class="ring" aria-hidden="true"></span>
+    <span class="orbit" aria-hidden="true"></span>
+    <svg class="eye" viewBox="0 0 530 291" role="img" aria-label="Farseer eye"><g class="lid"><use href="#eye"/></g></svg>
+  </aside>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="eye" viewBox="0 0 530 291"><path d="M260.6 290.2C259 290.1 256.1 289.8 254.2 289.6C252.4 289.4 249.2 289.1 247.1 289C245.1 288.9 242.2 288.6 240.8 288.3C239.3 288 237 287.6 235.6 287.5C234.2 287.4 232.3 287.1 231.4 286.8C230.5 286.5 228.7 286.2 227.4 286C226.1 285.9 224.2 285.5 223.2 285.1C222.3 284.8 221 284.5 220.3 284.4C218.8 284.2 214.1 283.1 211.9 282.5C208 281.4 203.8 280.3 202.9 280.1C200.9 279.8 187.8 275.5 181.9 273.2C180.4 272.7 178.5 272 177.8 271.8C173.4 270.3 161.8 265.4 157.2 263C156.2 262.5 155.1 262 154.8 261.9C152.6 261.3 132.4 251 124.8 246.6C122.9 245.6 120.8 244.4 120.1 244.1C119.4 243.7 118.1 242.9 117.1 242.3C113.4 240 108.7 237.1 105.4 235.1C103.5 233.9 99.6 231.4 96.8 229.5C93.9 227.6 91.1 225.8 90.5 225.4C88.1 223.9 83.6 220.8 82.4 219.8C81.7 219.2 80.3 218.2 79.4 217.6C78.4 216.9 76.6 215.6 75.3 214.7C74 213.7 72.6 212.7 72.3 212.4C71.9 212.1 70.8 211.3 69.7 210.5C68.7 209.7 67.2 208.7 66.5 208.3C65.8 207.8 64.5 206.9 63.8 206.3C63 205.6 61.5 204.4 60.4 203.5C59.3 202.7 56.5 200.6 54.3 198.8C52.1 197.1 49.3 194.9 48.2 194.1C47.1 193.2 45.6 192 45 191.4C44.4 190.8 42.6 189.4 41 188.1C39.4 186.9 37.2 185 36 184C34.8 182.9 33.4 181.8 32.9 181.3C31.3 180.2 29.7 178.8 26.5 176C24.9 174.6 23.2 173.1 22.8 172.8C22.3 172.4 19.9 170.3 17.5 168.2C15.1 166 12.3 163.5 11.4 162.7C3.1 155.6 1.1 152.8 0.3 147.6C0 145 0 144.6 0.3 142.1C0.8 139 1.5 137.2 3.3 134.9C4.2 133.6 9.3 128.7 12.2 126.2C13.1 125.5 15.5 123.4 17.5 121.6C19.5 119.8 21.6 118 22.2 117.6C22.7 117.2 24.5 115.7 26.2 114.2C27.8 112.8 30.4 110.7 31.9 109.5C33.4 108.4 35.3 106.8 36.1 106.1C37.9 104.5 42.5 100.8 44.1 99.8C44.6 99.3 45.9 98.3 46.9 97.5C48.7 96 51.9 93.4 58.1 88.8C65.7 83 66.7 82.3 68.4 81.2C69.3 80.5 71.5 79 73.2 77.7C74.9 76.4 77 74.9 77.8 74.3C78.7 73.7 81 72.1 82.9 70.7C87 67.8 90.8 65.7 93.2 65C95.7 64.3 100.5 63.5 103.6 63.3C105.7 63.2 107.2 63.3 110 63.7C115.2 64.5 117 65 120.5 66.8C124.9 69 128.1 71.7 134.5 78.4C136.1 80 137.7 81.6 138 81.9C138.4 82.2 139.2 83.2 139.9 84.2C143.9 89.7 145.1 95.7 143.6 101.7C142.8 104.7 141.6 108.5 140.9 110C140.7 110.6 140.2 112 140 113.1C139.6 115 139.3 116.2 138.1 121C137.9 121.9 137.6 123.4 137.4 124.4C136.8 127.3 135.8 136.9 135.6 141.4C135.5 145.8 135.8 154.8 136.2 157.2C136.4 158 136.7 160.1 136.9 162C137.1 163.9 137.5 166.1 137.7 167C138 167.9 138.4 169.5 138.5 170.5C138.7 171.5 139 172.8 139.2 173.3C139.4 173.9 139.7 175.3 140 176.5C140.3 177.7 140.7 179.1 140.9 179.7C141.2 180.2 141.6 181.2 141.7 181.8C141.9 182.5 142.2 183.4 142.4 183.8C142.6 184.2 143 185.3 143.2 186.1C143.9 188.4 146.3 194 148 197.2C148.9 198.8 150.3 201.5 151.2 203.2C152.1 205 153.2 207.1 153.7 207.9C155.3 210.6 159.5 216.9 160.2 217.6C160.6 218 161.4 219.1 161.9 219.9C165.5 225.1 174.3 234.4 182.9 241.9C186.8 245.3 194.6 250.8 199.4 253.7C201.3 254.8 203.4 256 204.2 256.5C206.7 257.9 212.1 260.7 214.1 261.5C215.2 261.9 216.7 262.6 217.6 263C218.4 263.5 219.9 264.1 220.8 264.4C221.6 264.7 223.2 265.3 224.2 265.8C229.9 268.1 242.1 271.4 247.1 272C248.4 272.1 250.3 272.4 251.4 272.6C258.2 273.9 277.3 273.9 284.2 272.6C285.3 272.4 287.2 272.1 288.4 272C292.2 271.5 300.9 269.4 305 267.9C309.9 266.1 315 264 315.9 263.4C316.2 263.2 317.4 262.6 318.6 262.1C321.6 260.9 327 257.9 328.6 256.6C330.5 255.1 332.6 252.2 333.4 250C334.1 248.2 334.1 248 334.1 243.5C334.1 238.9 334.1 238.9 333.4 237C332.9 235.9 332 234.4 331.4 233.5C329.9 231.6 325.9 227.3 323.1 224.8C322 223.7 320.1 221.8 318.8 220.6C317.4 219.3 315.7 217.7 314.8 217.1C306.2 210.4 304.5 209.2 302.9 208.3C302.2 208 301.1 207.3 300.4 206.9C295.3 203.6 287.6 199.8 282.8 198.3C282 198 281.1 197.7 280.8 197.6C280.4 197.4 278.8 196.9 277.1 196.4C273.3 195.3 267.8 194.6 263.9 194.8C256.7 195.2 254.3 195.7 247.5 198.3C246.1 198.8 244.1 199.6 243.1 199.9C242.2 200.2 240.3 200.9 239 201.4C237.7 201.9 234 203.3 230.8 204.5C227.5 205.7 224.5 206.8 224.1 207.1C223.7 207.3 222 207.9 220.4 208.4C218.7 208.9 216.9 209.6 216.2 209.9C215.6 210.2 214.4 210.7 213.5 211C210.1 212 208.3 212.7 207.5 213.2C206.5 213.8 203.7 214.5 202.2 214.5C201.7 214.5 200.7 214.3 200 214.1C198.4 213.6 197.4 212.7 196.2 210.2C195.2 208.3 195 207.2 195.7 205.6C195.9 205.1 196.6 203 197.3 201C198 199.1 198.7 197.1 198.9 196.7C199.1 196.4 199.6 194.8 200.1 193.3C200.6 191.8 201.3 190.1 201.6 189.4C202.4 187.7 205.1 180.7 206.4 176.8C206.9 175 207.6 173.3 207.8 173C207.9 172.7 208.4 171.4 208.9 170.1C209.3 168.9 210.1 166.8 210.6 165.5C211.1 164.2 211.8 162.4 212.1 161.5C212.4 160.6 212.9 159.5 213.1 159.1C213.3 158.7 213.6 157.6 213.8 156.7C213.9 155.8 214.3 154.3 214.6 153.4C215.1 151.8 215.1 151.1 215.1 144.9C215.1 138.3 215.1 138.1 214.4 136C214.1 134.8 213.7 133.4 213.6 132.9C213.5 131.8 212.5 129.2 211.2 126.2C210.8 125.3 210.5 124.5 210.5 124.4C210.5 124.3 210.1 123.3 209.6 122.3C209.1 121.2 207.7 118.4 206.6 116.1C205.5 113.7 203.7 110.5 202.7 108.9C201.7 107.4 200.5 105.6 200.2 105C199.8 104.3 199.3 103.7 199.1 103.5C198.9 103.3 198.3 102.5 197.8 101.8C197.3 101 196.5 99.9 196 99.3C195.5 98.6 194.1 97 193 95.6C189.8 91.7 187.3 89.1 167.7 69.5C157.5 59.4 148.7 50.5 148 49.6C146.6 47.9 145.1 44.8 144.7 43C144.2 40 144.5 37.7 146 34.6C147.9 30.6 150 28.8 158.1 24.6C159.9 23.7 162 22.6 162.8 22.1C164.1 21.3 169.4 18.9 173.9 17C175.2 16.4 177.3 15.5 178.7 15C183.1 13.1 189.8 10.7 193.8 9.6C195.9 9.1 198.7 8.2 200 7.8C202.5 7 205.1 6.3 207.1 6C207.8 5.8 209.4 5.4 210.6 5C211.9 4.6 213.8 4.2 214.9 4C216 3.9 217.6 3.5 218.5 3.3C219.4 3 221.3 2.6 222.8 2.5C224.2 2.3 226.2 2 227.3 1.7C228.5 1.5 231.1 1.1 233.2 1C235.4 0.9 238.4 0.6 240 0.4C245.1 -0.3 250 -0.5 258.2 -0.5C266.5 -0.5 271.4 -0.3 276.6 0.4C278.3 0.6 281.4 0.9 283.5 1C285.6 1.1 288.5 1.4 289.9 1.7C291.2 2 293.6 2.3 295 2.5C296.4 2.6 298.4 3 299.4 3.2C300.3 3.5 302.1 3.8 303.4 4C304.6 4.1 306.6 4.6 307.8 5C308.9 5.4 310.3 5.7 310.8 5.8C311.2 5.8 312.3 5.9 313 6.1C313.8 6.3 315.4 6.7 316.8 7C318.1 7.3 320 7.8 321 8.1C322 8.4 324.4 9.1 326.2 9.5C330.9 10.6 342.9 14.5 352.9 18.3C354.4 18.8 355.9 19.4 356.1 19.4C356.6 19.6 358.3 20.3 362 21.9C362.8 22.2 364.3 22.9 365.5 23.4C367.7 24.3 368.2 24.5 372.9 26.8C374.4 27.5 376.4 28.3 377.2 28.7C378.1 29 379.4 29.6 380 30C380.6 30.4 381.7 30.9 382.4 31.2C384.1 31.9 398.4 39.1 400.8 40.5C401.8 41.1 403.6 42.1 404.8 42.7C405.9 43.4 407.2 44.1 407.6 44.4C408 44.7 409.2 45.3 410.2 45.8C411.9 46.6 413.7 47.7 421.2 52.5C422.6 53.3 424.8 54.8 426.3 55.6C427.8 56.5 429.5 57.6 430.1 58.1C430.8 58.5 432.1 59.4 433.1 60C438.3 63.4 445 68 448 70.1C449 70.9 451 72.3 452.4 73.2C453.8 74.2 455.8 75.7 456.9 76.5C459.2 78.3 462.4 80.7 464.6 82.2C465.4 82.8 467.5 84.3 469.1 85.6C470.8 86.9 473.6 89.1 475.4 90.5C477.2 91.9 479.2 93.4 479.8 93.9C480.4 94.5 481.7 95.5 482.6 96.2C483.6 97 484.8 98.1 485.5 98.7C486.1 99.2 487 99.9 487.5 100.3C488.7 101.1 492 103.8 494 105.6C494.9 106.5 496.4 107.7 497.2 108.4C498.1 109 500.1 110.7 501.6 112C503.1 113.3 505.3 115.1 506.5 116.1C507.6 117.1 509.4 118.6 510.4 119.5C521.1 129.1 525.6 133.3 527.2 135.3C527.8 136.1 528.7 137.7 529.2 138.8L530.1 140.9L530.1 145.1C530.1 149.4 530.1 149.4 529.3 151.2C528.9 152.2 528.2 153.5 527.7 154.2C526.7 155.7 521 161.3 518.2 163.6C517.1 164.5 515.3 166.1 514.2 167.1C512.1 169.2 509.4 171.5 507.7 172.8C507.1 173.2 505.4 174.7 504 175.9C501.2 178.4 499.4 179.8 497.5 181.2C496.8 181.7 495.5 182.8 494.5 183.6C491.3 186.3 488.9 188.2 487.4 189.2C486.7 189.8 486 190.4 485.9 190.5C485.7 190.8 482.1 193.7 480.1 195.1C479.6 195.5 478.6 196.3 477.9 196.9C477.2 197.5 475.4 198.9 473.9 199.9C472.5 201 469.4 203.3 467.2 204.9C465 206.6 462.5 208.4 461.7 208.9C460.9 209.5 458.5 211.2 456.4 212.8C454.2 214.4 451.9 216.2 451.2 216.6C450.5 217.1 448.5 218.4 446.9 219.7C443.1 222.4 438.4 224.8 435.3 225.5C432.5 226.1 427.6 226.8 425.4 226.8C422.9 226.8 417 225.8 414.5 225.1C411.3 224.1 406.9 221.8 404.6 219.9C403.5 219 402.1 217.8 401.5 217.3C400.9 216.8 399 214.9 397.3 213.1C395.6 211.2 393.6 209.3 393 208.7C391.9 207.8 389.7 205.2 388.7 203.4C388.4 203.1 387.8 201.7 387.3 200.3L386.4 197.9L386.4 193C386.4 188.4 386.5 188 387.1 186.5C387.9 184.2 389 181.1 389.4 179.5C389.6 178.7 389.9 177.6 390.2 177C390.5 176.4 390.8 175.3 390.9 174.7C391 174.1 391.3 172.6 391.6 171.4C391.9 170.1 392.4 167.9 392.6 166.4C392.8 164.9 393.2 163 393.4 162.2C394.2 159.5 394.8 146.6 394.5 140.4C394.1 132.8 393.8 129.2 393.4 127.8C393.2 127 392.8 125.2 392.6 123.8C392.4 122.3 392 120.1 391.6 118.9C391.3 117.6 391 116.1 390.9 115.5C390.8 114.9 390.5 113.9 390.3 113.3C390 112.6 389.3 110.6 388.8 108.8C388.2 106.9 387.4 104.8 387.1 104C386.8 103.2 386.2 101.8 385.9 100.8C385.2 98.9 383.4 95 382.5 93.1C382.2 92.6 380.9 90 379.6 87.5C378.3 85 376.7 82.2 376.1 81.4C375.6 80.5 374.5 79 373.9 77.9C373.2 76.8 372.1 75.1 371.4 74.2C370.7 73.4 369.8 72.1 369.4 71.5C368.3 69.7 365.3 66 363.4 64C362.4 63 360.6 61 359.4 59.5C358.1 58.1 357 56.9 356.8 56.8C356.7 56.7 354.6 54.8 352.2 52.6C343.9 44.8 337.3 39.9 329.5 35.5C328.2 34.8 326.4 33.8 325.6 33.2C323.1 31.7 318.2 29.2 315.9 28.3C314.6 27.9 313.4 27.3 313 27.1C312.7 26.9 311.7 26.4 310.8 26.1C309.9 25.8 308.8 25.3 308.4 25.1C307.8 24.7 302.7 22.9 298.9 21.6C289.6 18.5 274.6 16.3 263.1 16.2C257.8 16.2 249.7 16.8 245.5 17.4C243.2 17.7 240.9 18.1 240.4 18.1C239.8 18.2 238.2 18.5 236.9 18.9C235.5 19.2 233.7 19.6 232.9 19.8C229.6 20.6 226.3 21.6 225.9 21.9C225.6 22 224.9 22.3 224.4 22.5C222 23.2 218.6 24.6 215.4 26C213.6 26.9 211.2 27.9 210.1 28.4C209 28.9 207.5 29.6 206.8 30.1C206 30.6 204.8 31.2 204 31.6C202 32.6 198.8 36 197.6 38.3C197.2 39.3 196.8 40.3 196.8 40.5C196.8 40.7 196.5 41.9 196.1 43C195.4 45.5 195.3 47.4 196 49.4C196.2 50.2 196.6 51.4 196.7 52C196.9 52.5 197.4 53.8 197.8 54.7C198.5 56.2 199.3 57.1 205.4 63.1C211.9 69.7 215.7 73.2 218.8 75.5C223.6 79.1 226 80.8 226.9 81.3C227.4 81.6 228.8 82.4 230 83.1C231.2 83.8 232.7 84.7 233.5 85.1C238.6 88.1 246.9 91.8 251.1 92.9C251.8 93 253.2 93.5 254.2 93.8C258.8 95.4 271.3 95.4 275.9 93.9C276.8 93.6 278.2 93.1 279 92.9C281 92.4 289.4 89.3 294.4 87.4C296 86.7 298.8 85.7 300.6 85C302.4 84.4 304.7 83.5 305.6 83.1C306.6 82.7 308.4 82 309.6 81.6C310.8 81.3 313.2 80.4 314.8 79.8C316.5 79.1 318.7 78.3 319.6 78C320.6 77.7 321.9 77.2 322.5 76.9C326.2 75 330.3 75 332.3 77C334.2 78.7 335 81.5 334.5 84C334.1 85.8 332.6 90.4 331.8 92.4C331.5 93.1 330.9 94.8 330.4 96.1C329.9 97.5 329.1 99.4 328.8 100.4C327.8 102.6 326.1 107.2 324.4 112.1C323.1 115.6 319.5 125.1 318.2 128.1C317.7 129.3 316.9 131.9 316.1 134.6C315.9 135.3 315.8 136.3 315.8 136.9C315.7 137.4 315.6 138.8 315.4 139.9C315 142.2 314.9 147.4 315.2 149.6C315.4 150.4 315.6 152.1 315.8 153.3C315.9 154.4 316.3 156.2 316.6 157.2C317 158.2 317.2 159.1 317.2 159.3C317.2 159.5 317.6 160.4 318 161.2C318.4 162.1 319.1 163.8 319.5 165C320.6 168 326 178.6 327.8 181.2C328.7 182.5 329.7 184.1 330.1 184.7C331.7 187.2 334.6 191 337.1 194.1C338.8 196.2 347.5 205 360.1 217.8C371.3 229 381.1 238.9 381.9 239.8C383.8 241.9 384.6 243.3 385.4 246.4C386.2 249.3 386.1 250.8 385.2 253.7C383.7 257.8 381.7 260.1 377.5 262.6C374.6 264.2 365.8 269 365.6 269C365.6 269 363.6 269.8 361.4 270.9C359.1 271.9 357.2 272.8 357.1 272.8C357 272.8 355 273.6 352.7 274.6C350.3 275.6 347.1 276.9 345.5 277.4C343.9 278 341.9 278.7 341 279.1C340.1 279.4 337.6 280.2 335.5 280.7C333.4 281.3 331.1 281.9 330.5 282.2C329.9 282.5 328.7 282.8 327.8 283C326.9 283.1 325.8 283.4 325.2 283.6C324.7 283.8 323.5 284.1 322.5 284.3C321.6 284.4 320.1 284.8 319.1 285.2C318.2 285.5 316.5 285.9 315.4 286C314.2 286.1 312.7 286.5 311.9 286.8C311.1 287 309.3 287.4 307.8 287.5C306.3 287.7 304.1 288 302.9 288.3C301.7 288.6 298.9 288.9 296.6 289C294.4 289.1 291.4 289.4 289.9 289.6C288.4 289.8 285.3 290.1 283 290.2C278.2 290.5 265 290.5 260.6 290.2Z"/></symbol>
+</svg>
+
+<script>
+  (() => {
+    const card = document.querySelector('.card');
+    const eye = card.querySelector('.eye');
+    const lid = eye.querySelector('.lid');
+    const cta = document.querySelector('.cta span');
+
+    // CTA: the app is not live yet — acknowledge the click instead of navigating
+    let ctaTimer;
+    document.querySelector('.cta').addEventListener('click', () => {
+      cta.textContent = 'Stay tuned';
+      clearTimeout(ctaTimer);
+      ctaTimer = setTimeout(() => { cta.textContent = 'App coming soon'; }, 1600);
+    });
+
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // the eye follows the pointer; when idle it glances around on its own
+    let tx = 0, ty = 0, x = 0, y = 0, lastMove = -1e9;
+    addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+      const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 520);
+      tx = dx / d * k; ty = dy / d * k; lastMove = performance.now();
+    });
+    setInterval(() => {
+      if (performance.now() - lastMove < 3000) return;
+      const a = Math.random() * Math.PI * 2, k = Math.random() < .3 ? 0 : .4 + Math.random() * .6;
+      tx = Math.cos(a) * k; ty = Math.sin(a) * k;
+    }, 2200);
+    const tick = () => {
+      x += (tx - x) * .09; y += (ty - y) * .09;
+      eye.style.setProperty('--lx', x.toFixed(3));
+      eye.style.setProperty('--ly', y.toFixed(3));
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    // blinks at random intervals, sometimes twice
+    lid.addEventListener('animationend', () => lid.classList.remove('blink'));
+    const blink = () => {
+      lid.classList.add('blink');
+      const twice = Math.random() < .25;
+      if (twice) setTimeout(() => lid.classList.add('blink'), 380);
+      setTimeout(blink, 2400 + Math.random() * 4000 + (twice ? 380 : 0));
+    };
+    setTimeout(blink, 1400);
+  })();
+</script>
+</body>
+</html>
