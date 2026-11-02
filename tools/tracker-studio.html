@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tracker Studio — трекінг-бокси та HUD</title>
+<link rel="stylesheet" href="studio.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  #out{background:#000}
+  .tabs{grid-template-columns:repeat(5,1fr)}
+  .tab{font-size:11.5px;padding:7px 2px}
+  input[type=text]{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:13px;font-weight:500;font-family:"JetBrains Mono",ui-monospace,monospace;outline:none;box-sizing:border-box}
+  .preset .pal{margin-top:6px}
+  #styles .preset{font-size:11.5px}
+  .colors.c5{grid-template-columns:repeat(5,1fr);gap:6px}
+  .colors.c5 .color-wrap{justify-content:center;padding:5px 4px}
+  .colors.c5 .color-field span{text-align:center}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round">
+          <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/>
+          <rect x="8.5" y="8.5" width="7" height="7" opacity=".55"/>
+          <circle cx="12" cy="12" r="1.3" fill="white" stroke="none"/>
+        </svg>
+      </div>
+      <div><h1>Tracker Studio</h1><p>пошук ознак → трекінг-бокси → підписи → HUD</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="src">Джерело</div>
+        <div class="tab" data-tab="track">Трекінг</div>
+        <div class="tab" data-tab="hud">HUD</div>
+        <div class="tab" data-tab="color">Колір</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ SOURCE ============ -->
+      <div data-pane="src" class="active">
+        <div class="group">
+          <h2>Пресети</h2>
+          <div class="presets c3" id="styles"></div>
+        </div>
+        <div class="group">
+          <h2>Джерело</h2>
+          <div class="presets c4" id="sources">
+            <div class="preset active" data-src="flowers">Квіти</div>
+            <div class="preset" data-src="swarm">Рій</div>
+            <div class="preset" data-src="word">Слово</div>
+            <div class="preset" data-src="file">Файл</div>
+          </div>
+          <div class="btns-grid" style="margin-top:10px"><button class="btn primary full" id="load">Завантажити фото чи відео</button></div>
+          <div class="note">Демо рухається у безшовному лупі. Своє фото чи відео — кнопкою, перетягуванням на превʼю або ⌘V.</div>
+        </div>
+        <div class="group" id="wordGroup" style="display:none">
+          <h2>Слово</h2>
+          <input type="text" id="demoText" value="TRACK" maxlength="10">
+        </div>
+        <div class="group" id="fitGroup" style="display:none">
+          <h2>Вписування</h2>
+          <div class="presets c2" id="fits">
+            <div class="preset active" data-fit="cover">Заповнити</div>
+            <div class="preset" data-fit="contain">Вмістити</div>
+          </div>
+          <div class="row mt"><label class="lbl">Масштаб</label><span class="val" id="vScale">1.00</span></div>
+          <input type="range" id="scale" min="0.2" max="3" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Зсув X</label><span class="val" id="vOffX">0.00</span></div>
+          <input type="range" id="offX" min="-0.5" max="0.5" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Зсув Y</label><span class="val" id="vOffY">0.00</span></div>
+          <input type="range" id="offY" min="-0.5" max="0.5" step="0.01" value="0">
+          <div class="note">Відео трекається наживо. MP4 рендериться покадрово перемотуванням кліпу (до 60 с).</div>
+        </div>
+      </div>
+
+      <!-- ============ TRACK ============ -->
+      <div data-pane="track">
+        <div class="group">
+          <h2>Детекція</h2>
+          <div class="presets c4" id="detects">
+            <div class="preset active" data-det="contrast">Контраст</div>
+            <div class="preset" data-det="luma">Яскравість</div>
+            <div class="preset" data-det="edges">Краї</div>
+            <div class="preset" data-det="motion">Рух</div>
+          </div>
+          <div class="row mt"><label class="lbl">Кількість</label><span class="val" id="vCount">12</span></div>
+          <input type="range" id="count" min="1" max="80" step="1" value="12">
+          <div class="row mt"><label class="lbl">Поріг</label><span class="val" id="vThresh">0.20</span></div>
+          <input type="range" id="thresh" min="0" max="0.9" step="0.01" value="0.2">
+          <div class="row mt"><label class="lbl">Масштаб пошуку</label><span class="val" id="vCell">10</span></div>
+          <input type="range" id="cell" min="3" max="24" step="1" value="10">
+          <div class="row mt"><label class="lbl">Відстань NMS</label><span class="val" id="vSpacing">2.00</span></div>
+          <input type="range" id="spacing" min="0.6" max="4" step="0.05" value="2">
+          <div class="row mt"><label class="lbl">Згладжування руху</label><span class="val" id="vSmooth">0.50</span></div>
+          <input type="range" id="smooth" min="0" max="0.95" step="0.01" value="0.5">
+          <div class="note">Пошук іде на зменшеній копії (160 px): карта ознак → локальні максимуми → NMS → топ-N. Точки зберігають ID між кадрами (найближчий збіг). «Рух» — різниця кадрів; на фото працює як «Контраст».</div>
+        </div>
+        <div class="group">
+          <h2>Бокси</h2>
+          <div class="presets c3" id="boxStyles">
+            <div class="preset active" data-box="rect">Рамка</div>
+            <div class="preset" data-box="brackets">Кути</div>
+            <div class="preset" data-box="cross">Приціл</div>
+            <div class="preset" data-box="circle">Коло</div>
+            <div class="preset" data-box="dot">Точка</div>
+            <div class="preset" data-box="square">Квадрат</div>
+          </div>
+          <div class="presets c2" id="sizeModes" style="margin-top:8px">
+            <div class="preset active" data-size="region">За регіоном</div>
+            <div class="preset" data-size="fixed">Фіксований</div>
+          </div>
+          <div class="row mt"><label class="lbl">Масштаб боксу</label><span class="val" id="vBoxScale">1.30</span></div>
+          <input type="range" id="boxScale" min="0.4" max="3" step="0.05" value="1.3">
+          <div class="row mt"><label class="lbl">Фіксований розмір</label><span class="val" id="vBoxFixed">120</span></div>
+          <input type="range" id="boxFixed" min="16" max="420" step="2" value="120">
+          <div class="row mt"><label class="lbl">Товщина лінії</label><span class="val" id="vLineW">1.5</span></div>
+          <input type="range" id="lineW" min="0.5" max="6" step="0.25" value="1.5">
+          <div class="row mt"><label class="lbl">Довжина кутів</label><span class="val" id="vBracket">0.25</span></div>
+          <input type="range" id="bracket" min="0.08" max="0.5" step="0.01" value="0.25">
+          <div class="row mt"><label class="lbl">Заливка</label><span class="val" id="vBoxFill">0.00</span></div>
+          <input type="range" id="boxFill" min="0" max="0.7" step="0.01" value="0">
+          <div class="switch-row"><span class="lbl">Квадратні бокси</span>
+            <label class="switch"><input type="checkbox" id="squareBox"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Вузли на кутах</span>
+            <label class="switch"><input type="checkbox" id="nodes"><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Підписи</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">ID</span>
+            <label class="switch"><input type="checkbox" id="lblId"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Впевненість</span>
+            <label class="switch"><input type="checkbox" id="lblConf"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Координати</span>
+            <label class="switch"><input type="checkbox" id="lblXY"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Слова</span>
+            <label class="switch"><input type="checkbox" id="lblWord"><span class="track"></span></label></div>
+          <div class="row mt"><label class="lbl">Слова (через кому)</label></div>
+          <input type="text" id="words" value="">
+          <div class="presets c3" id="lblStyles" style="margin-top:10px">
+            <div class="preset active" data-lbl="plain">Колір боксу</div>
+            <div class="preset" data-lbl="white">Білий</div>
+            <div class="preset" data-lbl="tag">Плашка</div>
+          </div>
+          <div class="row mt"><label class="lbl">Розмір підпису</label><span class="val" id="vLblSize">15</span></div>
+          <input type="range" id="lblSize" min="8" max="40" step="1" value="15">
+        </div>
+        <div class="group">
+          <h2>Звʼязки</h2>
+          <div class="presets c3" id="linkModes">
+            <div class="preset active" data-link="none">Немає</div>
+            <div class="preset" data-link="nearest">Найближчі</div>
+            <div class="preset" data-link="chain">Ланцюг</div>
+            <div class="preset" data-link="center">До центру</div>
+            <div class="preset" data-link="web">Сузірʼя</div>
+          </div>
+          <div class="row mt"><label class="lbl">Сусідів</label><span class="val" id="vLinkK">2</span></div>
+          <input type="range" id="linkK" min="1" max="4" step="1" value="2">
+          <div class="row mt"><label class="lbl">Радіус сузірʼя</label><span class="val" id="vLinkDist">0.30</span></div>
+          <input type="range" id="linkDist" min="0.05" max="0.8" step="0.01" value="0.3">
+          <div class="row mt"><label class="lbl">Прозорість ліній</label><span class="val" id="vLinkAlpha">0.60</span></div>
+          <input type="range" id="linkAlpha" min="0.05" max="1" step="0.01" value="0.6">
+          <div class="switch-row"><span class="lbl">Пунктир</span>
+            <label class="switch"><input type="checkbox" id="dashed"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Треки руху</span>
+            <label class="switch"><input type="checkbox" id="trails"><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Анімація</h2>
+          <div class="row"><label class="lbl">Поява (с)</label><span class="val" id="vPop">0.35</span></div>
+          <input type="range" id="pop" min="0" max="1.2" step="0.01" value="0.35">
+          <div class="row mt"><label class="lbl">Друк (симв/с)</label><span class="val" id="vTypeSpeed">24</span></div>
+          <input type="range" id="typeSpeed" min="4" max="80" step="1" value="24">
+          <div class="row mt"><label class="lbl">Тремтіння</label><span class="val" id="vJitter">0.20</span></div>
+          <input type="range" id="jitter" min="0" max="1" step="0.01" value="0.2">
+          <div class="row mt"><label class="lbl">Час життя</label><span class="val" id="vLife">1.00</span></div>
+          <input type="range" id="life" min="0.1" max="1" step="0.01" value="1">
+          <div class="note">Час життя &lt; 1 — бокси зʼявляються й зникають по черзі, безшовно в лупі. Тремтіння — сідований дрейф, ніби бокс «ловить» ціль. Друк 80 — підпис зʼявляється одразу.</div>
+        </div>
+      </div>
+
+      <!-- ============ HUD ============ -->
+      <div data-pane="hud">
+        <div class="group">
+          <h2>Шари HUD</h2>
+          <div class="switch-row" style="margin-top:0"><span class="lbl">Радіальний циферблат</span>
+            <label class="switch"><input type="checkbox" id="hudDial"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Перехрестя</span>
+            <label class="switch"><input type="checkbox" id="hudCross"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Лінійки</span>
+            <label class="switch"><input type="checkbox" id="hudRulers"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Сітка</span>
+            <label class="switch"><input type="checkbox" id="hudGrid"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Кутова рамка</span>
+            <label class="switch"><input type="checkbox" id="hudFrame"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Таймкод і REC</span>
+            <label class="switch"><input type="checkbox" id="hudTime"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Показники</span>
+            <label class="switch"><input type="checkbox" id="hudRead"><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Циферблат</h2>
+          <div class="row"><label class="lbl">Розмір</label><span class="val" id="vDialSize">0.55</span></div>
+          <input type="range" id="dialSize" min="0.15" max="1.3" step="0.01" value="0.55">
+          <div class="row mt"><label class="lbl">Обертів за луп</label><span class="val" id="vDialSpin">1</span></div>
+          <input type="range" id="dialSpin" min="-3" max="3" step="1" value="1">
+          <div class="switch-row"><span class="lbl">Стежити за ціллю</span>
+            <label class="switch"><input type="checkbox" id="dialFollow"><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Вигляд HUD</h2>
+          <div class="colors">
+            <div class="color-field"><span>Колір HUD</span><div class="color-wrap"><input type="color" id="hudColor" value="#ffffff"></div></div>
+          </div>
+          <div class="row mt"><label class="lbl">Непрозорість</label><span class="val" id="vHudAlpha">0.80</span></div>
+          <input type="range" id="hudAlpha" min="0.1" max="1" step="0.01" value="0.8">
+          <div class="row mt"><label class="lbl">Розмір шрифту</label><span class="val" id="vHudSize">14</span></div>
+          <input type="range" id="hudSize" min="8" max="32" step="1" value="14">
+          <div class="row mt"><label class="lbl">Заголовок</label></div>
+          <input type="text" id="hudTitle" value="KLIK VISION SYS" maxlength="40">
+        </div>
+      </div>
+
+      <!-- ============ COLOR ============ -->
+      <div data-pane="color">
+        <div class="group">
+          <h2>Грейд</h2>
+          <div class="presets c4" id="grades">
+            <div class="preset active" data-grade="orig">Оригінал</div>
+            <div class="preset" data-grade="bw">Ч/Б</div>
+            <div class="preset" data-grade="teal">Teal</div>
+            <div class="preset" data-grade="thermal">Термо</div>
+            <div class="preset" data-grade="poster">Постер</div>
+            <div class="preset" data-grade="depth">Глибина</div>
+            <div class="preset" data-grade="neg">Негатив</div>
+            <div class="preset" data-grade="night">Нічне</div>
+          </div>
+          <div class="row mt"><label class="lbl">Яскравість</label><span class="val" id="vBright">1.00</span></div>
+          <input type="range" id="bright" min="0.3" max="2" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Контраст</label><span class="val" id="vContrast">1.00</span></div>
+          <input type="range" id="contrast" min="0.3" max="3" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Насиченість</label><span class="val" id="vSat">1.00</span></div>
+          <input type="range" id="sat" min="0" max="2" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Рівні постеру</label><span class="val" id="vLevels">5</span></div>
+          <input type="range" id="levels" min="2" max="12" step="1" value="5">
+        </div>
+        <div class="group">
+          <h2>Показ</h2>
+          <div class="presets c2" id="reveals">
+            <div class="preset active" data-rev="normal">Звичайний</div>
+            <div class="preset" data-rev="inside">Лише в боксах</div>
+            <div class="preset" data-rev="invert">Інверсія</div>
+            <div class="preset" data-rev="zoom">Зум у боксі</div>
+          </div>
+          <div class="row mt"><label class="lbl">Затемнення поза боксами</label><span class="val" id="vDimOut">0.00</span></div>
+          <input type="range" id="dimOut" min="0" max="1" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Зум</label><span class="val" id="vZoom">2.00</span></div>
+          <input type="range" id="zoom" min="1.2" max="5" step="0.05" value="2">
+          <div class="colors" style="margin-top:12px">
+            <div class="color-field"><span>Колір фону</span><div class="color-wrap"><input type="color" id="bg" value="#000000"></div></div>
+          </div>
+          <div class="switch-row"><span class="lbl">Прозорий фон</span>
+            <label class="switch"><input type="checkbox" id="transparent"><span class="track"></span></label></div>
+          <div class="note">«Лише в боксах» — картинка видна тільки всередині рамок, решта — колір фону. Прозорий фон лишає тільки оверлей (для PNG і WebM).</div>
+        </div>
+        <div class="group">
+          <h2>Палітра боксів</h2>
+          <div class="presets c3" id="palettes"></div>
+          <div class="colors c5" style="margin-top:10px">
+            <div class="color-field"><span>1</span><div class="color-wrap"><input type="color" id="c1" value="#39ff6a"></div></div>
+            <div class="color-field"><span>2</span><div class="color-wrap"><input type="color" id="c2" value="#00e5ff"></div></div>
+            <div class="color-field"><span>3</span><div class="color-wrap"><input type="color" id="c3" value="#ff2bd6"></div></div>
+            <div class="color-field"><span>4</span><div class="color-wrap"><input type="color" id="c4" value="#ffe600"></div></div>
+            <div class="color-field"><span>5</span><div class="color-wrap"><input type="color" id="c5" value="#ff6a1f"></div></div>
+          </div>
+          <div class="presets c3" id="colorModes" style="margin-top:10px">
+            <div class="preset active" data-cm="single">Один колір</div>
+            <div class="preset" data-cm="random">Випадково</div>
+            <div class="preset" data-cm="class">За класом</div>
+          </div>
+          <div class="note">«Один колір» — перший колір палітри. «За класом» — колір і слово за відтінком знайденої плями.</div>
+        </div>
+        <div class="group">
+          <h2>Світіння й плівка</h2>
+          <div class="row"><label class="lbl">Bloom</label><span class="val" id="vBloom">0.00</span></div>
+          <input type="range" id="bloom" min="0" max="2.5" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Поріг bloom</label><span class="val" id="vBloomThr">0.60</span></div>
+          <input type="range" id="bloomThr" min="0" max="0.95" step="0.01" value="0.6">
+          <div class="row mt"><label class="lbl">Радіус bloom</label><span class="val" id="vBloomRad">1.50</span></div>
+          <input type="range" id="bloomRad" min="0.5" max="4" step="0.05" value="1.5">
+          <div class="row mt"><label class="lbl">Зерно</label><span class="val" id="vGrain">0.00</span></div>
+          <input type="range" id="grain" min="0" max="0.4" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Сканлайни</label><span class="val" id="vScan">0.00</span></div>
+          <input type="range" id="scan" min="0" max="1" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Крок сканлайнів</label><span class="val" id="vScanSize">4</span></div>
+          <input type="range" id="scanSize" min="2" max="12" step="1" value="4">
+          <div class="row mt"><label class="lbl">Віньєтка</label><span class="val" id="vVig">0.00</span></div>
+          <input type="range" id="vig" min="0" max="1.5" step="0.01" value="0">
+        </div>
+      </div>
+
+      <!-- ============ EXPORT ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Формат</h2>
+          <div class="presets c4" id="aspects">
+            <div class="preset" data-aspect="1:1">1:1</div>
+            <div class="preset active" data-aspect="4:5">4:5</div>
+            <div class="preset" data-aspect="9:16">9:16</div>
+            <div class="preset" data-aspect="16:9">16:9</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid"><button class="btn primary" id="exPng">PNG</button><button class="btn" id="exJpg">JPG</button></div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">Тривалість лупа (с)</label><span class="val" id="vDur">6</span></div>
+          <input type="range" id="dur" min="2" max="20" step="1" value="6">
+          <div class="row mt"><label class="lbl">Повторів у файлі</label><span class="val" id="vLoops">1</span></div>
+          <input type="range" id="loops" min="1" max="5" step="1" value="1">
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">16</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="16">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (30 fps)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово (WebCodecs) — луп замикається ідеально. Для відео-джерела — весь кліп до 60 с, кадр за кадром. WebM пишеться з живого превʼю.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <input type="file" id="file" accept="image/*,video/*" hidden>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · ознаки на 160 px → NMS → трекінг з ID → бокси, підписи, звʼязки → HUD → грейд і bloom (WebGL2) · все локально</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const FPS = 30, TAU = Math.PI*2, SW = 160, MAXMISS = 8;
+  const P = {
+    source:"demo", demo:"flowers", demoText:"TRACK", fit:"cover", scale:1, offX:0, offY:0,
+    detect:"contrast", count:12, thresh:0.2, cell:10, spacing:2, smooth:0.5,
+    boxStyle:"rect", sizeMode:"region", boxScale:1.3, boxFixed:120, squareBox:false, lineW:1.5, bracket:0.25, boxFill:0, nodes:false,
+    lblId:true, lblConf:true, lblXY:false, lblWord:false, words:"TARGET, OBJECT, FACE, HAND, NODE, SIGNAL", lblStyle:"plain", lblSize:15,
+    links:"none", linkK:2, linkDist:0.3, linkAlpha:0.6, dashed:false, trails:false,
+    pop:0.35, typeSpeed:24, jitter:0.2, life:1,
+    hudDial:false, hudCross:false, hudRulers:false, hudGrid:false, hudFrame:false, hudTime:false, hudRead:false,
+    dialSize:0.55, dialSpin:1, dialFollow:false, hudColor:"#ffffff", hudAlpha:0.8, hudSize:14, hudTitle:"KLIK VISION SYS",
+    grade:"orig", bright:1, contrast:1, sat:1, levels:5,
+    reveal:"normal", dimOut:0, zoom:2, bg:"#000000", transparent:false,
+    palette:"white", colorMode:"single", c1:"#39ff6a", c2:"#00e5ff", c3:"#ff2bd6", c4:"#ffe600", c5:"#ff6a1f",
+    bloom:0, bloomThr:0.6, bloomRad:1.5, grain:0, scan:0, scanSize:4, vig:0,
+    aspect:"4:5", dur:6, loops:1, bitrate:16,
+  };
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const BASE = clone(P);    // нейтральна база, поверх якої лягають пресети
+
+  const PALETTES = {
+    white:  { name:"Білий",     cols:["#ffffff","#e6e6e6","#cfcfcf","#f5f5f5","#b8b8b8"] },
+    sun:    { name:"Жовтий",    cols:["#ece33a","#fff27a","#d9c826","#fff9c4","#c2b21c"] },
+    neon:   { name:"Neon",      cols:["#39ff6a","#00e5ff","#ff2bd6","#ffe600","#ff6a1f"] },
+    red:    { name:"Червоний",  cols:["#ff2a2a","#ff5c4d","#ff1f5e","#ff8f80","#ffffff"] },
+    teal:   { name:"Teal",      cols:["#cfe9e4","#8fd3c8","#e8fffb","#5fb3a6","#ffffff"] },
+    fish:   { name:"Акваріум",  cols:["#5b8cff","#ffb03a","#3ad6c8","#ff5aa8","#c8ff4a"] },
+    cv:     { name:"Сегменти",  cols:["#ff3b3b","#3b6bff","#2fd35a","#ffd23b","#c03bff"] },
+    figure: { name:"Фігура",    cols:["#2bd94a","#2a3cff","#2bd94a","#2a3cff","#111111"] },
+    custom: { name:"Свої кольори", cols:null },
+  };
+
+  const STYLES = [
+    { name:"Black Reveal", demo:"flowers", p:{ reveal:"inside", bg:"#000000", boxStyle:"brackets", bracket:0.2, lineW:1.5, squareBox:true, palette:"sun",
+      lblId:true, lblConf:false, lblSize:15, detect:"contrast", count:10, thresh:0.18, cell:11, spacing:2.4, boxScale:1.6,
+      pop:0.45, typeSpeed:18, jitter:0.12, life:0.62, hudFrame:true, hudColor:"#e8e23a", hudAlpha:0.9, grain:0.03 } },
+    { name:"Figure Track", p:{ reveal:"inside", bg:"#f3f3ef", boxStyle:"rect", lineW:1.5, nodes:true, palette:"figure", links:"chain", linkAlpha:0.9,
+      lblId:false, lblConf:false, lblWord:true, words:"ANALYSING FRAME, VERTEX, SUBJECT, CONTOUR, ISOLINE", lblStyle:"tag", lblSize:12,
+      detect:"edges", count:20, thresh:0.15, cell:7, spacing:1.5, boxScale:1.25, pop:0.25, typeSpeed:30, jitter:0.08, life:0.85,
+      hudRead:true, hudColor:"#2a3cff", hudTitle:"ISOLINE EXPERIMENTS [01]", hudSize:12, hudAlpha:1 } },
+    { name:"CV Debug", p:{ grade:"poster", levels:4, sat:1.3, contrast:1.1, boxStyle:"rect", boxFill:0.42, lineW:1, colorMode:"class", palette:"cv",
+      lblStyle:"tag", lblId:false, lblWord:true, lblConf:true, words:"person, car, road, sky, wall, tree, building", lblSize:13,
+      detect:"luma", count:12, thresh:0.25, cell:13, spacing:2, boxScale:1.4, jitter:0.1, hudRead:true, hudTitle:"SEG · DEPTH · DEBUG", hudSize:12 } },
+    { name:"Red Brackets", p:{ grade:"bw", contrast:1.35, bright:0.9, bloom:1.3, bloomThr:0.45, bloomRad:2.2, vig:0.7, grain:0.06,
+      boxStyle:"brackets", bracket:0.16, palette:"red", lineW:1.5, lblId:true, lblConf:true, lblSize:11,
+      detect:"luma", count:7, thresh:0.25, cell:15, spacing:2.4, boxScale:1.8, dimOut:0.2, life:0.8, pop:0.3,
+      hudRead:true, hudTitle:"0A-SECTOR-1-1038", hudColor:"#a7adb3", hudSize:12 } },
+    { name:"Teal HUD", p:{ grade:"teal", contrast:1.25, grain:0.1, vig:0.9, bloom:0.35, bloomThr:0.6, boxStyle:"cross", palette:"teal", lineW:1.25,
+      lblId:true, lblConf:false, lblXY:true, lblSize:12, detect:"contrast", count:5, cell:15, spacing:3, boxScale:1.2, jitter:0.25, life:0.8,
+      hudDial:true, dialSize:0.62, dialSpin:1, dialFollow:true, hudRead:true, hudTime:true, hudColor:"#d4ece7", hudAlpha:0.75, hudSize:12,
+      hudTitle:"OCULAR SCAN · V2" } },
+    { name:"Constellation", p:{ grade:"bw", contrast:1.15, boxStyle:"circle", squareBox:true, palette:"white", lineW:1.25, links:"web", linkDist:0.45, linkAlpha:0.85,
+      lblId:false, lblConf:false, lblWord:true, words:"Body, Bees, Plants, Space, Water, Soil, Seeds, Lasers, Air, Light", lblSize:16, lblStyle:"white",
+      detect:"luma", count:14, cell:9, spacing:2.2, boxScale:0.8, dimOut:0.25, jitter:0.3, hudCross:true } },
+    { name:"Label Cloud", p:{ boxStyle:"square", palette:"fish", colorMode:"random", lblId:false, lblConf:false, lblWord:true, lblStyle:"white", lblSize:11,
+      words:"signal, noise, memory, echo, vector, pixel, orbit, ghost, cache, drift, delta, sigma, prism, flux, node, glyph, pulse, archive, mirror, cloud, static, bloom, index, query",
+      count:60, detect:"contrast", thresh:0.06, cell:4, spacing:1.3, pop:0.3, typeSpeed:40, jitter:0.25, life:0.8, dimOut:0.25, sat:0.85 } },
+    { name:"Thermal Lock", p:{ grade:"thermal", contrast:1.15, bloom:0.8, bloomThr:0.55, bloomRad:1.8, scan:0.35, scanSize:4, grain:0.05,
+      boxStyle:"cross", palette:"white", lineW:2, lblId:true, lblConf:true, lblWord:true, words:"LOCK, HEAT, TGT", lblStyle:"tag", lblSize:13,
+      detect:"luma", count:4, cell:18, spacing:2.6, boxScale:1.4, hudDial:true, dialSize:0.36, dialSpin:2, dialFollow:true,
+      hudCross:true, hudTime:true, hudColor:"#ffffff", hudAlpha:0.85 } },
+    { name:"Minimal White", p:{ boxStyle:"rect", palette:"white", lineW:1, lblId:true, lblConf:true, lblStyle:"tag", lblSize:12,
+      count:8, detect:"contrast", cell:11, spacing:2.4, boxScale:1.3, jitter:0.1, hudTime:true, hudAlpha:0.7 } },
+    { name:"Motion Trails", demo:"swarm", p:{ grade:"bw", contrast:1.1, boxStyle:"rect", palette:"fish", colorMode:"random", lineW:2, trails:true,
+      lblId:false, lblConf:false, count:30, detect:"motion", thresh:0.12, cell:6, spacing:1.6, boxScale:1.2, smooth:0.35, jitter:0, pop:0.2 } },
+    { name:"Measure", p:{ grade:"bw", contrast:1.25, bright:1.05, hudGrid:true, hudRulers:true, hudDial:true, dialSize:0.7, dialSpin:1,
+      boxStyle:"dot", palette:"white", lineW:1.5, links:"center", linkAlpha:0.55, dashed:true, lblId:false, lblConf:false, lblXY:true,
+      lblStyle:"white", lblSize:12, count:6, detect:"edges", cell:12, spacing:3, jitter:0.15, hudAlpha:0.7 } },
+  ];
+  Object.assign(P, STYLES[0].p);
+  const DEFAULTS = clone(P);
+
+  const DETECT_NAMES = { contrast:"CONTRAST", luma:"LUMA", edges:"EDGES", motion:"MOTION" };
+  const GRADES = { orig:0, bw:1, teal:2, thermal:3, poster:4, depth:5, neg:6, night:7 };
+
+  const $ = id => document.getElementById(id);
+  const out = $("out");
+  const ctx = out.getContext("2d");
+  const srcC = document.createElement("canvas");                       // джерело W×H
+  const fctx = srcC.getContext("2d");
+  const compC = document.createElement("canvas");                      // композит перед пост-обробкою
+  const cctx = compC.getContext("2d");
+  const small = document.createElement("canvas");                      // 160 px для пошуку ознак
+  const sctx = small.getContext("2d", { willReadFrequently:true });
+  const glC = document.createElement("canvas");                        // WebGL2: грейд і пост
+  let W = 1080, H = 1350, SH = 200, NPX = 0;
+
+  /* ================= helpers ================= */
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const frac = x => x - Math.floor(x);
+  const hash01 = n => { const s = Math.sin(n*127.1 + 311.7)*43758.5453; return s - Math.floor(s); };
+  const pad = (n, k) => String(Math.max(0, Math.floor(n))).padStart(k, "0");
+  const monoFont = (px, wt) => `${wt || 500} ${Math.round(px)}px "JetBrains Mono", ui-monospace, Menlo, monospace`;
+  function rng(seed){
+    let a = seed >>> 0;
+    return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; };
+  }
+  const inkCache = new Map();
+  function inkFor(hex){
+    if(inkCache.has(hex)) return inkCache.get(hex);
+    const n = parseInt(hex.slice(1), 16), l = (0.2126*(n >> 16 & 255) + 0.7152*(n >> 8 & 255) + 0.0722*(n & 255))/255;
+    const v = l > 0.55 ? "#000000" : "#ffffff"; inkCache.set(hex, v); return v;
+  }
+  const palColors = () => P.palette === "custom" ? [P.c1, P.c2, P.c3, P.c4, P.c5] : (PALETTES[P.palette] || PALETTES.white).cols;
+  const wordList = () => (P.words || "").split(",").map(s => s.trim()).filter(Boolean);
+
+  /* ================= WebGL2: грейд + bloom/зерно/сканлайни ================= */
+  let gl = null;
+  try{ gl = glC.getContext("webgl2", { preserveDrawingBuffer:true, antialias:false, alpha:false, premultipliedAlpha:false }); }catch(e){ gl = null; }
+  const G = {};
+
+  const VS = `#version 300 es
+out vec2 vUv;
+void main(){
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  vUv = p;
+  gl_Position = vec4(p*2.0 - 1.0, 0.0, 1.0);
+}`;
+
+  const FS_GRADE = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 o;
+uniform sampler2D uTex;
+uniform int uMode;
+uniform float uContrast, uBright, uSat, uLevels;
+const vec3 LW = vec3(0.2126, 0.7152, 0.0722);
+vec3 ramp(float t, vec3 a, vec3 b, vec3 c, vec3 d, vec3 e){
+  t = clamp(t, 0.0, 1.0)*4.0;
+  if(t < 1.0) return mix(a, b, t);
+  if(t < 2.0) return mix(b, c, t - 1.0);
+  if(t < 3.0) return mix(c, d, t - 2.0);
+  return mix(d, e, t - 3.0);
+}
+vec3 turbo(float x){
+  const vec4 kR = vec4(0.13572138, 4.61539260, -42.66032258, 132.13108234);
+  const vec4 kG = vec4(0.09140261, 2.19418839, 4.84296658, -14.18503333);
+  const vec4 kB = vec4(0.10667330, 12.64194608, -60.58204836, 110.36276771);
+  const vec2 kR2 = vec2(-152.94239396, 59.28637943);
+  const vec2 kG2 = vec2(4.27729857, 2.82956604);
+  const vec2 kB2 = vec2(-89.90310912, 27.34824973);
+  x = clamp(x, 0.0, 1.0);
+  vec4 v4 = vec4(1.0, x, x*x, x*x*x);
+  vec2 v2 = v4.zw*v4.z;
+  return clamp(vec3(dot(v4, kR) + dot(v2, kR2), dot(v4, kG) + dot(v2, kG2), dot(v4, kB) + dot(v2, kB2)), 0.0, 1.0);
+}
+void main(){
+  vec3 c = texture(uTex, vUv).rgb*uBright;
+  float l = dot(c, LW);
+  c = mix(vec3(l), c, uSat);
+  c = clamp((c - 0.5)*uContrast + 0.5, 0.0, 1.0);
+  l = dot(c, LW);
+  if(uMode == 1){
+    float k = smoothstep(0.06, 0.94, l);
+    c = vec3(k*k*(3.0 - 2.0*k));
+  } else if(uMode == 2){
+    vec3 t = ramp(l, vec3(0.01, 0.03, 0.035), vec3(0.06, 0.16, 0.17), vec3(0.22, 0.38, 0.38), vec3(0.52, 0.68, 0.66), vec3(0.86, 0.95, 0.92));
+    c = mix(t, c, 0.12);
+  } else if(uMode == 3){
+    c = ramp(l, vec3(0.02, 0.0, 0.08), vec3(0.35, 0.02, 0.55), vec3(0.9, 0.12, 0.2), vec3(1.0, 0.62, 0.05), vec3(1.0, 0.98, 0.75));
+  } else if(uMode == 4){
+    float n = max(uLevels, 2.0) - 1.0;
+    c = floor(c*n + 0.5)/n;
+  } else if(uMode == 5){
+    c = turbo(l);
+  } else if(uMode == 6){
+    c = 1.0 - c;
+  } else if(uMode == 7){
+    float k = pow(l, 0.8);
+    c = vec3(0.12, 1.0, 0.35)*k + vec3(0.0, 0.03, 0.01);
+  }
+  o = vec4(c, 1.0);
+}`;
+
+  const FS_BRIGHT = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 o;
+uniform sampler2D uTex;
+uniform vec2 uTexel;
+uniform float uThr;
+void main(){
+  vec3 c = texture(uTex, vUv + uTexel*vec2(-1.0, -1.0)).rgb;
+  c += texture(uTex, vUv + uTexel*vec2(1.0, -1.0)).rgb;
+  c += texture(uTex, vUv + uTexel*vec2(-1.0, 1.0)).rgb;
+  c += texture(uTex, vUv + uTexel*vec2(1.0, 1.0)).rgb;
+  c *= 0.25;
+  float l = max(c.r, max(c.g, c.b));
+  float k = clamp((l - uThr)/max(1.0 - uThr, 0.001), 0.0, 1.0);
+  o = vec4(c*k, 1.0);
+}`;
+
+  const FS_BLUR = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 o;
+uniform sampler2D uTex;
+uniform vec2 uDir;
+void main(){
+  vec3 c = texture(uTex, vUv).rgb*0.2270270270;
+  c += (texture(uTex, vUv + uDir*1.3846153846).rgb + texture(uTex, vUv - uDir*1.3846153846).rgb)*0.3162162162;
+  c += (texture(uTex, vUv + uDir*3.2307692308).rgb + texture(uTex, vUv - uDir*3.2307692308).rgb)*0.0702702703;
+  o = vec4(c, 1.0);
+}`;
+
+  const FS_POST = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 o;
+uniform sampler2D uTex;
+uniform sampler2D uBloom;
+uniform float uBloomAmt, uGrain, uScan, uScanSize, uVig, uSeed;
+uniform vec2 uRes;
+float hash(vec2 p){
+  vec3 p3 = fract(vec3(p.xyx)*0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y)*p3.z);
+}
+void main(){
+  vec3 c = texture(uTex, vUv).rgb;
+  c += texture(uBloom, vUv).rgb*uBloomAmt*1.4;
+  if(uScan > 0.0){
+    float s = 0.5 + 0.5*cos(6.2831853*gl_FragCoord.y/uScanSize);
+    c *= 1.0 - uScan*0.65*(1.0 - s);
+  }
+  if(uVig > 0.0){
+    vec2 d = vUv - 0.5;
+    d.x *= uRes.x/uRes.y;
+    c *= clamp(1.0 - uVig*dot(d, d)*1.6, 0.0, 1.0);
+  }
+  if(uGrain > 0.0){
+    float n = hash(gl_FragCoord.xy + uSeed*37.0) + hash(gl_FragCoord.xy*1.37 - uSeed*11.0) - 1.0;
+    c += n*uGrain;
+  }
+  o = vec4(clamp(c, 0.0, 1.0), 1.0);
+}`;
+
+  function mkShader(type, src){
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src); gl.compileShader(sh);
+    if(!gl.getShaderParameter(sh, gl.COMPILE_STATUS)){ console.error(gl.getShaderInfoLog(sh)); return null; }
+    return sh;
+  }
+  function mkProg(fs){
+    const v = mkShader(gl.VERTEX_SHADER, VS), f = mkShader(gl.FRAGMENT_SHADER, fs);
+    if(!v || !f) return null;
+    const p = gl.createProgram();
+    gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)){ console.error(gl.getProgramInfoLog(p)); return null; }
+    const cache = {};
+    return { p, u: n => (n in cache) ? cache[n] : (cache[n] = gl.getUniformLocation(p, n)) };
+  }
+  function texNew(){
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  }
+  function fboNew(w, h){
+    const t = texNew();
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { t, f, w, h };
+  }
+  let glOK = false;
+  if(gl){
+    try{
+      G.grade = mkProg(FS_GRADE); G.bright = mkProg(FS_BRIGHT); G.blur = mkProg(FS_BLUR); G.post = mkProg(FS_POST);
+      if(G.grade && G.bright && G.blur && G.post){
+        G.vao = gl.createVertexArray(); gl.bindVertexArray(G.vao);
+        G.texSrc = texNew(); G.texComp = texNew();
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        glOK = true;
+      }
+    }catch(e){ console.error(e); glOK = false; }
+  }
+  let srcTexDirty = true;
+  function glResize(){
+    if(!glOK) return;
+    glC.width = W; glC.height = H;
+    for(const f of [G.bA, G.bB]) if(f){ gl.deleteTexture(f.t); gl.deleteFramebuffer(f.f); }
+    const bw = Math.max(1, W >> 2), bh = Math.max(1, H >> 2);
+    G.bA = fboNew(bw, bh); G.bB = fboNew(bw, bh);
+    srcTexDirty = true;
+  }
+  function pass(pr, target, w, h){
+    gl.useProgram(pr.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.f : null);
+    gl.viewport(0, 0, w, h);
+  }
+  function bindTex(unit, tex, pr, name){
+    gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(pr.u(name), unit);
+  }
+  function upload(tex, canvas){
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+  }
+  const glDraw = () => gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  function glGrade(){
+    if(srcTexDirty){ upload(G.texSrc, srcC); srcTexDirty = false; }
+    const pr = G.grade;
+    pass(pr, null, W, H);
+    bindTex(0, G.texSrc, pr, "uTex");
+    gl.uniform1i(pr.u("uMode"), GRADES[P.grade] || 0);
+    gl.uniform1f(pr.u("uContrast"), P.contrast);
+    gl.uniform1f(pr.u("uBright"), P.bright);
+    gl.uniform1f(pr.u("uSat"), P.sat);
+    gl.uniform1f(pr.u("uLevels"), P.levels);
+    glDraw();
+  }
+  function glPost(seed){
+    upload(G.texComp, compC);
+    const A = G.bA, B = G.bB;
+    if(P.bloom > 0){
+      let pr = G.bright;
+      pass(pr, A, A.w, A.h);
+      bindTex(0, G.texComp, pr, "uTex");
+      gl.uniform2f(pr.u("uTexel"), 1/W, 1/H);
+      gl.uniform1f(pr.u("uThr"), P.bloomThr);
+      glDraw();
+      pr = G.blur;
+      for(let it = 0; it < 2; it++){
+        const st = P.bloomRad*(it + 1);
+        pass(pr, B, B.w, B.h); bindTex(0, A.t, pr, "uTex"); gl.uniform2f(pr.u("uDir"), st/A.w, 0); glDraw();
+        pass(pr, A, A.w, A.h); bindTex(0, B.t, pr, "uTex"); gl.uniform2f(pr.u("uDir"), 0, st/A.h); glDraw();
+      }
+    }
+    const pr = G.post;
+    pass(pr, null, W, H);
+    bindTex(0, G.texComp, pr, "uTex");
+    bindTex(1, A.t, pr, "uBloom");
+    gl.uniform1f(pr.u("uBloomAmt"), P.bloom);
+    gl.uniform1f(pr.u("uGrain"), P.grain);
+    gl.uniform1f(pr.u("uScan"), P.scan);
+    gl.uniform1f(pr.u("uScanSize"), P.scanSize);
+    gl.uniform1f(pr.u("uVig"), P.vig);
+    gl.uniform1f(pr.u("uSeed"), seed);
+    gl.uniform2f(pr.u("uRes"), W, H);
+    glDraw();
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
+  }
+
+  /* ================= розмір ================= */
+  const ASPECTS = { "1:1":[1080,1080], "4:5":[1080,1350], "9:16":[1080,1920], "16:9":[1920,1080] };
+  let srcDirty = true, needDetect = true;
+  function resize(){
+    [W, H] = ASPECTS[P.aspect] || ASPECTS["4:5"];
+    for(const c of [out, srcC, compC]){ c.width = W; c.height = H; }
+    glResize(); allocDetect(); resetTracker();
+    srcDirty = true; needDetect = true; needRender = true;
+    $("dims").textContent = `${W}×${H}`;
+  }
+
+  /* ================= процедурне демо ================= */
+  function noiseCanvas(w, h, seed, base, amp){
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const x = c.getContext("2d"), id = x.createImageData(w, h), r = rng(seed);
+    for(let i = 0; i < w*h; i++){
+      const v = r();
+      id.data[i*4] = base[0] + v*amp[0]; id.data[i*4 + 1] = base[1] + v*amp[1]; id.data[i*4 + 2] = base[2] + v*amp[2]; id.data[i*4 + 3] = 255;
+    }
+    x.putImageData(id, 0, 0); return c;
+  }
+  const NOISE_A = noiseCanvas(10, 13, 3, [8, 22, 14], [20, 55, 30]);
+  const NOISE_B = noiseCanvas(44, 56, 4, [6, 18, 12], [16, 40, 24]);
+
+  const FLOWER_COLS = [
+    ["#fffbe0", "#ffd21f", "#f2a300"],     // пелюстка ближче → далі, серцевина
+    ["#fff0f8", "#ea7dbd", "#ffcf33"],
+    ["#ffffff", "#e4e8f2", "#ffb81c"],
+    ["#f5edff", "#ab86f2", "#ffe14d"],
+    ["#fff3e6", "#ff8a3d", "#8a3a0c"],
+  ];
+  const FLOWERS = (() => {
+    const r = rng(7), a = [];
+    for(let i = 0; i < 9; i++) a.push({
+      ox:(r() - 0.5)*0.25, oy:(r() - 0.5)*0.3, ax:0.08 + r()*0.22, ay:0.08 + r()*0.24,
+      kx:r() < 0.75 ? 1 : 2, ky:1, px:r(), py:r(), size:0.05 + r()*0.08,
+      petals:[7, 9, 12, 16, 24][Math.floor(r()*5)], col:FLOWER_COLS[i % FLOWER_COLS.length],
+      rot:r()*TAU, spin:[1, -1, 2, -2][Math.floor(r()*4)], core:r() });
+    return a.sort((p, q) => p.size - q.size);
+  })();
+  const BOKEH = (() => { const r = rng(5); return Array.from({ length:4 }, () => ({ x:0.15 + r()*0.7, y:0.1 + r()*0.8, a:0.05 + r()*0.12, p:r(), rad:0.12 + r()*0.18, rgb:r() < 0.5 ? "255,236,190" : "190,235,255" })); })();
+  const DUST = (() => { const r = rng(21), a = []; for(let i = 0; i < 70; i++) a.push({ x:r(), y:r(), wx:0.004 + r()*0.02, wy:0.004 + r()*0.02, k:1 + Math.floor(r()*3), p:r(), sz:0.6 + r()*1.8, b:0.3 + r()*0.7 }); return a; })();
+  const FISH = (() => {
+    const r = rng(11), a = [];
+    for(let i = 0; i < 28; i++){ const d = r(); a.push({ y:0.08 + r()*0.86, x0:r(), dir:r() < 0.5 ? -1 : 1, k:r() < 0.3 ? 2 : 1, len:0.045 + d*0.11, shade:0.25 + r()*0.7, p:r(), d }); }
+    return a.sort((p, q) => p.d - q.d);
+  })();
+
+  function drawDust(c, w, h, s, ph, col){
+    c.fillStyle = col;
+    for(const d of DUST){
+      const x = (d.x + d.wx*Math.sin(TAU*(d.k*ph + d.p)))*w, y = (d.y + d.wy*Math.cos(TAU*(d.k*ph + d.p*1.7)))*h;
+      const tw = 0.5 + 0.5*Math.sin(TAU*(d.k*2*ph + d.p*3));
+      c.globalAlpha = d.b*(0.35 + 0.65*tw);
+      c.beginPath(); c.arc(x, y, Math.max(0.35, d.sz*s/1080), 0, TAU); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
+  function drawFlower(c, x, y, r, f, rot){
+    const n = f.petals, pw = Math.min(r*0.42, r*Math.PI/n*1.25);
+    c.save(); c.translate(x, y); c.rotate(rot);
+    const g = c.createLinearGradient(r*0.1, 0, r, 0);
+    g.addColorStop(0, f.col[0]); g.addColorStop(1, f.col[1]);
+    c.fillStyle = g; c.strokeStyle = "rgba(0,0,0,0.18)"; c.lineWidth = Math.max(0.4, r*0.012);
+    for(let i = 0; i < n; i++){
+      c.rotate(TAU/n);
+      c.beginPath(); c.ellipse(r*0.53, 0, r*0.47, pw*0.5, 0, 0, TAU); c.fill(); c.stroke();
+    }
+    const cr = r*(0.17 + f.core*0.1);
+    const cg = c.createRadialGradient(-cr*0.35, -cr*0.35, cr*0.1, 0, 0, cr);
+    cg.addColorStop(0, "#fff7b8"); cg.addColorStop(0.55, f.col[2]); cg.addColorStop(1, "#5a3304");
+    c.fillStyle = cg; c.beginPath(); c.arc(0, 0, cr, 0, TAU); c.fill();
+    c.fillStyle = "rgba(90,50,0,0.5)";
+    for(let i = 0; i < 10; i++){ const a = i*2.399, rr = cr*0.75*Math.sqrt((i + 0.5)/10); c.beginPath(); c.arc(Math.cos(a)*rr, Math.sin(a)*rr, cr*0.08, 0, TAU); c.fill(); }
+    c.restore();
+  }
+  function demoFlowers(c, w, h, s, ph){
+    const g = c.createLinearGradient(0, 0, w*0.4, h);
+    g.addColorStop(0, "#0b1d14"); g.addColorStop(1, "#020604");
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.imageSmoothingEnabled = true;
+    c.globalAlpha = 0.7; c.drawImage(NOISE_A, 0, 0, w, h);
+    c.globalAlpha = 0.35; c.drawImage(NOISE_B, 0, 0, w, h);
+    c.globalAlpha = 1;
+    for(const o of BOKEH){
+      const x = (o.x + 0.05*Math.sin(TAU*(ph + o.p)))*w, y = (o.y + 0.04*Math.cos(TAU*(ph + o.p)))*h, R = o.rad*s;
+      const rg = c.createRadialGradient(x, y, 0, x, y, R);
+      rg.addColorStop(0, `rgba(${o.rgb},${o.a})`); rg.addColorStop(1, `rgba(${o.rgb},0)`);
+      c.fillStyle = rg; c.fillRect(x - R, y - R, R*2, R*2);
+    }
+    for(const f of FLOWERS){
+      const x = (0.5 + f.ox + f.ax*Math.sin(TAU*(f.kx*ph + f.px)))*w;
+      const y = (0.5 + f.oy + f.ay*Math.sin(TAU*(f.ky*ph + f.py)))*h;
+      const r = f.size*s*(1 + 0.05*Math.sin(TAU*(2*ph + f.px)));
+      const rot = f.rot + TAU/f.petals*f.spin*ph;          // поворот на ціле число пелюсток за луп
+      const sg = c.createRadialGradient(x, y + r*0.15, r*0.3, x, y + r*0.15, r*1.35);
+      sg.addColorStop(0, "rgba(0,0,0,0.55)"); sg.addColorStop(1, "rgba(0,0,0,0)");
+      c.fillStyle = sg; c.fillRect(x - r*1.4, y - r*1.25, r*2.8, r*2.8);
+      drawFlower(c, x, y, r, f, rot);
+    }
+    drawDust(c, w, h, s, ph, "#fff6d0");
+  }
+  function demoSwarm(c, w, h, s, ph){
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#9aa6ab"); g.addColorStop(0.35, "#465257"); g.addColorStop(1, "#0b0f11");
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.fillStyle = "rgba(255,255,255,0.05)";
+    for(let i = 0; i < 6; i++){
+      const cx = (0.1 + i*0.17 + 0.03*Math.sin(TAU*(ph + i*0.3)))*w, sw = (0.03 + 0.02*(i % 3))*w;
+      c.beginPath(); c.moveTo(cx - sw*0.3, 0); c.lineTo(cx + sw*0.3, 0); c.lineTo(cx + sw*2.2 + 0.1*w, h); c.lineTo(cx - sw*0.6 + 0.1*w, h); c.closePath(); c.fill();
+    }
+    const m = 0.16;
+    for(const f of FISH){
+      const u = frac(f.x0 + f.dir*f.k*ph);
+      const X = (-m + u*(1 + 2*m))*w, Y = (f.y + 0.012*Math.sin(TAU*(2*ph + f.p)))*h;
+      const L = f.len*s, Hh = L*0.3, wag = Math.sin(TAU*(6*ph + f.p))*Hh*0.25;
+      const v = Math.round(60 + f.shade*170), dk = Math.round(v*0.3);
+      c.save(); c.translate(X, Y); c.scale(f.dir, 1);
+      c.globalAlpha = 0.55 + f.d*0.45;
+      const fg = c.createLinearGradient(0, -Hh*0.5, 0, Hh*0.5);
+      fg.addColorStop(0, `rgb(${v},${v},${v})`); fg.addColorStop(1, `rgb(${dk},${dk},${dk})`);
+      c.fillStyle = fg;
+      c.beginPath(); c.ellipse(0, 0, L*0.5, Hh*0.5, 0, 0, TAU); c.fill();
+      c.beginPath(); c.moveTo(-L*0.4, 0); c.lineTo(-L*0.68, -Hh*0.55 + wag); c.lineTo(-L*0.62, wag*0.5); c.lineTo(-L*0.68, Hh*0.55 + wag); c.closePath(); c.fill();
+      c.fillStyle = "#0a0a0a"; c.beginPath(); c.arc(L*0.3, -Hh*0.08, Math.max(0.4, L*0.025), 0, TAU); c.fill();
+      c.restore();
+    }
+    c.globalAlpha = 1;
+    drawDust(c, w, h, s, ph, "#dfe8ea");
+  }
+  function demoWord(c, w, h, s, ph){
+    const g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#07080d"); g.addColorStop(1, "#141a26");
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    for(let i = 0; i < 2; i++){
+      const x = (0.5 + 0.3*Math.sin(TAU*(ph + i*0.5)))*w, y = (0.5 + 0.22*Math.cos(TAU*(ph + i*0.5)))*h, R = s*0.35;
+      const rg = c.createRadialGradient(x, y, 0, x, y, R);
+      rg.addColorStop(0, i ? "rgba(90,160,255,0.35)" : "rgba(255,120,60,0.35)"); rg.addColorStop(1, "rgba(0,0,0,0)");
+      c.fillStyle = rg; c.fillRect(x - R, y - R, R*2, R*2);
+    }
+    const txt = [...(P.demoText || "TRACK").toUpperCase()].slice(0, 10);
+    if(txt.length){
+      const font = px => `400 ${px}px "Archivo Black", Inter, sans-serif`;
+      c.font = font(100);
+      const widths = txt.map(ch => c.measureText(ch).width), tot = widths.reduce((a, b) => a + b, 0) || 1;
+      const fs = Math.min(h*0.3, w*0.86/tot*100), k = fs/100;
+      c.font = font(fs); c.textBaseline = "middle"; c.textAlign = "left";
+      const bx = (-0.3 + 1.6*ph)*w;               // світлова смуга: за кадром на початку й у кінці лупа
+      let x = (w - tot*k)/2;
+      txt.forEach((ch, i) => {
+        const cw = widths[i]*k, cx = x + cw/2;
+        const yy = h/2 + Math.sin(TAU*(ph + i/txt.length))*h*0.035;
+        const rot = Math.sin(TAU*(ph + i*0.17))*0.05;
+        c.save(); c.translate(cx, yy); c.rotate(rot);
+        const lg = c.createLinearGradient(bx - 0.22*w - cx, 0, bx + 0.22*w - cx, 0);
+        lg.addColorStop(0, "#aab3c4"); lg.addColorStop(0.5, "#ffffff"); lg.addColorStop(1, "#aab3c4");
+        c.fillStyle = lg; c.fillText(ch, -cw/2, 0);
+        c.restore();
+        x += cw;
+      });
+    }
+    drawDust(c, w, h, s, ph, "#ffffff");
+  }
+  function drawDemo(c, w, h, ph){
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = "source-over";
+    const s = Math.min(w, h);
+    if(P.demo === "swarm") demoSwarm(c, w, h, s, ph);
+    else if(P.demo === "word") demoWord(c, w, h, s, ph);
+    else demoFlowers(c, w, h, s, ph);
+  }
+
+  /* ================= завантажене медіа ================= */
+  let media = null;   // {type:"image"|"video", el, url, w, h}
+  function drawMedia(c, w, h){
+    if(media && media.type === "video" && media.el.readyState < 2) return;   // тримаємо попередній кадр
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = "source-over";
+    c.fillStyle = "#000"; c.fillRect(0, 0, w, h);
+    if(!media) return;
+    const mw = media.w || 1, mh = media.h || 1;
+    const k = (P.fit === "contain" ? Math.min(w/mw, h/mh) : Math.max(w/mw, h/mh))*P.scale;
+    const dw = mw*k, dh = mh*k;
+    c.imageSmoothingEnabled = true; c.imageSmoothingQuality = "high";
+    c.drawImage(media.el, (w - dw)/2 + P.offX*w, (h - dh)/2 + P.offY*h, dw, dh);
+  }
+
+  /* ================= пошук ознак (160 px) ================= */
+  let L = null, Lp = null, S = null, T1 = null, T2 = null, RGB = null, II = null, II2 = null, hasPrev = false;
+  function allocDetect(){
+    SH = Math.max(32, Math.round(SW*H/W));
+    small.width = SW; small.height = SH; NPX = SW*SH;
+    L = new Float32Array(NPX); Lp = new Float32Array(NPX); S = new Float32Array(NPX);
+    T1 = new Float32Array(NPX); T2 = new Float32Array(NPX); RGB = new Uint8Array(NPX*3);
+    II = new Float64Array((SW + 1)*(SH + 1)); II2 = new Float64Array((SW + 1)*(SH + 1));
+    hasPrev = false;
+  }
+  function integral(src, ii, sq){
+    const w1 = SW + 1;
+    for(let x = 0; x < w1; x++) ii[x] = 0;
+    for(let y = 0; y < SH; y++){
+      let row = 0; ii[(y + 1)*w1] = 0;
+      for(let x = 0; x < SW; x++){
+        const v = src[y*SW + x]; row += sq ? v*v : v;
+        ii[(y + 1)*w1 + x + 1] = ii[y*w1 + x + 1] + row;
+      }
+    }
+  }
+  function boxMean(ii, dst, r){
+    const w1 = SW + 1;
+    for(let y = 0; y < SH; y++){
+      const y0 = Math.max(0, y - r), y1 = Math.min(SH, y + r + 1);
+      for(let x = 0; x < SW; x++){
+        const x0 = Math.max(0, x - r), x1 = Math.min(SW, x + r + 1);
+        dst[y*SW + x] = (ii[y1*w1 + x1] - ii[y0*w1 + x1] - ii[y1*w1 + x0] + ii[y0*w1 + x0])/((x1 - x0)*(y1 - y0));
+      }
+    }
+  }
+  function sobel(src, dst){
+    dst.fill(0);
+    for(let y = 1; y < SH - 1; y++) for(let x = 1; x < SW - 1; x++){
+      const i = y*SW + x;
+      const gx = src[i - SW + 1] + 2*src[i + 1] + src[i + SW + 1] - src[i - SW - 1] - 2*src[i - 1] - src[i + SW - 1];
+      const gy = src[i + SW - 1] + 2*src[i + SW] + src[i + SW + 1] - src[i - SW - 1] - 2*src[i - SW] - src[i - SW + 1];
+      dst[i] = Math.sqrt(gx*gx + gy*gy);
+    }
+  }
+  function maxFilter(src, dst, tmp, r){
+    for(let y = 0; y < SH; y++){
+      const o = y*SW;
+      for(let x = 0; x < SW; x++){
+        let m = -1e9; const a = Math.max(0, x - r), b = Math.min(SW - 1, x + r);
+        for(let k = a; k <= b; k++){ const v = src[o + k]; if(v > m) m = v; }
+        tmp[o + x] = m;
+      }
+    }
+    for(let x = 0; x < SW; x++){
+      for(let y = 0; y < SH; y++){
+        let m = -1e9; const a = Math.max(0, y - r), b = Math.min(SH - 1, y + r);
+        for(let k = a; k <= b; k++){ const v = tmp[k*SW + x]; if(v > m) m = v; }
+        dst[y*SW + x] = m;
+      }
+    }
+  }
+  /* small → кандидати {x,y,w,h у частках кадру, s 0..1, cls}, відсортовані за силою */
+  function detect(keepPrev){
+    const d = sctx.getImageData(0, 0, SW, SH).data;
+    for(let i = 0, j = 0; i < NPX; i++, j += 4){
+      RGB[i*3] = d[j]; RGB[i*3 + 1] = d[j + 1]; RGB[i*3 + 2] = d[j + 2];
+      L[i] = (0.2126*d[j] + 0.7152*d[j + 1] + 0.0722*d[j + 2])/255;
+    }
+    const r = Math.max(1, Math.round(P.cell/2));
+    let mode = P.detect;
+    if(mode === "motion" && (!hasPrev || P.source === "image")) mode = "contrast";
+    if(mode === "luma"){ integral(L, II, false); boxMean(II, S, r); }
+    else if(mode === "edges"){ sobel(L, T1); integral(T1, II, false); boxMean(II, S, r); }
+    else if(mode === "motion"){
+      for(let i = 0; i < NPX; i++) T1[i] = Math.abs(L[i] - Lp[i]);
+      integral(T1, II, false); boxMean(II, S, r);
+    } else {
+      integral(L, II, false); integral(L, II2, true);
+      boxMean(II, T1, r); boxMean(II2, T2, r);
+      for(let i = 0; i < NPX; i++) S[i] = Math.sqrt(Math.max(0, T2[i] - T1[i]*T1[i]));
+    }
+    if(!keepPrev){ Lp.set(L); hasPrev = true; }
+
+    /* локальні максимуми → NMS → топ */
+    let smax = 0;
+    for(let i = 0; i < NPX; i++) if(S[i] > smax) smax = S[i];
+    if(smax <= 1e-6) return [];
+    maxFilter(S, T2, T1, Math.max(1, Math.round(P.cell*0.5)));
+    const thr = Math.max(P.thresh*smax, mode === "motion" ? 0.004 : 1e-4);
+    const cand = [];
+    for(let y = 2; y < SH - 2; y++) for(let x = 2; x < SW - 2; x++){
+      const i = y*SW + x, v = S[i];
+      if(v >= thr && v >= T2[i]) cand.push(i);
+    }
+    cand.sort((a, b) => S[b] - S[a]);
+    const minD = Math.max(2, P.cell*P.spacing), minD2 = minD*minD, cap = Math.min(170, P.count*2 + 4);
+    const picked = [];
+    for(const i of cand){
+      const x = i % SW, y = (i/SW) | 0;
+      let ok = true;
+      for(const p of picked){ const dx = p.px - x, dy = p.py - y; if(dx*dx + dy*dy < minD2){ ok = false; break; } }
+      if(ok){ picked.push({ px:x, py:y, s:S[i] }); if(picked.length >= cap) break; }
+    }
+    /* розмір регіону — зважені моменти довкола піку */
+    const R = Math.max(2, Math.round(P.cell*1.6)), res = [];
+    for(const p of picked){
+      let sw = 0, sx = 0, sy = 0, sxx = 0, syy = 0;
+      const base = p.s*0.5;
+      const ya = Math.max(0, p.py - R), yb = Math.min(SH - 1, p.py + R), xa = Math.max(0, p.px - R), xb = Math.min(SW - 1, p.px + R);
+      for(let yy = ya; yy <= yb; yy++) for(let xx = xa; xx <= xb; xx++){
+        const w = S[yy*SW + xx] - base;
+        if(w <= 0) continue;
+        sw += w; sx += w*xx; sy += w*yy; sxx += w*xx*xx; syy += w*yy*yy;
+      }
+      let mx = p.px, my = p.py, vx = 1, vy = 1;
+      if(sw > 0){ mx = sx/sw; my = sy/sw; vx = Math.max(0, sxx/sw - mx*mx); vy = Math.max(0, syy/sw - my*my); }
+      const bw = 2.4*Math.sqrt(vx) + P.cell*0.6, bh = 2.4*Math.sqrt(vy) + P.cell*0.6;
+      /* клас за кольором у піку: сірі світлі / сірі темні / 4 сектори відтінку */
+      const ci = (p.py*SW + p.px)*3, cr = RGB[ci], cg = RGB[ci + 1], cb = RGB[ci + 2];
+      const mxc = Math.max(cr, cg, cb), mnc = Math.min(cr, cg, cb), sat = mxc ? (mxc - mnc)/mxc : 0;
+      let cls;
+      if(sat < 0.22) cls = mxc > 150 ? 0 : 1;
+      else {
+        const dd = mxc - mnc;
+        let hue = mxc === cr ? ((cg - cb)/dd + 6) % 6 : mxc === cg ? (cb - cr)/dd + 2 : (cr - cg)/dd + 4;
+        hue /= 6;
+        cls = 2 + (Math.floor(hue*4 + 0.5) % 4);
+      }
+      res.push({ x:(mx + 0.5)/SW, y:(my + 0.5)/SH, w:bw/SW, h:bh/SH, s:p.s/smax, cls });
+    }
+    return res;
+  }
+
+  /* ================= трекінг ================= */
+  let tracks = [], nextId = 1, lastTrackT = -1, stillTracks = [], lockPt = null;
+  function resetTracker(){ tracks = []; nextId = 1; lastTrackT = -1; hasPrev = false; }
+  /* найближчий збіг: стабільні ID між кадрами */
+  function trackStep(cands, dt, kdt){
+    const maxD = Math.max(4, P.cell*P.spacing*1.6), maxD2 = maxD*maxD;
+    const pairs = [];
+    for(let ti = 0; ti < tracks.length; ti++){
+      const tr = tracks[ti];
+      for(let ci = 0; ci < cands.length; ci++){
+        const cd = cands[ci], dx = (tr.x - cd.x)*SW, dy = (tr.y - cd.y)*SH, d2 = dx*dx + dy*dy;
+        if(d2 < maxD2) pairs.push([d2, ti, ci]);
+      }
+    }
+    pairs.sort((a, b) => a[0] - b[0]);
+    const tU = new Uint8Array(tracks.length), cU = new Uint8Array(cands.length);
+    const k = dt > 0 ? 1 - Math.pow(P.smooth*0.9, Math.max(1, (kdt || dt)*FPS)) : 1;   // не залежить від fps
+    for(const [, ti, ci] of pairs){
+      if(tU[ti] || cU[ci]) continue;
+      tU[ti] = 1; cU[ci] = 1;
+      const tr = tracks[ti], cd = cands[ci];
+      tr.x += (cd.x - tr.x)*k; tr.y += (cd.y - tr.y)*k; tr.w += (cd.w - tr.w)*k; tr.h += (cd.h - tr.h)*k;
+      tr.s = cd.s; tr.cls = cd.cls; tr.miss = 0;
+    }
+    if(dt > 0){
+      for(let ti = 0; ti < tracks.length; ti++) if(!tU[ti]) tracks[ti].miss++;
+      tracks = tracks.filter(tr => tr.miss <= MAXMISS);
+    }
+    /* нові треки — лише з топ-N (решта пулу тільки утримує старі) */
+    const lim = Math.min(cands.length, P.count);
+    for(let ci = 0; ci < lim && tracks.length < P.count; ci++){
+      if(cU[ci]) continue;
+      const cd = cands[ci];
+      tracks.push({ id:nextId, x:cd.x, y:cd.y, w:cd.w, h:cd.h, s:cd.s, cls:cd.cls, miss:0, age:dt > 0 ? 0 : 99, seed:hash01(nextId*1.618 + 0.33), trail:[] });
+      nextId += hash01(nextId*3.71) < 0.35 ? 2 : 1;
+    }
+    if(tracks.length > P.count){ tracks.sort((a, b) => b.s - a.s); tracks.length = P.count; }
+    if(dt > 0) for(const tr of tracks){
+      tr.age += dt;
+      tr.trail.push(tr.x, tr.y);
+      if(tr.trail.length > 64) tr.trail.splice(0, 2);
+    }
+  }
+  /* фото: детекція один раз, далі сідований дрейф і цикл появи */
+  function buildStill(cands){
+    const r = rng(9001), n = Math.min(cands.length, P.count);
+    stillTracks = cands.slice(0, n).map(cd => ({ x:cd.x, y:cd.y, w:cd.w, h:cd.h, s:cd.s, cls:cd.cls, miss:0, age:1e9, seed:r(), h0:0, id:0, trail:null }));
+    const perm = stillTracks.map((_, i) => i);
+    for(let i = perm.length - 1; i > 0; i--){ const j = Math.floor(r()*(i + 1)); const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+    perm.forEach((ti, j) => { stillTracks[ti].h0 = (j + r()*0.6)/Math.max(1, n); });
+    let id = 1;
+    [...stillTracks].sort((a, b) => a.h0 - b.h0).forEach(tr => { tr.id = id; id += r() < 0.4 ? 1 + Math.floor(r()*5) : 1; });
+  }
+
+  /* ================= бокси кадру ================= */
+  const easeBack = x => { const c1 = 1.70158, u = x - 1; return 1 + (c1 + 1)*u*u*u + c1*u*u; };
+  function jit(sd, ph){
+    const k1 = 1 + Math.floor(sd*2.999), k2 = 1 + Math.floor(frac(sd*7.31)*2.999);
+    return [Math.sin(TAU*(k1*ph + sd)) + 0.45*Math.sin(TAU*(3*ph + sd*5.1)),
+            Math.sin(TAU*(k2*ph + sd*2.3)) + 0.45*Math.cos(TAU*(4*ph + sd*3.7)),
+            Math.sin(TAU*(k1*ph + sd*9.1))];
+  }
+  function collectBoxes(t, ph){
+    const still = P.source === "image";
+    const list = still ? stillTracks : tracks;
+    const pal = palColors(), words = wordList(), J = P.jitter;
+    const res = [];
+    let lockId = Infinity; lockPt = null;
+    for(const tr of list){
+      const sd = tr.seed;
+      let bw = P.sizeMode === "fixed" ? P.boxFixed : tr.w*W*P.boxScale;
+      let bh = P.sizeMode === "fixed" ? P.boxFixed : tr.h*H*P.boxScale;
+      if(P.squareBox) bw = bh = Math.max(bw, bh);
+      const j = jit(sd, ph), sc = 1 + J*0.08*j[2];
+      bw = Math.max(6, bw*sc); bh = Math.max(6, bh*sc);
+      const x = tr.x*W + J*0.16*bw*j[0], y = tr.y*H + J*0.16*bh*j[1];
+      if(tr.id < lockId){ lockId = tr.id; lockPt = [x, y]; }
+      /* життєвий цикл: поява зі scale-pop, зникнення */
+      let age = tr.age, fade = 1;
+      if(P.life < 0.999){
+        const u = frac(ph - (still ? tr.h0 : hash01(tr.id*0.7131 + 0.17)));
+        if(u >= P.life) continue;
+        age = Math.min(age, u*P.dur);
+        fade = P.pop > 0 ? clamp((P.life - u)*P.dur/(P.pop*0.6), 0, 1) : 1;
+      }
+      const pin = P.pop > 0 ? Math.min(1, age/P.pop) : 1;
+      const k = (pin < 1 ? Math.max(0, easeBack(pin)) : 1)*fade;
+      let a = Math.min(1, pin*2.5)*fade;
+      if(tr.miss > 0) a *= 1 - tr.miss/(MAXMISS + 1);
+      if(k < 0.01 || a < 0.01) continue;
+      const col = P.colorMode === "single" ? pal[0]
+        : P.colorMode === "class" ? pal[tr.cls % pal.length]
+        : pal[Math.floor(hash01(tr.id*1.37 + 0.3)*pal.length) % pal.length];
+      const word = words.length ? words[(P.colorMode === "class" ? tr.cls : Math.floor(hash01(tr.id*2.113 + 0.7)*words.length)) % words.length] : "";
+      const fl = hash01(tr.id*3.17 + Math.floor(ph*P.dur*5)*0.731);
+      const conf = clamp(0.52 + 0.46*clamp(tr.s, 0, 1) + (fl - 0.5)*0.06, 0.3, 0.99);
+      let trail = null;
+      if(P.trails){
+        trail = [];
+        if(still){ for(let i = 18; i >= 1; i--){ const q = jit(sd, ph - i*0.012); trail.push(tr.x*W + J*0.16*bw*q[0], tr.y*H + J*0.16*bh*q[1]); } }
+        else { const tl = tr.trail; for(let i = 0; i < tl.length; i += 2) trail.push(tl[i]*W, tl[i + 1]*H); }
+      }
+      res.push({ id:tr.id, x, y, w:bw, h:bh, k, a, age, col, conf, word, cls:tr.cls, trail });
+    }
+    res.sort((p, q) => p.id - q.id);
+    return res;
+  }
+
+  /* ================= малювання боксів ================= */
+  const markerSize = b => P.boxStyle === "square" ? Math.max(5, P.lblSize*0.55)*b.k : Math.max(3, P.lineW*2.2)*2*b.k;
+  function shapePath(c, b){
+    const w = b.w*b.k, h = b.h*b.k;
+    if(P.boxStyle === "circle" || P.boxStyle === "dot"){ const r = Math.max(w, h)/2; c.moveTo(b.x + r, b.y); c.arc(b.x, b.y, r, 0, TAU); }
+    else c.rect(b.x - w/2, b.y - h/2, w, h);
+  }
+  function drawBoxes(c, boxes){
+    const st = P.boxStyle, lw = P.lineW;
+    c.setLineDash([]); c.lineCap = "square"; c.lineJoin = "miter";
+    for(const b of boxes){
+      const w = b.w*b.k, h = b.h*b.k, x = b.x - w/2, y = b.y - h/2;
+      c.strokeStyle = b.col; c.fillStyle = b.col; c.lineWidth = lw;
+      if(P.boxFill > 0 && st !== "dot" && st !== "square"){
+        c.globalAlpha = b.a*P.boxFill;
+        c.beginPath();
+        if(st === "circle") c.arc(b.x, b.y, Math.max(w, h)/2, 0, TAU); else c.rect(x, y, w, h);
+        c.fill();
+      }
+      c.globalAlpha = b.a;
+      c.beginPath();
+      if(st === "rect") c.rect(x, y, w, h);
+      else if(st === "brackets"){
+        const Lb = Math.min(w, h)*P.bracket;
+        c.moveTo(x, y + Lb); c.lineTo(x, y); c.lineTo(x + Lb, y);
+        c.moveTo(x + w - Lb, y); c.lineTo(x + w, y); c.lineTo(x + w, y + Lb);
+        c.moveTo(x + w, y + h - Lb); c.lineTo(x + w, y + h); c.lineTo(x + w - Lb, y + h);
+        c.moveTo(x + Lb, y + h); c.lineTo(x, y + h); c.lineTo(x, y + h - Lb);
+      } else if(st === "cross"){
+        const g = Math.min(w, h)*0.14, tk = Math.min(w, h)*0.1;
+        c.moveTo(x, b.y); c.lineTo(b.x - g, b.y); c.moveTo(b.x + g, b.y); c.lineTo(x + w, b.y);
+        c.moveTo(b.x, y); c.lineTo(b.x, b.y - g); c.moveTo(b.x, b.y + g); c.lineTo(b.x, y + h);
+        c.moveTo(x, b.y - tk); c.lineTo(x, b.y + tk); c.moveTo(x + w, b.y - tk); c.lineTo(x + w, b.y + tk);
+        c.moveTo(b.x - tk, y); c.lineTo(b.x + tk, y); c.moveTo(b.x - tk, y + h); c.lineTo(b.x + tk, y + h);
+        c.moveTo(b.x + g*0.55, b.y); c.arc(b.x, b.y, g*0.55, 0, TAU);
+      } else if(st === "circle"){
+        const r = Math.max(w, h)/2, tk = r*0.14;
+        c.moveTo(b.x + r, b.y); c.arc(b.x, b.y, r, 0, TAU);
+        c.moveTo(b.x + r, b.y); c.lineTo(b.x + r + tk, b.y); c.moveTo(b.x - r, b.y); c.lineTo(b.x - r - tk, b.y);
+        c.moveTo(b.x, b.y - r); c.lineTo(b.x, b.y - r - tk); c.moveTo(b.x, b.y + r); c.lineTo(b.x, b.y + r + tk);
+      } else if(st === "dot"){
+        const r = markerSize(b)/2;
+        c.lineWidth = Math.max(1, lw*0.6);
+        c.moveTo(b.x + r*2.4, b.y); c.arc(b.x, b.y, r*2.4, 0, TAU); c.stroke();
+        c.beginPath(); c.arc(b.x, b.y, r, 0, TAU); c.fill();
+        c.beginPath();
+      } else if(st === "square"){
+        const q = markerSize(b); c.fillRect(b.x - q/2, b.y - q/2, q, q);
+      }
+      c.stroke();
+      if(P.nodes){
+        const q = lw*2 + 3;
+        let pts;
+        if(st === "circle" || st === "dot"){ const r = Math.max(w, h)/2; pts = [b.x + r, b.y, b.x - r, b.y, b.x, b.y - r, b.x, b.y + r]; }
+        else pts = [x, y, x + w, y, x, y + h, x + w, y + h];
+        for(let i = 0; i < pts.length; i += 2) c.fillRect(pts[i] - q/2, pts[i + 1] - q/2, q, q);
+      }
+    }
+    c.globalAlpha = 1;
+  }
+  function drawTrails(c, boxes){
+    for(const b of boxes){
+      const tr = b.trail;
+      if(!tr || tr.length < 4) continue;
+      c.fillStyle = b.col;
+      const n = tr.length/2, q = Math.max(2, P.lineW*1.3);
+      for(let i = 0; i < n; i += 2){
+        c.globalAlpha = b.a*0.85*(i + 1)/n;
+        c.fillRect(tr[i*2] - q/2, tr[i*2 + 1] - q/2, q, q);
+      }
+    }
+    c.globalAlpha = 1;
+  }
+  function drawLinks(c, boxes, ctr){
+    const vis = boxes.filter(b => b.k > 0.3);
+    if(!vis.length) return;
+    c.lineWidth = Math.max(0.75, P.lineW*0.7); c.lineCap = "butt";
+    c.setLineDash(P.dashed ? [P.lineW*4 + 2, P.lineW*4 + 2] : []);
+    const A = P.linkAlpha, mode = P.links;
+    const seg = (p, q, al) => {
+      if(al <= 0.01) return;
+      c.globalAlpha = al; c.strokeStyle = p.col;
+      c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(q.x, q.y); c.stroke();
+    };
+    if(mode === "chain"){
+      for(let i = 1; i < vis.length; i++) seg(vis[i - 1], vis[i], A*Math.min(vis[i - 1].a, vis[i].a));
+    } else if(mode === "center"){
+      const o = { x:ctr[0], y:ctr[1] };
+      for(const b of vis) seg(b, o, A*b.a);
+      c.setLineDash([]); c.globalAlpha = A; c.fillStyle = vis[0].col;
+      c.beginPath(); c.arc(o.x, o.y, P.lineW*2 + 2, 0, TAU); c.fill();
+    } else if(mode === "nearest"){
+      const seen = new Set();
+      for(const p of vis){
+        const ds = vis.filter(q => q !== p).map(q => [(q.x - p.x)**2 + (q.y - p.y)**2, q]).sort((u, v) => u[0] - v[0]).slice(0, P.linkK);
+        for(const [, q] of ds){
+          const key = p.id < q.id ? p.id + ":" + q.id : q.id + ":" + p.id;
+          if(seen.has(key)) continue;
+          seen.add(key); seg(p, q, A*Math.min(p.a, q.a));
+        }
+      }
+    } else if(mode === "web"){
+      const D = P.linkDist*Math.min(W, H);
+      for(let i = 0; i < vis.length; i++) for(let j = i + 1; j < vis.length; j++){
+        const p = vis[i], q = vis[j], d = Math.hypot(p.x - q.x, p.y - q.y);
+        if(d < D) seg(p, q, A*Math.min(p.a, q.a)*(1 - d/D));
+      }
+    }
+    c.setLineDash([]); c.globalAlpha = 1;
+  }
+  function drawLabels(c, boxes){
+    if(!(P.lblId || P.lblConf || P.lblXY || P.lblWord)) return;
+    const fs = P.lblSize, tag = P.lblStyle === "tag", padX = Math.round(fs*0.35), padY = Math.round(fs*0.2);
+    const asc = fs*0.78, dsc = fs*0.22, lh = tag ? fs + padY*2 : Math.round(fs*1.3);
+    const marker = P.boxStyle === "dot" || P.boxStyle === "square";
+    c.font = monoFont(fs, 500); c.textAlign = "left"; c.textBaseline = "alphabetic";
+    for(const b of boxes){
+      if(b.k < 0.25) continue;
+      const full = [], l1 = [];
+      if(P.lblId) l1.push(pad(b.id, 3));
+      if(P.lblWord && b.word) l1.push(b.word);
+      if(P.lblConf) l1.push(b.conf.toFixed(2));
+      if(l1.length) full.push(l1.join(" "));
+      if(P.lblXY) full.push(`X${pad(b.x, 4)} Y${pad(b.y, 4)}`);
+      if(!full.length) continue;
+      /* друк по символу */
+      let n = P.typeSpeed >= 80 ? 1e9 : Math.floor(b.age*P.typeSpeed);
+      const lines = [];
+      for(const ln of full){
+        if(n <= 0) break;
+        if(n >= ln.length){ lines.push(ln); n -= ln.length; } else { lines.push(ln.slice(0, n) + "_"); n = 0; }
+      }
+      if(!lines.length) continue;
+      const w = b.w*b.k, h = b.h*b.k;
+      let lx, ly;     // ly — базова лінія першого рядка
+      if(marker){
+        lx = b.x + markerSize(b)/2 + fs*0.5 + (tag ? padX : 0);
+        ly = b.y - (lines.length*lh)/2 + asc + (tag ? padY : (lh - fs)/2);
+      } else {
+        const top = b.y - h/2, under = tag ? dsc + padY + P.lineW/2 : dsc + 4;
+        ly = top - under - (lines.length - 1)*lh;
+        if(ly - asc - (tag ? padY : 0) < 2) ly = top + asc + (tag ? padY : 0) + P.lineW + 3;
+        lx = b.x - w/2 + (tag ? padX - P.lineW/2 : 0);
+      }
+      c.globalAlpha = b.a;
+      lines.forEach((ln, i) => {
+        const tw = c.measureText(ln).width, px = tag ? padX : 0;
+        const x0 = clamp(lx, 2 + px, W - tw - 2 - px), y0 = ly + i*lh;
+        if(tag){
+          c.fillStyle = b.col; c.fillRect(x0 - padX, y0 - asc - padY, tw + padX*2, fs + padY*2);
+          c.fillStyle = inkFor(b.col);
+        } else c.fillStyle = P.lblStyle === "white" ? "#ffffff" : b.col;
+        c.fillText(ln, x0, y0);
+      });
+    }
+    c.globalAlpha = 1;
+  }
+
+  /* ================= HUD ================= */
+  function hudSet(c){
+    c.globalAlpha = P.hudAlpha; c.strokeStyle = P.hudColor; c.fillStyle = P.hudColor;
+    c.lineWidth = 1.25; c.setLineDash([]); c.lineCap = "butt"; c.lineJoin = "miter";
+  }
+  function hudGrid(c){
+    const g = Math.min(W, H)/12, cx = W/2, cy = H/2, x0 = cx - Math.ceil(cx/g)*g, y0 = cy - Math.ceil(cy/g)*g;
+    c.globalAlpha = P.hudAlpha*0.22; c.lineWidth = 1; c.beginPath();
+    for(let x = x0; x <= W; x += g){ const X = Math.round(x) + 0.5; c.moveTo(X, 0); c.lineTo(X, H); }
+    for(let y = y0; y <= H; y += g){ const Y = Math.round(y) + 0.5; c.moveTo(0, Y); c.lineTo(W, Y); }
+    c.stroke();
+    c.globalAlpha = P.hudAlpha*0.7; c.beginPath();
+    const p = g*0.09;
+    for(let x = cx - Math.floor(cx/(2*g))*2*g; x <= W; x += 2*g) for(let y = cy - Math.floor(cy/(2*g))*2*g; y <= H; y += 2*g){
+      c.moveTo(x - p, y); c.lineTo(x + p, y); c.moveTo(x, y - p); c.lineTo(x, y + p);
+    }
+    c.stroke(); c.globalAlpha = P.hudAlpha;
+  }
+  function hudFrame(c){
+    const s = Math.min(W, H), m = s*0.035, Lc = s*0.05, t = s*0.016, cx = W/2, cy = H/2;
+    c.lineWidth = 1.5; c.beginPath();
+    c.moveTo(m, m + Lc); c.lineTo(m, m); c.lineTo(m + Lc, m);
+    c.moveTo(W - m - Lc, m); c.lineTo(W - m, m); c.lineTo(W - m, m + Lc);
+    c.moveTo(W - m, H - m - Lc); c.lineTo(W - m, H - m); c.lineTo(W - m - Lc, H - m);
+    c.moveTo(m + Lc, H - m); c.lineTo(m, H - m); c.lineTo(m, H - m - Lc);
+    c.moveTo(cx - t, m); c.lineTo(cx + t, m); c.moveTo(cx, m); c.lineTo(cx, m + t);
+    c.moveTo(cx - t, H - m); c.lineTo(cx + t, H - m); c.moveTo(cx, H - m); c.lineTo(cx, H - m - t);
+    c.moveTo(m, cy - t); c.lineTo(m, cy + t); c.moveTo(m, cy); c.lineTo(m + t, cy);
+    c.moveTo(W - m, cy - t); c.lineTo(W - m, cy + t); c.moveTo(W - m, cy); c.lineTo(W - m - t, cy);
+    c.stroke();
+  }
+  function hudRulers(c, lock){
+    const s = Math.min(W, H), l1 = s*0.007, l2 = s*0.018, fs = Math.max(8, P.hudSize*0.75);
+    c.lineWidth = 1; c.beginPath();
+    for(let x = 0; x <= W; x += 20){ const Lr = x % 100 === 0 ? l2 : l1, X = x + 0.5; c.moveTo(X, 0); c.lineTo(X, Lr); c.moveTo(X, H); c.lineTo(X, H - Lr); }
+    for(let y = 0; y <= H; y += 20){ const Lr = y % 100 === 0 ? l2 : l1, Y = y + 0.5; c.moveTo(0, Y); c.lineTo(Lr, Y); c.moveTo(W, Y); c.lineTo(W - Lr, Y); }
+    c.stroke();
+    c.font = monoFont(fs); c.textAlign = "left"; c.textBaseline = "top";
+    for(let x = 100; x < W; x += 100) c.fillText(String(x), x + 3, 3);
+    for(let y = 100; y < H; y += 100) c.fillText(String(y), l2 + 3, y + 2);
+    if(lock){
+      const tx = clamp(lock[0], 0, W), ty = clamp(lock[1], 0, H), q = s*0.012;
+      c.beginPath();
+      c.moveTo(tx - q, l2 + 2); c.lineTo(tx + q, l2 + 2); c.lineTo(tx, l2 + 2 + q*1.4); c.closePath();
+      c.moveTo(tx - q, H - l2 - 2); c.lineTo(tx + q, H - l2 - 2); c.lineTo(tx, H - l2 - 2 - q*1.4); c.closePath();
+      c.moveTo(l2 + 2, ty - q); c.lineTo(l2 + 2, ty + q); c.lineTo(l2 + 2 + q*1.4, ty); c.closePath();
+      c.moveTo(W - l2 - 2, ty - q); c.lineTo(W - l2 - 2, ty + q); c.lineTo(W - l2 - 2 - q*1.4, ty); c.closePath();
+      c.fill();
+      c.textBaseline = "bottom"; c.textAlign = "left";
+      c.fillText(pad(tx, 4), tx + q*1.2, H - l2 - 4);
+      c.textBaseline = "middle"; c.textAlign = "right";
+      c.fillText(pad(ty, 4), W - l2 - q*2, ty);
+    }
+  }
+  function hudCross(c){
+    const cx = W/2, cy = H/2, g = Math.min(W, H)*0.035;
+    c.lineWidth = 1; c.globalAlpha = P.hudAlpha*0.4; c.beginPath();
+    c.moveTo(0, cy); c.lineTo(cx - g, cy); c.moveTo(cx + g, cy); c.lineTo(W, cy);
+    c.moveTo(cx, 0); c.lineTo(cx, cy - g); c.moveTo(cx, cy + g); c.lineTo(cx, H);
+    c.stroke();
+    c.globalAlpha = P.hudAlpha; c.lineWidth = 1.5; c.beginPath();
+    const b = g*0.7, Lc = g*0.3;
+    c.moveTo(cx - b, cy - b + Lc); c.lineTo(cx - b, cy - b); c.lineTo(cx - b + Lc, cy - b);
+    c.moveTo(cx + b - Lc, cy - b); c.lineTo(cx + b, cy - b); c.lineTo(cx + b, cy - b + Lc);
+    c.moveTo(cx + b, cy + b - Lc); c.lineTo(cx + b, cy + b); c.lineTo(cx + b - Lc, cy + b);
+    c.moveTo(cx - b + Lc, cy + b); c.lineTo(cx - b, cy + b); c.lineTo(cx - b, cy + b - Lc);
+    c.stroke();
+    c.beginPath(); c.arc(cx, cy, 2, 0, TAU); c.fill();
+  }
+  function hudDial(c, cx, cy, R, ph, boxes){
+    c.save(); c.translate(cx, cy);
+    const lw = Math.max(1, R*0.006);
+    c.lineWidth = lw;
+    c.beginPath(); c.arc(0, 0, R, 0, TAU); c.stroke();
+    /* шкала */
+    c.beginPath();
+    for(let i = 0; i < 72; i++){
+      const a = i/72*TAU, Lt = i % 6 === 0 ? R*0.075 : R*0.035, r0 = R*0.94;
+      c.moveTo(Math.cos(a)*r0, Math.sin(a)*r0); c.lineTo(Math.cos(a)*(r0 - Lt), Math.sin(a)*(r0 - Lt));
+    }
+    c.stroke();
+    /* обертові дуги — ціле число обертів за луп */
+    const a1 = TAU*P.dialSpin*ph;
+    c.lineWidth = lw*4;
+    c.beginPath(); c.arc(0, 0, R*0.8, a1, a1 + 1.25); c.stroke();
+    c.beginPath(); c.arc(0, 0, R*0.8, a1 + Math.PI, a1 + Math.PI + 0.45); c.stroke();
+    const a2 = -TAU*P.dialSpin*2*ph;
+    c.lineWidth = lw*1.5; c.beginPath();
+    for(let j = 0; j < 36; j++){
+      if(j % 4 === 3) continue;
+      const s0 = a2 + j/36*TAU;
+      c.moveTo(Math.cos(s0)*R*0.7, Math.sin(s0)*R*0.7); c.arc(0, 0, R*0.7, s0, s0 + TAU/36*0.55);
+    }
+    c.stroke();
+    /* внутрішні товсті риски — індикатор, що заповнюється */
+    const sweep = frac(ph*Math.max(1, Math.abs(P.dialSpin)));
+    c.lineWidth = lw*2.6;
+    for(let i = 0; i < 48; i++){
+      const u = i/48, a = u*TAU - Math.PI/2;
+      c.globalAlpha = P.hudAlpha*(u <= sweep ? 1 : 0.22);
+      c.beginPath(); c.moveTo(Math.cos(a)*R*0.5, Math.sin(a)*R*0.5); c.lineTo(Math.cos(a)*R*0.59, Math.sin(a)*R*0.59); c.stroke();
+    }
+    c.globalAlpha = P.hudAlpha;
+    /* внутрішнє коло + перехрестя */
+    c.lineWidth = lw; c.beginPath();
+    c.moveTo(R*0.32, 0); c.arc(0, 0, R*0.32, 0, TAU);
+    c.moveTo(-R*1.12, 0); c.lineTo(-R*0.38, 0); c.moveTo(R*0.38, 0); c.lineTo(R*1.12, 0);
+    c.moveTo(0, -R*1.12); c.lineTo(0, -R*0.38); c.moveTo(0, R*0.38); c.lineTo(0, R*1.12);
+    c.moveTo(-R*0.05, 0); c.lineTo(R*0.05, 0); c.moveTo(0, -R*0.05); c.lineTo(0, R*0.05);
+    c.stroke();
+    const fs = Math.max(9, P.hudSize*0.85);
+    c.font = monoFont(fs); c.textAlign = "center"; c.textBaseline = "middle";
+    ["000", "090", "180", "270"].forEach((tx, i) => { const a = i*Math.PI/2 - Math.PI/2 + 0.14; c.fillText(tx, Math.cos(a)*R*1.08, Math.sin(a)*R*1.08); });
+    const tg = boxes.length ? boxes[0] : null;
+    c.textAlign = "left";
+    c.fillText(tg ? `TGT #${pad(tg.id, 3)} · ${tg.conf.toFixed(2)}` : "SCAN ···", R*0.42, R*0.86);
+    c.restore();
+  }
+  function hudText(c, boxes, t, ph){
+    if(!P.hudRead && !P.hudTime) return;
+    const s = Math.min(W, H), m = s*0.055, fs = P.hudSize, lh = Math.round(fs*1.35);
+    const tt = P.source === "video" ? t : ph*P.dur;
+    if(P.hudRead){
+      c.textAlign = "left"; c.textBaseline = "top";
+      c.font = monoFont(fs, 700); c.fillText(P.hudTitle || "", m, m);
+      c.font = monoFont(fs, 500);
+      [`OBJ ${pad(boxes.length, 2)} · ${DETECT_NAMES[P.detect] || ""}`, `SRC ${P.source.toUpperCase()} · ${W}×${H}`, `GRID ${SW}×${SH} · NMS ${(P.cell*P.spacing).toFixed(1)}`]
+        .forEach((ln, i) => c.fillText(ln, m, m + lh*(i + 1.3)));
+      c.textAlign = "right";
+      const log = boxes.slice().sort((a, b) => b.id - a.id).slice(0, 5), off = P.hudTime ? 1.3 : 0;
+      log.forEach((b, i) => c.fillText(`#${pad(b.id, 3)} ${b.conf.toFixed(2)} [${pad(b.x, 4)},${pad(b.y, 4)}]`, W - m, m + lh*(i + off)));
+      c.textBaseline = "bottom";
+      const mean = boxes.length ? boxes.reduce((acc, b) => acc + b.conf, 0)/boxes.length : 0;
+      c.fillText(`μCONF ${mean.toFixed(2)} · FPS ${FPS}`, W - m, H - m);
+      c.fillText(`TRK ${P.source === "image" ? "LOCK" : "LIVE"} · ${P.grade.toUpperCase()}`, W - m, H - m - lh);
+    }
+    if(P.hudTime){
+      c.font = monoFont(fs, 500);
+      c.textAlign = "right"; c.textBaseline = "top";
+      const blinkN = Math.max(1, Math.round(P.dur*2));
+      const on = P.source === "video" ? Math.floor(t*2) % 2 === 0 : Math.floor(ph*blinkN) % 2 === 0;
+      c.fillText("REC", W - m, m);
+      if(on){
+        const ga = c.globalAlpha; c.globalAlpha = 1; c.fillStyle = "#ff3b30";
+        c.beginPath(); c.arc(W - m - c.measureText("REC").width - fs*0.7, m + fs*0.55, fs*0.32, 0, TAU); c.fill();
+        c.globalAlpha = ga; c.fillStyle = P.hudColor;
+      }
+      c.textAlign = "left"; c.textBaseline = "bottom";
+      const fr = Math.floor(tt*FPS + 1e-6);
+      c.fillText(`TC ${pad(tt/3600, 2)}:${pad((tt/60) % 60, 2)}:${pad(tt % 60, 2)}:${pad(fr % FPS, 2)}`, m, H - m);
+      c.fillText(`FRM ${pad(fr, 6)}`, m, H - m - lh);
+    }
+  }
+
+  /* ================= кадр ================= */
+  function gradeImage(){
+    if(!glOK) return srcC;
+    if(P.grade === "orig" && P.bright === 1 && P.contrast === 1 && P.sat === 1) return srcC;
+    glGrade(); return glC;
+  }
+  function compose(boxes, t, ph){
+    const needPost = glOK && !P.transparent && (P.bloom > 0 || P.grain > 0 || P.scan > 0 || P.vig > 0);
+    const c = needPost ? cctx : ctx;
+    const img = gradeImage();
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = "source-over"; c.setLineDash([]);
+    if(P.transparent) c.clearRect(0, 0, W, H); else { c.fillStyle = P.bg; c.fillRect(0, 0, W, H); }
+    const clipBoxes = () => { c.beginPath(); for(const b of boxes) shapePath(c, b); c.clip(); };
+
+    /* ---- показ ---- */
+    if(P.reveal === "inside"){
+      if(boxes.length){ c.save(); clipBoxes(); c.drawImage(img, 0, 0); c.restore(); }
+    } else {
+      if(!P.transparent){
+        c.drawImage(img, 0, 0);
+        if(P.dimOut > 0){
+          c.globalAlpha = P.dimOut; c.fillStyle = P.bg; c.fillRect(0, 0, W, H); c.globalAlpha = 1;
+          if(boxes.length && P.reveal !== "zoom"){ c.save(); clipBoxes(); c.drawImage(img, 0, 0); c.restore(); }
+        }
+        if(P.reveal === "invert" && boxes.length){
+          c.save(); c.globalCompositeOperation = "difference"; c.fillStyle = "#ffffff";
+          for(const b of boxes){ c.globalAlpha = b.a; c.beginPath(); shapePath(c, b); c.fill(); }
+          c.restore();
+        }
+      }
+      if(P.reveal === "zoom"){
+        for(const b of boxes){
+          const w = b.w*b.k, h = b.h*b.k;
+          const sw = Math.min(W, w/P.zoom), sh = Math.min(H, h/P.zoom);
+          if(sw < 1 || sh < 1) continue;
+          const sx = clamp(b.x - sw/2, 0, W - sw), sy = clamp(b.y - sh/2, 0, H - sh);
+          c.save(); c.beginPath(); shapePath(c, b); c.clip();
+          c.drawImage(img, sx, sy, sw, sh, b.x - w/2, b.y - h/2, w, h);
+          c.restore();
+        }
+      }
+    }
+
+    /* ---- оверлеї ---- */
+    c.globalCompositeOperation = "source-over"; c.globalAlpha = 1;
+    const ctr = P.hudDial && P.dialFollow && lockPt ? lockPt : [W/2, H/2];
+    if(P.hudGrid){ hudSet(c); hudGrid(c); }
+    if(P.trails) drawTrails(c, boxes);
+    if(P.links !== "none") drawLinks(c, boxes, ctr);
+    drawBoxes(c, boxes);
+    drawLabels(c, boxes);
+    hudSet(c);
+    if(P.hudFrame) hudFrame(c);
+    if(P.hudRulers) hudRulers(c, lockPt);
+    if(P.hudCross) hudCross(c);
+    if(P.hudDial){ hudSet(c); hudDial(c, ctr[0], ctr[1], P.dialSize*Math.min(W, H)/2, ph, boxes); }
+    hudSet(c); hudText(c, boxes, t, ph);
+    c.globalAlpha = 1;
+
+    if(needPost){
+      glPost(Math.floor((P.source === "video" ? t : ph*P.dur)*FPS) % 9973);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = "copy";
+      ctx.drawImage(glC, 0, 0);
+      ctx.globalCompositeOperation = "source-over";
+    }
+  }
+
+  function renderFrame(t){
+    const ph = frac(t/P.dur);
+    /* джерело */
+    if(P.source === "demo"){ drawDemo(fctx, W, H, ph); srcTexDirty = true; }
+    else if(media && P.source === media.type){
+      if(media.type === "video" || srcDirty){ drawMedia(fctx, W, H); srcTexDirty = true; srcDirty = false; }
+    } else if(srcDirty){ fctx.fillStyle = "#000"; fctx.fillRect(0, 0, W, H); srcDirty = false; srcTexDirty = true; }
+    /* трекінг */
+    if(P.source === "image"){
+      if(needDetect && media){ drawMedia(sctx, SW, SH); hasPrev = false; buildStill(detect(true)); }
+      needDetect = false;
+    } else {
+      const raw = t - lastTrackT;
+      let dt = raw;
+      if(lastTrackT < 0 || dt < 0 || dt > 0.25) dt = 1/FPS;
+      const skip = dt === 0 && (!needDetect || P.detect === "motion");      // пауза: треки не «вмирають»
+      if(!skip){
+        if(P.source === "demo") drawDemo(sctx, SW, SH, ph); else drawMedia(sctx, SW, SH);
+        trackStep(detect(dt === 0), dt, raw > 0 ? Math.min(raw, 1) : dt);
+      }
+      lastTrackT = t; needDetect = false;
+    }
+    compose(collectBoxes(t, ph), t, ph);
+  }
+  /* прогрів трекера на один луп демо — щоб MP4 замикався з тими самими ID */
+  function warmup(){
+    const n = Math.round(P.dur*FPS);
+    for(let i = 0; i < n; i++){
+      const t = i/FPS;
+      drawDemo(sctx, SW, SH, frac(t/P.dur));
+      trackStep(detect(false), 1/FPS);
+      lastTrackT = t;
+    }
+  }
+
+  /* ================= цикл ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, t0 = now(), tPause = 0, needRender = true, lastT = -1;
+  let busy = false;
+  const activeVideo = () => P.source === "video" && media && media.type === "video" ? media.el : null;
+  function curTime(){
+    const v = activeVideo();
+    if(v) return v.currentTime;
+    return playing ? now() - t0 : tPause;
+  }
+  function tick(){
+    requestAnimationFrame(tick);
+    if(busy) return;
+    const t = curTime();
+    if(needRender || (playing && Math.abs(t - lastT) > 0.9/FPS)){
+      needRender = false; lastT = t;
+      renderFrame(t);
+    }
+  }
+  $("playBtn").addEventListener("click", () => {
+    if(playing){ tPause = now() - t0; } else { t0 = now() - tPause; }
+    playing = !playing;
+    const v = activeVideo();
+    if(v){ if(playing) v.play().catch(() => {}); else v.pause(); }
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+    needRender = true;
+  });
+
+  /* ================= exports ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  const fname = ext => `tracker-${P.source === "demo" ? P.demo : P.source}.${ext}`;
+
+  $("exPng").addEventListener("click", () => out.toBlob(b => { if(b) downloadBlob(b, fname("png")); }, "image/png"));
+  $("exJpg").addEventListener("click", () => {
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d"); x.fillStyle = P.bg; x.fillRect(0, 0, W, H); x.drawImage(out, 0, 0);
+    c.toBlob(b => { if(b) downloadBlob(b, fname("jpg")); }, "image/jpeg", 0.95);
+  });
+
+  function seekVideo(v, t){
+    return new Promise(res => {
+      let done = false, tm = 0;
+      const fin = () => { if(done) return; done = true; v.removeEventListener("seeked", fin); clearTimeout(tm); res(); };
+      tm = setTimeout(fin, 2000);                       // запобіжник: відео не відповіло — йдемо далі
+      v.addEventListener("seeked", fin);
+      const d = isFinite(v.duration) ? v.duration : t + 1;
+      v.currentTime = Math.min(t, Math.max(0, d - 0.01));
+    });
+  }
+
+  let mp4Abort = false;
+  $("exMp4").addEventListener("click", async () => {
+    if(busy){ mp4Abort = true; return; }
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    busy = true; mp4Abort = false;
+    $("mp4Label").textContent = "■ Скасувати";
+    const vid = activeVideo();
+    const vd = vid ? (isFinite(vid.duration) && vid.duration > 0 ? Math.min(vid.duration, 60) : P.dur) : 0;
+    const total = vid ? Math.max(1, Math.round(vd*FPS)) : Math.round(P.dur*FPS)*P.loops;
+    const EW = W & ~1, EH = H & ~1;                      // H.264 — парні сторони
+    const muxer = new Mp4Muxer.Muxer({ target:new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:EW, height:EH }, fastStart:"in-memory" });
+    let err = null;
+    const enc = new VideoEncoder({
+      output:(c, m) => {
+        const b = new Uint8Array(c.byteLength); c.copyTo(b);
+        muxer.addVideoChunkRaw(b, c.type, c.timestamp, c.duration ?? Math.round(1e6/FPS), m);
+      },
+      error:e => { err = e; }
+    });
+    const tr = P.transparent; P.transparent = false;     // H.264 без альфи
+    if(vid) vid.pause();
+    resetTracker();
+    try{
+      enc.configure({ codec: EW*EH > 1500000 ? "avc1.640033" : "avc1.640028", width:EW, height:EH, bitrate:P.bitrate*1e6, framerate:FPS });
+      if(!vid && P.source === "demo"){ status("Підготовка трекера…", true); await new Promise(r => setTimeout(r, 0)); warmup(); }
+      for(let i = 0; i < total && !err && !mp4Abort; i++){
+        const t = i/FPS;
+        if(vid) await seekVideo(vid, t);
+        renderFrame(t);
+        const fi = { timestamp:Math.round(i*1e6/FPS), duration:Math.round(1e6/FPS) };
+        if(EW !== W || EH !== H) fi.visibleRect = { x:0, y:0, width:EW, height:EH };
+        const fr = new VideoFrame(out, fi);
+        enc.encode(fr, { keyFrame: i % (FPS*2) === 0 }); fr.close();
+        if(enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 0));
+        if(i % 6 === 0){ status(`Рендер ${Math.round(i/total*100)}%`, true); await new Promise(r => setTimeout(r, 0)); }
+      }
+      if(!err && !mp4Abort){
+        status("Кодування…", true);
+        await Promise.race([enc.flush(), new Promise((_, rej) => setTimeout(() => rej(new Error("flush timeout")), 20000))]);
+        muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer], { type:"video/mp4" }), fname("mp4"));
+      }
+    }catch(e){ err = err || e; }
+    try{ if(enc.state !== "closed") enc.close(); }catch(e){}
+    P.transparent = tr;
+    if(err) alert("Помилка кодування MP4: " + (err.message || err));
+    if(vid){ vid.currentTime = 0; if(playing) vid.play().catch(() => {}); }
+    resetTracker(); t0 = now() - (playing ? 0 : tPause);
+    busy = false; needRender = true;
+    $("mp4Label").textContent = "MP4 (30 fps)"; status("");
+  });
+
+  let webmRec = null;
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    if(!playing) $("playBtn").click();
+    const vid = activeVideo();
+    let len = P.dur*P.loops;
+    if(vid){ vid.currentTime = 0; resetTracker(); vid.play().catch(() => {}); len = isFinite(vid.duration) && vid.duration > 0 ? Math.min(vid.duration, 60) : P.dur; }
+    else t0 = now();                                          // запис стартує з початку лупа
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    try{ webmRec = new MediaRecorder(out.captureStream(FPS), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+    webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    webmRec.onstop = () => { if(chunks.length) downloadBlob(new Blob(chunks, { type:"video/webm" }), fname("webm")); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+    webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    setTimeout(() => { if(webmRec) webmRec.stop(); }, len*1000);
+  });
+
+  /* ================= своє фото / відео ================= */
+  function setSource(src){
+    P.source = src;
+    if(media && media.type === "video"){ if(src === "video" && playing) media.el.play().catch(() => {}); else media.el.pause(); }
+    srcDirty = true; needDetect = true; resetTracker(); syncUI(); needRender = true;
+  }
+  function freeMedia(old){
+    if(!old) return;
+    if(old.type === "video"){ try{ old.el.pause(); old.el.removeAttribute("src"); old.el.load(); }catch(e){} }
+    URL.revokeObjectURL(old.url);
+  }
+  function loadFile(file){
+    if(!file) return;
+    const isVid = /^video\//.test(file.type), isImg = /^image\//.test(file.type);
+    if(!isVid && !isImg) return;
+    const url = URL.createObjectURL(file);
+    if(isVid){
+      const v = document.createElement("video");
+      v.muted = true; v.loop = true; v.playsInline = true; v.preload = "auto";
+      v.addEventListener("loadeddata", () => {
+        const old = media; media = { type:"video", el:v, url, w:v.videoWidth || 1, h:v.videoHeight || 1 }; freeMedia(old);
+        setSource("video"); status("");
+      }, { once:true });
+      v.addEventListener("error", () => { alert("Не вдалося відкрити відео."); URL.revokeObjectURL(url); }, { once:true });
+      v.src = url;
+    } else {
+      const im = new Image();
+      im.onload = () => {
+        const old = media; media = { type:"image", el:im, url, w:im.naturalWidth || 1000, h:im.naturalHeight || 1000 }; freeMedia(old);
+        setSource("image"); status("");
+      };
+      im.onerror = () => { alert("Не вдалося відкрити файл як зображення."); URL.revokeObjectURL(url); };
+      im.src = url;
+    }
+  }
+  $("load").addEventListener("click", () => $("file").click());
+  $("file").addEventListener("change", e => { loadFile(e.target.files[0]); e.target.value = ""; });
+  const stage = $("stage");
+  ["dragenter","dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if(f) loadFile(f); });
+  window.addEventListener("paste", e => {
+    const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith("image/") || i.type.startsWith("video/"));
+    if(it){ e.preventDefault(); loadFile(it.getAsFile()); }
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  /* палітри з превʼю-смужкою */
+  const palBox = $("palettes");
+  for(const [key, p] of Object.entries(PALETTES)){
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.pal = key;
+    el.innerHTML = `<div>${p.name}</div><div class="pal"></div>`;
+    palBox.appendChild(el);
+  }
+  function paintPalSwatches(){
+    palBox.querySelectorAll(".preset").forEach(el => {
+      const cols = el.dataset.pal === "custom" ? [P.c1, P.c2, P.c3, P.c4, P.c5] : PALETTES[el.dataset.pal].cols, n = cols.length;
+      el.querySelector(".pal").style.background = `linear-gradient(90deg,${cols.map((c, i) => `${c} ${i/n*100}% ${(i + 1)/n*100}%`).join(",")})`;
+    });
+  }
+  palBox.addEventListener("click", e => {
+    const el = e.target.closest(".preset"); if(!el) return;
+    P.palette = el.dataset.pal; syncUI(); needRender = true;
+  });
+
+  const stBox = $("styles");
+  function applyStyle(s){
+    const keep = { aspect:P.aspect, dur:P.dur, loops:P.loops, bitrate:P.bitrate, source:P.source, demo:P.demo, demoText:P.demoText,
+      fit:P.fit, scale:P.scale, offX:P.offX, offY:P.offY };
+    Object.assign(P, clone(BASE), keep, s.p);
+    if(s.demo && P.source === "demo") P.demo = s.demo;
+    srcDirty = true; needDetect = true; resetTracker(); syncUI(); needRender = true;
+  }
+  STYLES.forEach((s, i) => {
+    const el = document.createElement("div");
+    el.className = "preset"; el.textContent = s.name; el.dataset.i = i;
+    el.addEventListener("click", () => {
+      applyStyle(s);
+      stBox.querySelectorAll(".preset").forEach(x => x.classList.toggle("active", x === el));
+    });
+    stBox.appendChild(el);
+  });
+
+  function bindPresets(sel, key, attr, after){
+    document.querySelectorAll(sel + " .preset").forEach(p => p.addEventListener("click", () => {
+      document.querySelectorAll(sel + " .preset").forEach(x => x.classList.remove("active"));
+      p.classList.add("active"); P[key] = p.dataset[attr];
+      if(after) after(); needRender = true;
+    }));
+  }
+  document.querySelectorAll("#sources .preset").forEach(p => p.addEventListener("click", () => {
+    const v = p.dataset.src;
+    if(v === "file"){ if(media) setSource(media.type); else $("file").click(); return; }
+    P.demo = v; setSource("demo");
+  }));
+  bindPresets("#fits", "fit", "fit", () => { srcDirty = true; needDetect = true; });
+  bindPresets("#detects", "detect", "det", () => { needDetect = true; hasPrev = false; });
+  bindPresets("#boxStyles", "boxStyle", "box");
+  bindPresets("#sizeModes", "sizeMode", "size");
+  bindPresets("#lblStyles", "lblStyle", "lbl");
+  bindPresets("#linkModes", "links", "link");
+  bindPresets("#grades", "grade", "grade");
+  bindPresets("#reveals", "reveal", "rev");
+  bindPresets("#colorModes", "colorMode", "cm");
+  bindPresets("#aspects", "aspect", "aspect", resize);
+
+  const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2);
+  const RANGES = [
+    ["scale","vScale",f2,"src"], ["offX","vOffX",f2,"src"], ["offY","vOffY",f2,"src"],
+    ["count","vCount",null,"det"], ["thresh","vThresh",f2,"det"], ["cell","vCell",null,"det"], ["spacing","vSpacing",f2,"det"], ["smooth","vSmooth",f2],
+    ["boxScale","vBoxScale",f2], ["boxFixed","vBoxFixed",null], ["lineW","vLineW",f1], ["bracket","vBracket",f2], ["boxFill","vBoxFill",f2],
+    ["lblSize","vLblSize",null], ["linkK","vLinkK",null], ["linkDist","vLinkDist",f2], ["linkAlpha","vLinkAlpha",f2],
+    ["pop","vPop",f2], ["typeSpeed","vTypeSpeed",null], ["jitter","vJitter",f2], ["life","vLife",f2],
+    ["dialSize","vDialSize",f2], ["dialSpin","vDialSpin",null], ["hudAlpha","vHudAlpha",f2], ["hudSize","vHudSize",null],
+    ["bright","vBright",f2], ["contrast","vContrast",f2], ["sat","vSat",f2], ["levels","vLevels",null],
+    ["dimOut","vDimOut",f2], ["zoom","vZoom",f2],
+    ["bloom","vBloom",f2], ["bloomThr","vBloomThr",f2], ["bloomRad","vBloomRad",f2], ["grain","vGrain",f2],
+    ["scan","vScan",f2], ["scanSize","vScanSize",null], ["vig","vVig",f2],
+    ["dur","vDur",null], ["loops","vLoops",null], ["bitrate","vBitrate",null],
+  ];
+  for(const [id, vid, fmt, kind] of RANGES){
+    $(id).addEventListener("input", e => {
+      P[id] = parseFloat(e.target.value);
+      $(vid).textContent = fmt ? fmt(P[id]) : P[id];
+      if(kind === "src"){ srcDirty = true; needDetect = true; }
+      else if(kind === "det") needDetect = true;
+      needRender = true;
+    });
+  }
+  const SWITCHES = ["squareBox","nodes","lblId","lblConf","lblXY","lblWord","dashed","trails",
+    "hudDial","hudCross","hudRulers","hudGrid","hudFrame","hudTime","hudRead","dialFollow","transparent"];
+  SWITCHES.forEach(id => $(id).addEventListener("change", e => { P[id] = e.target.checked; needRender = true; }));
+  $("demoText").addEventListener("input", e => { P.demoText = e.target.value; needDetect = true; needRender = true; });
+  $("words").addEventListener("input", e => { P.words = e.target.value; needRender = true; });
+  $("hudTitle").addEventListener("input", e => { P.hudTitle = e.target.value; needRender = true; });
+  ["c1","c2","c3","c4","c5"].forEach(id => $(id).addEventListener("input", e => { P[id] = e.target.value; P.palette = "custom"; syncUI(); needRender = true; }));
+  ["hudColor","bg"].forEach(id => $(id).addEventListener("input", e => { P[id] = e.target.value; needRender = true; }));
+
+  function syncUI(){
+    for(const [id, vid, fmt] of RANGES){ $(id).value = P[id]; $(vid).textContent = fmt ? fmt(P[id]) : P[id]; }
+    for(const id of SWITCHES) $(id).checked = !!P[id];
+    $("demoText").value = P.demoText; $("words").value = P.words; $("hudTitle").value = P.hudTitle;
+    ["c1","c2","c3","c4","c5","hudColor","bg"].forEach(id => $(id).value = P[id]);
+    const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x.dataset[attr] === val));
+    mark("#sources", "src", P.source === "demo" ? P.demo : "file");
+    mark("#fits", "fit", P.fit); mark("#detects", "det", P.detect); mark("#boxStyles", "box", P.boxStyle);
+    mark("#sizeModes", "size", P.sizeMode); mark("#lblStyles", "lbl", P.lblStyle); mark("#linkModes", "link", P.links);
+    mark("#grades", "grade", P.grade); mark("#reveals", "rev", P.reveal); mark("#palettes", "pal", P.palette);
+    mark("#colorModes", "cm", P.colorMode); mark("#aspects", "aspect", P.aspect);
+    $("wordGroup").style.display = P.source === "demo" && P.demo === "word" ? "block" : "none";
+    $("fitGroup").style.display = P.source !== "demo" ? "block" : "none";
+    paintPalSwatches();
+  }
+  $("reset").addEventListener("click", () => {
+    Object.assign(P, clone(DEFAULTS));
+    if(media && media.type === "video") media.el.pause();
+    stBox.querySelectorAll(".preset").forEach((x, i) => x.classList.toggle("active", i === 0));
+    resize(); syncUI(); needRender = true;
+  });
+
+  /* ================= boot ================= */
+  stBox.firstChild.classList.add("active");
+  resize(); syncUI();
+  if(!glOK) status("WebGL2 недоступний — грейд і bloom вимкнено");
+  if(document.fonts){
+    Promise.all([document.fonts.load(monoFont(16, 500)), document.fonts.load(monoFont(16, 700)), document.fonts.load('400 64px "Archivo Black"')])
+      .then(() => { needDetect = true; needRender = true; }).catch(() => {});
+  }
+  tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

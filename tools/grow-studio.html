@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grow Studio — ріст: physarum, реакція-дифузія, потоки, DLA</title>
+<link rel="stylesheet" href="studio.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Inter:wght@900&family=Onest:wght@900&family=Rubik:wght@900&family=Unbounded:wght@900&display=swap" rel="stylesheet">
+<style>
+  #out{background:#000;touch-action:none;cursor:crosshair}
+  .tabs{grid-template-columns:repeat(5,1fr)}
+  .tab{font-size:11.5px}
+  input[type=text]{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:8px 10px;font-size:15px;font-weight:700;font-family:inherit;outline:none;box-sizing:border-box}
+  .preset .pal{margin-top:6px}
+  #fonts .preset{font-size:13px}
+  .presets.c4 .preset{padding:8px 3px}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21.5V14"/>
+          <path d="M12 14L7.6 9.4M12 14l4.6-3.8" opacity=".85"/>
+          <path d="M7.6 9.4L4.6 5.2M7.6 9.4l1.6-5M16.6 10.2l3-3.6M16.6 10.2l-.4-5.4" opacity=".55"/>
+          <circle cx="4.6" cy="5.2" r="1.1" fill="white" stroke="none"/>
+          <circle cx="9.2" cy="4.4" r="1.1" fill="white" stroke="none"/>
+          <circle cx="19.6" cy="6.6" r="1.1" fill="white" stroke="none"/>
+          <circle cx="16.2" cy="4.8" r="1.1" fill="white" stroke="none"/>
+        </svg>
+      </div>
+      <div><h1>Grow Studio</h1><p>physarum · reaction-diffusion · flow fields</p></div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="grow">Ріст</div>
+        <div class="tab" data-tab="model">Модель</div>
+        <div class="tab" data-tab="mask">Маска</div>
+        <div class="tab" data-tab="look">Вигляд</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <!-- ============ РІСТ ============ -->
+      <div data-pane="grow" class="active">
+        <div class="group">
+          <h2>Пресети</h2>
+          <div class="presets c3" id="styles"></div>
+        </div>
+        <div class="group">
+          <h2>Режим</h2>
+          <div class="presets c2" id="modes">
+            <div class="preset active" data-mode="phys">Physarum</div>
+            <div class="preset" data-mode="rd">Реакція-дифузія</div>
+            <div class="preset" data-mode="flow">Потоки</div>
+            <div class="preset" data-mode="dla">DLA · гілки</div>
+          </div>
+          <div class="note" id="modeNote"></div>
+        </div>
+        <div class="group">
+          <h2>Симуляція</h2>
+          <div class="row"><label class="lbl">Сід</label><span class="val" id="vSeed">7</span></div>
+          <input type="range" id="seed" min="1" max="999" step="1" value="7">
+          <div class="btns-grid" style="margin-top:10px">
+            <button class="btn primary" id="restart">Перезапуск</button>
+            <button class="btn" id="newSeed">Новий сід</button>
+          </div>
+          <div class="row mt"><label class="lbl">Кроків за кадр</label><span class="val" id="vSpeed">2</span></div>
+          <input type="range" id="speed" min="1" max="40" step="1" value="2">
+          <div class="row mt"><label class="lbl">Роздільність симуляції</label><span class="val" id="vRes">0.50</span></div>
+          <input type="range" id="res" min="0.25" max="1" step="0.05" value="0.5">
+          <div class="note">Симуляція не лупиться: «Перезапуск» повертає її до зародка з тим самим сідом — і вона росте так само. Менша роздільність — крупніші структури й вища швидкість (картинка все одно масштабується плавно). Малюй мишкою по превʼю: physarum — приманка, реакція-дифузія — нові зародки, DLA — нове джерело.</div>
+        </div>
+      </div>
+
+      <!-- ============ МОДЕЛЬ ============ -->
+      <div data-pane="model">
+        <!-- Physarum -->
+        <div class="group" id="gPhys">
+          <h2>Physarum · слизовик</h2>
+          <div class="row"><label class="lbl">Агенти (тис.)</label><span class="val" id="vAgents">384</span></div>
+          <input type="range" id="agents" min="16" max="1024" step="16" value="384">
+          <div class="row mt"><label class="lbl">Кут сенсора (°)</label><span class="val" id="vSa">22.5</span></div>
+          <input type="range" id="sa" min="2" max="90" step="0.5" value="22.5">
+          <div class="row mt"><label class="lbl">Дистанція сенсора</label><span class="val" id="vSd">9.0</span></div>
+          <input type="range" id="sd" min="1" max="60" step="0.5" value="9">
+          <div class="row mt"><label class="lbl">Поворот (°)</label><span class="val" id="vRa">45.0</span></div>
+          <input type="range" id="ra" min="2" max="90" step="0.5" value="45">
+          <div class="row mt"><label class="lbl">Крок</label><span class="val" id="vSs">1.00</span></div>
+          <input type="range" id="ss" min="0.2" max="4" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Слід</label><span class="val" id="vDep">1.00</span></div>
+          <input type="range" id="dep" min="0.1" max="5" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Згасання сліду</label><span class="val" id="vDecay">0.900</span></div>
+          <input type="range" id="decay" min="0.7" max="0.999" step="0.001" value="0.9">
+          <div class="row mt"><label class="lbl">Дифузія</label><span class="val" id="vDiff">1.00</span></div>
+          <input type="range" id="diff" min="0" max="1" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Хаос</label><span class="val" id="vJit">0.02</span></div>
+          <input type="range" id="jit" min="0" max="1" step="0.01" value="0.02">
+          <div class="row mt"><label class="lbl">Старт</label></div>
+          <div class="presets c4" id="spawns">
+            <div class="preset" data-spawn="centre">Центр</div>
+            <div class="preset" data-spawn="ring">Кільце</div>
+            <div class="preset active" data-spawn="random">Всюди</div>
+            <div class="preset" data-spawn="mask">Маска</div>
+          </div>
+          <div class="row mt"><label class="lbl">Радіус старту</label><span class="val" id="vRad">1.00</span></div>
+          <input type="range" id="rad" min="0.1" max="1.4" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Притягання маски</label><span class="val" id="vMattr">0.00</span></div>
+          <input type="range" id="mattr" min="-6" max="10" step="0.1" value="0">
+          <div class="switch-row"><span class="lbl">Відбиття від країв</span>
+            <label class="switch"><input type="checkbox" id="bounce"><span class="track"></span></label></div>
+          <div class="note">Кожен агент нюхає слід трьома сенсорами (вперед, ліворуч, праворуч), повертає до найсильнішого, робить крок і лишає свій слід. Слід розпливається і згасає — так виростає мережа. Притягання додає маску до запаху: агенти збираються на світлих ділянках (мінус — уникають їх).</div>
+        </div>
+
+        <!-- Reaction-diffusion -->
+        <div class="group" id="gRd">
+          <h2>Реакція-дифузія · Gray-Scott</h2>
+          <div class="presets c3" id="rdps">
+            <div class="preset active" data-rdp="coral">Корал</div>
+            <div class="preset" data-rdp="maze">Лабіринт</div>
+            <div class="preset" data-rdp="spots">Плями</div>
+            <div class="preset" data-rdp="mitosis">Мітоз</div>
+            <div class="preset" data-rdp="worms">Червʼяки</div>
+            <div class="preset" data-rdp="holes">Дірки</div>
+          </div>
+          <div class="row mt"><label class="lbl">Feed</label><span class="val" id="vFeed">0.0545</span></div>
+          <input type="range" id="feed" min="0.008" max="0.1" step="0.0005" value="0.0545">
+          <div class="row mt"><label class="lbl">Kill</label><span class="val" id="vKill">0.0620</span></div>
+          <input type="range" id="kill" min="0.04" max="0.075" step="0.0005" value="0.062">
+          <div class="row mt"><label class="lbl">Зародки</label></div>
+          <div class="presets c4" id="rdseeds">
+            <div class="preset" data-rdseed="mask">Маска</div>
+            <div class="preset active" data-rdseed="spots">Плямки</div>
+            <div class="preset" data-rdseed="centre">Центр</div>
+            <div class="preset" data-rdseed="ring">Кільце</div>
+          </div>
+          <div class="row mt"><label class="lbl">Радіус</label><span class="val" id="vRrad">1.00</span></div>
+          <input type="range" id="rrad" min="0.1" max="1.4" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Утримання маскою</label><span class="val" id="vHold">0.00</span></div>
+          <input type="range" id="hold" min="0" max="1" step="0.01" value="0">
+          <div class="note">Дві речовини: U підживлюється (Feed), V зʼїдає U і вмирає (Kill). Кілька тисячних у Feed/Kill — і корал стає лабіринтом чи клітинами, що діляться. Пресети перемикаються наживо, без перезапуску. «Утримання» не дає візерунку вийти за межі маски.</div>
+        </div>
+
+        <!-- Flow -->
+        <div class="group" id="gFlow">
+          <h2>Потоки · curl noise</h2>
+          <div class="row"><label class="lbl">Частинки (тис.)</label><span class="val" id="vFcount">64</span></div>
+          <input type="range" id="fcount" min="8" max="256" step="8" value="64">
+          <div class="row mt"><label class="lbl">Швидкість</label><span class="val" id="vFspeed">1.60</span></div>
+          <input type="range" id="fspeed" min="0.2" max="5" step="0.05" value="1.6">
+          <div class="row mt"><label class="lbl">Масштаб шуму</label><span class="val" id="vFscale">1.40</span></div>
+          <input type="range" id="fscale" min="0.3" max="8" step="0.05" value="1.4">
+          <div class="row mt"><label class="lbl">Завихрення</label><span class="val" id="vFcurl">1.00</span></div>
+          <input type="range" id="fcurl" min="0" max="2" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Деталі</label><span class="val" id="vFoct">0.35</span></div>
+          <input type="range" id="foct" min="0" max="1" step="0.01" value="0.35">
+          <div class="row mt"><label class="lbl">Еволюція</label><span class="val" id="vFevo">0.12</span></div>
+          <input type="range" id="fevo" min="0" max="1" step="0.01" value="0.12">
+          <div class="row mt"><label class="lbl">Вітер</label><span class="val" id="vFwind">0.15</span></div>
+          <input type="range" id="fwind" min="0" max="2" step="0.01" value="0.15">
+          <div class="row mt"><label class="lbl">Напрям вітру (°)</label><span class="val" id="vFdir">20</span></div>
+          <input type="range" id="fdir" min="0" max="360" step="1" value="20">
+          <div class="row mt"><label class="lbl">Довжина штриха</label><span class="val" id="vFlen">1.00</span></div>
+          <input type="range" id="flen" min="0.5" max="6" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Шлейф</label><span class="val" id="vFfade">0.985</span></div>
+          <input type="range" id="ffade" min="0.8" max="0.999" step="0.001" value="0.985">
+          <div class="row mt"><label class="lbl">Інтенсивність</label><span class="val" id="vFint">0.16</span></div>
+          <input type="range" id="fint" min="0.02" max="1" step="0.01" value="0.16">
+          <div class="row mt"><label class="lbl">Життя (кадрів)</label><span class="val" id="vFlife">220</span></div>
+          <input type="range" id="flife" min="20" max="600" step="5" value="220">
+          <div class="row mt"><label class="lbl">Маска</label></div>
+          <div class="presets c3" id="fmasks">
+            <div class="preset active" data-fmask="none">Нема</div>
+            <div class="preset" data-fmask="around">Обтікання</div>
+            <div class="preset" data-fmask="radial">Радіально</div>
+          </div>
+          <div class="row mt"><label class="lbl">Радіус впливу</label><span class="val" id="vFmr">0.12</span></div>
+          <input type="range" id="fmr" min="0.02" max="0.4" step="0.005" value="0.12">
+          <div class="row mt"><label class="lbl">Сила поля</label><span class="val" id="vFrad">0.85</span></div>
+          <input type="range" id="frad" min="0" max="1" step="0.01" value="0.85">
+          <div class="row mt"><label class="lbl">Народження</label></div>
+          <div class="presets c4" id="fspawns">
+            <div class="preset active" data-fspawn="all">Всюди</div>
+            <div class="preset" data-fspawn="mask">З маски</div>
+            <div class="preset" data-fspawn="edge">Від краю</div>
+            <div class="preset" data-fspawn="mix">Мікс</div>
+          </div>
+          <div class="note">Частинки пливуть по curl-шуму (поле без джерел і стоків — тому пасма не злипаються) і малюють тонкий штрих у буфер, що повільно згасає. «Обтікання» — потік огинає маску як перешкоду; «Радіально» — силові лінії розходяться від силуету, як ошурки навколо магніту.</div>
+        </div>
+
+        <!-- DLA -->
+        <div class="group" id="gDla">
+          <h2>DLA · гілки</h2>
+          <div class="presets c2" id="dalgs">
+            <div class="preset active" data-dalg="dla">DLA · блукання</div>
+            <div class="preset" data-dalg="sc">Колонізація</div>
+          </div>
+          <div class="row mt"><label class="lbl">Джерело</label></div>
+          <div class="presets c4" id="dseeds">
+            <div class="preset" data-dseed="centre">Центр</div>
+            <div class="preset" data-dseed="bottom">Низ</div>
+            <div class="preset active" data-dseed="top">Верх</div>
+            <div class="preset" data-dseed="mask">Маска</div>
+          </div>
+          <div id="dlaBox">
+            <div class="row mt"><label class="lbl">Липкість</label><span class="val" id="vDstick">0.55</span></div>
+            <input type="range" id="dstick" min="0.05" max="1" step="0.01" value="0.55">
+            <div class="row mt"><label class="lbl">Дрейф</label><span class="val" id="vDdrift">0.50</span></div>
+            <input type="range" id="ddrift" min="0" max="1" step="0.01" value="0.5">
+          </div>
+          <div id="scBox">
+            <div class="row mt"><label class="lbl">Область</label></div>
+            <div class="presets c3" id="dregions">
+              <div class="preset active" data-dregion="full">Поле</div>
+              <div class="preset" data-dregion="semi">Півколо</div>
+              <div class="preset" data-dregion="mask">Маска</div>
+            </div>
+            <div class="row mt"><label class="lbl">Атрактори</label><span class="val" id="vDattr">4000</span></div>
+            <input type="range" id="dattr" min="300" max="12000" step="100" value="4000">
+            <div class="row mt"><label class="lbl">Крок гілки</label><span class="val" id="vDseg">2.5</span></div>
+            <input type="range" id="dseg" min="1" max="8" step="0.1" value="2.5">
+            <div class="row mt"><label class="lbl">Радіус впливу</label><span class="val" id="vDinfl">30</span></div>
+            <input type="range" id="dinfl" min="8" max="120" step="1" value="30">
+            <div class="row mt"><label class="lbl">Тремтіння</label><span class="val" id="vDjit">0.15</span></div>
+            <input type="range" id="djit" min="0" max="1" step="0.01" value="0.15">
+          </div>
+          <div class="row mt"><label class="lbl">Товщина</label><span class="val" id="vDw">1.10</span></div>
+          <input type="range" id="dw" min="0.3" max="6" step="0.05" value="1.1">
+          <div class="row mt"><label class="lbl">Стовщення стовбура</label><span class="val" id="vDthick">0.90</span></div>
+          <input type="range" id="dthick" min="0" max="2" step="0.01" value="0.9">
+          <div class="row mt"><label class="lbl">Згасання за віком</label><span class="val" id="vDage">0.85</span></div>
+          <input type="range" id="dage" min="0" max="1" step="0.01" value="0.85">
+          <div class="row mt"><label class="lbl">Ліміт точок</label><span class="val" id="vDmax">30000</span></div>
+          <input type="range" id="dmax" min="2000" max="80000" step="1000" value="30000">
+          <div class="note">DLA: частинки блукають навмання й прилипають до гілок — кінчики ловлять більше, тому ростуть блискавки, іній, корали. Дрейф тягне блукання до джерела — гілки стають рвучкими, як розряд. Колонізація: гілки тягнуться до хмари точок-атракторів — виходять жилки листка. Колір — вік гілки: свіжі кінчики найяскравіші.</div>
+        </div>
+      </div>
+
+      <!-- ============ МАСКА ============ -->
+      <div data-pane="mask">
+        <div class="group">
+          <h2>Джерело маски</h2>
+          <div class="presets c4" id="srcs">
+            <div class="preset" data-src="none">Нема</div>
+            <div class="preset active" data-src="text">Текст</div>
+            <div class="preset" data-src="shape">Фігура</div>
+            <div class="preset" data-src="image">Фото</div>
+          </div>
+          <div class="note">Маска — зародок і поле для всіх режимів: звідки стартують агенти, де росте візерунок, що обтікають потоки, звідки бʼє DLA.</div>
+        </div>
+        <div class="group" id="textGroup">
+          <h2>Текст</h2>
+          <input type="text" id="text" value="GROW" maxlength="16" placeholder="Слово…">
+          <div class="presets c3" id="fonts" style="margin-top:10px">
+            <div class="preset active" data-font="Unbounded" style="font-family:Unbounded;font-weight:900">Unbounded</div>
+            <div class="preset" data-font="Anton" style="font-family:Anton">Anton</div>
+            <div class="preset" data-font="Archivo Black" style="font-family:'Archivo Black'">Archivo</div>
+            <div class="preset" data-font="Onest" style="font-family:Onest;font-weight:900">Onest</div>
+            <div class="preset" data-font="Rubik" style="font-family:Rubik;font-weight:900">Rubik</div>
+            <div class="preset" data-font="Inter" style="font-family:Inter;font-weight:900">Inter</div>
+          </div>
+        </div>
+        <div class="group" id="shapeGroup">
+          <h2>Фігура</h2>
+          <div class="presets c3" id="shapes">
+            <div class="preset active" data-shape="circle">Коло</div>
+            <div class="preset" data-shape="ellipse">Еліпс</div>
+            <div class="preset" data-shape="figure">Силует</div>
+            <div class="preset" data-shape="star">Зірка</div>
+            <div class="preset" data-shape="heart">Серце</div>
+            <div class="preset" data-shape="ring">Кільце</div>
+          </div>
+        </div>
+        <div class="group" id="imageGroup">
+          <h2>Фото</h2>
+          <div class="btns-grid"><button class="btn primary full" id="imgLoad">Завантажити фото</button></div>
+          <div class="row mt"><label class="lbl">Поріг</label><span class="val" id="vMth">0.50</span></div>
+          <input type="range" id="mth" min="0.02" max="0.98" step="0.01" value="0.5">
+          <div class="note">Світлі ділянки фото стають маскою (темні — «Інвертувати маску»). Файл можна перетягнути прямо на превʼю або вставити ⌘V — нічого не вивантажується.</div>
+        </div>
+        <div class="group">
+          <h2>Розміщення</h2>
+          <div class="row"><label class="lbl">Масштаб</label><span class="val" id="vMsize">0.60</span></div>
+          <input type="range" id="msize" min="0.1" max="1.5" step="0.01" value="0.6">
+          <div class="row mt"><label class="lbl">Зсув X</label><span class="val" id="vMx">0.00</span></div>
+          <input type="range" id="mx" min="-0.5" max="0.5" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Зсув Y</label><span class="val" id="vMy">0.00</span></div>
+          <input type="range" id="my" min="-0.5" max="0.5" step="0.01" value="0">
+          <div class="switch-row"><span class="lbl">Інвертувати маску</span>
+            <label class="switch"><input type="checkbox" id="minv"><span class="track"></span></label></div>
+          <div class="switch-row"><span class="lbl">Показати маску</span>
+            <label class="switch"><input type="checkbox" id="mshow"><span class="track"></span></label></div>
+        </div>
+      </div>
+
+      <!-- ============ ВИГЛЯД ============ -->
+      <div data-pane="look">
+        <div class="group">
+          <h2>Палітра · gradient map</h2>
+          <div class="presets c2" id="palettes"></div>
+          <div class="colors c3" style="margin-top:10px">
+            <div class="color-field"><span>Фон</span><div class="color-wrap"><input type="color" id="c1" value="#06070a"></div></div>
+            <div class="color-field"><span>Середній</span><div class="color-wrap"><input type="color" id="c2" value="#3d7bff"></div></div>
+            <div class="color-field"><span>Світлий</span><div class="color-wrap"><input type="color" id="c3" value="#f4f7ff"></div></div>
+          </div>
+          <div class="note">Інтенсивність сліду / концентрація / вік гілки → колір по градієнту. Нуль — колір фону, максимум — найсвітліша точка палітри.</div>
+        </div>
+        <div class="group">
+          <h2>Тон</h2>
+          <div class="row"><label class="lbl">Експозиція</label><span class="val" id="vGain">1.00</span></div>
+          <input type="range" id="gain" min="0.05" max="5" step="0.01" value="1">
+          <div class="row mt"><label class="lbl">Гама</label><span class="val" id="vGamma">1.00</span></div>
+          <input type="range" id="gamma" min="0.3" max="3" step="0.01" value="1">
+          <div class="switch-row"><span class="lbl">Інвертувати</span>
+            <label class="switch"><input type="checkbox" id="invert"><span class="track"></span></label></div>
+        </div>
+        <div class="group">
+          <h2>Рельєф</h2>
+          <div class="row"><label class="lbl">Сила</label><span class="val" id="vRelief">0.00</span></div>
+          <input type="range" id="relief" min="0" max="1" step="0.01" value="0">
+          <div class="row mt"><label class="lbl">Висота</label><span class="val" id="vHeight">6.0</span></div>
+          <input type="range" id="height" min="0.5" max="30" step="0.5" value="6">
+          <div class="row mt"><label class="lbl">Кут світла (°)</label><span class="val" id="vLang">135</span></div>
+          <input type="range" id="lang" min="0" max="360" step="1" value="135">
+          <div class="note">Нормалі рахуються з самого поля — візерунок стає опуклим, як корал чи висохла глина під косим світлом.</div>
+        </div>
+        <div class="group">
+          <h2>Світіння</h2>
+          <div class="row"><label class="lbl">Bloom</label><span class="val" id="vBloom">0.35</span></div>
+          <input type="range" id="bloom" min="0" max="2" step="0.01" value="0.35">
+          <div class="row mt"><label class="lbl">Радіус</label><span class="val" id="vBloomR">1.00</span></div>
+          <input type="range" id="bloomR" min="0.3" max="3" step="0.05" value="1">
+        </div>
+      </div>
+
+      <!-- ============ ЕКСПОРТ ============ -->
+      <div data-pane="export">
+        <div class="group">
+          <h2>Формат</h2>
+          <div class="presets c4" id="aspects">
+            <div class="preset" data-aspect="1:1">1:1</div>
+            <div class="preset active" data-aspect="4:5">4:5</div>
+            <div class="preset" data-aspect="9:16">9:16</div>
+            <div class="preset" data-aspect="16:9">16:9</div>
+          </div>
+        </div>
+        <div class="group">
+          <h2>Статика</h2>
+          <div class="btns-grid"><button class="btn primary" id="exPng">PNG</button><button class="btn" id="exJpg">JPG</button></div>
+          <div class="note">Поточний стан симуляції — як є на превʼю.</div>
+        </div>
+        <div class="group">
+          <h2>Відео</h2>
+          <div class="row"><label class="lbl">Тривалість (с)</label><span class="val" id="vDur">10</span></div>
+          <input type="range" id="dur" min="2" max="40" step="1" value="10">
+          <div class="row mt"><label class="lbl">Кадрів за секунду</label></div>
+          <div class="presets c2" id="fpss">
+            <div class="preset active" data-fps="30">30 fps</div>
+            <div class="preset" data-fps="60">60 fps</div>
+          </div>
+          <div class="row mt"><label class="lbl">Бітрейт (Мбіт/с)</label><span class="val" id="vBitrate">16</span></div>
+          <input type="range" id="bitrate" min="2" max="40" step="1" value="16">
+          <div class="btns-grid" style="margin-top:12px">
+            <button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (30 fps)</span></button>
+            <button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>
+          </div>
+          <div class="note">MP4 рендериться покадрово (WebCodecs): симуляція перезапускається з тим самим сідом і крок за кроком росте задану кількість секунд — запис починається з зародка. WebM пишеться з живого превʼю, теж із перезапуску.</div>
+        </div>
+        <div class="group"><div class="btns-grid"><button class="btn full" id="reset">Скинути всі налаштування</button></div></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <input type="file" id="imgFile" accept="image/*,.svg" hidden>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="iconbtn" id="restartBtn" title="Перезапуск з тим самим сідом">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл · Physarum · Gray-Scott · curl-noise · DLA / space colonisation · WebGL2 float-текстури · все локально</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= params ================= */
+  const TAU = Math.PI*2, D2R = Math.PI/180;
+  const P = {
+    mode:"phys", seed:7, speed:2, res:0.5,
+    agents:384, sa:22.5, sd:9, ra:45, ss:1, dep:1, decay:0.9, diff:1, jit:0.02, spawn:"random", rad:1, mattr:0, bounce:false,
+    rdp:"coral", feed:0.0545, kill:0.062, rdseed:"spots", rrad:1, hold:0,
+    fcount:64, fspeed:1.6, fscale:1.4, fcurl:1, foct:0.35, fevo:0.12, fwind:0.15, fdir:20, flen:1, ffade:0.985, fint:0.16, flife:220,
+    fmask:"none", fmr:0.12, frad:0.85, fspawn:"all",
+    dalg:"dla", dseed:"top", dregion:"full", dstick:0.55, ddrift:0.5, dattr:4000, dseg:2.5, dinfl:30, djit:0.15,
+    dw:1.1, dthick:0.9, dage:0.85, dmax:30000,
+    src:"text", text:"GROW", font:"Unbounded", shape:"circle", msize:0.6, mx:0, my:0, mth:0.5, minv:false, mshow:false,
+    palette:"mono", c1:"#06070a", c2:"#3d7bff", c3:"#f4f7ff", gain:1, gamma:1, invert:false,
+    relief:0, height:6, lang:135, bloom:0.35, bloomR:1,
+    aspect:"4:5", fps:30, dur:10, bitrate:16,
+  };
+  const BASE = JSON.parse(JSON.stringify(P));    // нейтральна база, поверх неї лягають пресети
+
+  /* gradient map: інтенсивність 0..1 → колір */
+  const PALETTES = {
+    mono:    { name:"Білий на чорному", stops:[[0,"#000000"],[1,"#ffffff"]] },
+    slime:   { name:"Слиз",           stops:[[0,"#0d1b1f"],[0.35,"#21402c"],[0.65,"#86b01e"],[0.88,"#def05a"],[1,"#fbffd6"]] },
+    acid:    { name:"Кислота",        stops:[[0,"#050605"],[0.3,"#163806"],[0.6,"#7ed61a"],[0.85,"#dcff4a"],[1,"#f8ffe2"]] },
+    coral:   { name:"Корал на кремі", stops:[[0,"#f3ebdc"],[0.3,"#f4b39a"],[0.6,"#e8573f"],[0.85,"#a3202c"],[1,"#5c0d1c"]] },
+    ice:     { name:"Лід",            stops:[[0,"#01030a"],[0.3,"#0c2a5c"],[0.6,"#3f8fd8"],[0.85,"#bfe8ff"],[1,"#ffffff"]] },
+    fire:    { name:"Вогонь",         stops:[[0,"#000000"],[0.25,"#3d0600"],[0.5,"#b8260a"],[0.72,"#ff8a1f"],[0.9,"#ffe3a0"],[1,"#ffffff"]] },
+    plasma:  { name:"Плазма",         stops:[[0,"#040108"],[0.3,"#2a0a44"],[0.55,"#8a2be2"],[0.8,"#ef8cff"],[1,"#ffffff"]] },
+    graphite:{ name:"Графіт",         stops:[[0,"#1d1d1f"],[0.5,"#7e7e82"],[1,"#eeeeee"]] },
+    custom:  { name:"Свої кольори",   stops:null },
+  };
+
+  /* Gray-Scott: [feed, kill] */
+  const RDP = { coral:[0.0545,0.062], maze:[0.029,0.057], spots:[0.03,0.062], mitosis:[0.0367,0.0649], worms:[0.058,0.065], holes:[0.039,0.058] };
+
+  const STYLES = [
+    { name:"Слизовик", p:{ mode:"phys", res:0.5, speed:2, agents:384, sa:22.5, sd:9, ra:45, ss:1, dep:1, decay:0.9, diff:1, jit:0.02, spawn:"random", palette:"slime", gain:0.6, gamma:1.1, bloom:0.35 } },
+    { name:"Вибух", p:{ mode:"phys", res:0.6, speed:2, agents:640, sa:45, sd:18, ra:22.5, ss:1.4, dep:1, decay:0.95, diff:0.5, jit:0.25, spawn:"centre", rad:1.4, palette:"mono", gain:0.5, gamma:1.2, bloom:0.5 } },
+    { name:"Кільце", p:{ mode:"phys", res:0.6, speed:2, agents:512, sa:45, sd:18, ra:22.5, ss:1.4, dep:1, decay:0.95, diff:0.5, jit:0.3, spawn:"ring", rad:1, palette:"mono", gain:0.5, gamma:1.3, bloom:0.45, bloomR:1.2 } },
+    { name:"Ріст тексту", p:{ mode:"phys", res:0.6, speed:2, agents:640, sa:30, sd:8, ra:30, ss:0.8, dep:1, decay:0.88, diff:1, jit:0.3, spawn:"mask", mattr:8, src:"text", msize:0.75, palette:"acid", gain:0.45, bloom:0.45 } },
+    { name:"Корал", p:{ mode:"rd", res:0.5, speed:14, rdp:"coral", feed:0.0545, kill:0.062, rdseed:"spots", palette:"coral", relief:0.75, height:7, lang:135, bloom:0 } },
+    { name:"Лабіринт", p:{ mode:"rd", res:0.45, speed:20, rdp:"maze", feed:0.029, kill:0.057, rdseed:"spots", palette:"graphite", relief:0.95, height:9, lang:120, gamma:0.9, bloom:0 } },
+    { name:"Мітоз", p:{ mode:"rd", res:0.5, speed:24, rdp:"mitosis", feed:0.0367, kill:0.0649, rdseed:"spots", rrad:1.2, palette:"ice", relief:0.45, height:5, bloom:0.45 } },
+    { name:"Червʼяки", p:{ mode:"rd", res:0.5, speed:40, rdp:"worms", feed:0.058, kill:0.065, rdseed:"spots", rrad:1.4, palette:"acid", relief:0.5, height:6, bloom:0.3 } },
+    { name:"Корал-текст", p:{ mode:"rd", res:0.5, speed:28, rdp:"coral", feed:0.0545, kill:0.062, rdseed:"mask", hold:1, src:"text", palette:"fire", relief:0.6, height:6, bloom:0.35 } },
+    { name:"Волосся", p:{ mode:"flow", res:1, speed:2, fcount:64, fspeed:1.6, fscale:1.4, fcurl:1, foct:0.35, fevo:0.12, fwind:0.15, fdir:20, flen:1, ffade:0.985, fint:0.16, flife:220, fmask:"none", fspawn:"all", palette:"mono", bloom:0.2 } },
+    { name:"Ошурки", p:{ mode:"flow", res:1, speed:2, fcount:96, fspeed:1.4, fscale:2.6, fcurl:0.35, foct:0.2, fevo:0.08, fwind:0, flen:2.2, ffade:0.97, fint:0.2, flife:140, fmask:"radial", fmr:0.15, frad:0.85, fspawn:"mix", src:"shape", shape:"figure", msize:0.8, palette:"mono", bloom:0.6, bloomR:1.2 } },
+    { name:"Обтікання", p:{ mode:"flow", res:1, speed:2, fcount:128, fspeed:1.8, fscale:1.8, fcurl:0.45, foct:0.4, fevo:0.1, fwind:1, fdir:250, flen:1, ffade:0.992, fint:0.1, flife:320, fmask:"around", fmr:0.12, fspawn:"all", src:"shape", shape:"ellipse", msize:0.32, mx:-0.12, my:-0.22, palette:"mono", bloom:0.15 } },
+    { name:"Блискавка", p:{ mode:"dla", res:0.5, speed:8, dalg:"dla", dseed:"top", dstick:0.55, ddrift:0.5, dw:1.1, dthick:0.9, dage:0.85, dmax:30000, palette:"plasma", bloom:0.9, bloomR:1.5 } },
+    { name:"Жилки", p:{ mode:"dla", res:0.5, speed:3, dalg:"sc", dseed:"bottom", dregion:"semi", dattr:5000, dseg:2.5, dinfl:28, djit:0.15, dw:0.9, dthick:1, dage:0.5, palette:"ice", bloom:0.3 } },
+    { name:"Іній", p:{ mode:"dla", res:0.5, speed:10, dalg:"dla", dseed:"centre", dstick:1, ddrift:0.05, dw:1, dthick:0.7, dage:0.6, palette:"ice", bloom:0.55 } },
+  ];
+  Object.assign(P, STYLES[0].p);
+  const DEFAULTS = JSON.parse(JSON.stringify(P));
+
+  const MODE_NOTES = {
+    phys:"Сотні тисяч агентів нюхають слід і лишають свій — виростає мережа, як у слизовика.",
+    rd:"Дві речовини реагують і дифундують — корали, лабіринти, клітини, що діляться.",
+    flow:"Частинки пливуть по curl-шуму й лишають шлейф — волосся, вітер, ошурки навколо маски.",
+    dla:"Частинки блукають і прилипають до гілок — блискавка, іній, жилки листка.",
+  };
+  const SPAWN = { centre:0, ring:1, random:2, mask:3 };
+  const RDSEED = { mask:0, spots:1, centre:2, ring:3 };
+  const FMASK = { none:0, around:1, radial:2 };
+  const FSPAWN = { all:0, mask:1, edge:2, mix:3 };
+
+  const $ = id => document.getElementById(id);
+  const out = $("out");
+  let W = 1080, H = 1350;
+
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+
+  /* ================= WebGL2 ================= */
+  const gl = out.getContext("webgl2", { preserveDrawingBuffer:true, antialias:false, alpha:false, premultipliedAlpha:false });
+  if(!gl){
+    status("WebGL2 недоступний");
+    alert("Цей браузер не підтримує WebGL2 — відкрий студію в свіжому Chrome, Safari чи Firefox.");
+    return;
+  }
+  gl.getExtension("EXT_color_buffer_float");
+  gl.getExtension("EXT_color_buffer_half_float");
+  const FBLEND = !!gl.getExtension("EXT_float_blend");
+  const F32 = { i:gl.RGBA32F, f:gl.RGBA, t:gl.FLOAT };
+  const F16 = { i:gl.RGBA16F, f:gl.RGBA, t:gl.HALF_FLOAT };
+  const U8  = { i:gl.RGBA8,   f:gl.RGBA, t:gl.UNSIGNED_BYTE };
+  function renderable(fmt){
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, fmt.i, 4, 4, 0, fmt.f, fmt.t, null);
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.deleteFramebuffer(f); gl.deleteTexture(t);
+    while(gl.getError() !== gl.NO_ERROR){}
+    return ok;
+  }
+  const HAS32 = renderable(F32), HAS16 = renderable(F16);
+  const STATE = HAS32 ? F32 : HAS16 ? F16 : U8;                     // агенти, частинки, Gray-Scott
+  const ACC = (HAS32 && FBLEND) ? F32 : HAS16 ? F16 : HAS32 ? F32 : U8;  // буфери з адитивним блендом
+  const ACC_BLEND = ACC !== F32 || FBLEND;
+  const LOWQ = STATE === U8;
+
+  /* ---------- шейдери ---------- */
+  const HDR = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+const float PI = 3.14159265;
+const float TAU = 6.28318531;
+`;
+  const HASH = `
+uint pcg(uint v){ uint s = v*747796405u + 2891336453u; uint w = ((s >> ((s >> 28u) + 4u)) ^ s)*277803737u; return (w >> 22u) ^ w; }
+float rnd(uint a, uint b, uint c){ return float(pcg(a ^ pcg(b + pcg(c))))*(1.0/4294967296.0); }
+`;
+  /* таблиця точок старту: 256×512 RGBA8, uv по 16 біт; рядки 0–255 — всередині маски, 256–511 — край */
+  const SPAWNGL = `
+uniform sampler2D u_spawn;
+vec2 spawnPt(float r, int row0){
+  int i = int(r*65535.0);
+  vec4 t = floor(texelFetch(u_spawn, ivec2(i % 256, row0 + i/256), 0)*255.0 + 0.5);
+  return (vec2(t.r*256.0 + t.g, t.b*256.0 + t.a) + 0.5)/65536.0;
+}
+`;
+  /* simplex 3D (Ashima / Gustavson) */
+  const NOISE = `
+vec3 mod289(vec3 x){ return x - floor(x*(1.0/289.0))*289.0; }
+vec4 mod289(vec4 x){ return x - floor(x*(1.0/289.0))*289.0; }
+vec4 permute(vec4 x){ return mod289(((x*34.0) + 10.0)*x); }
+vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314*r; }
+float snoise(vec3 v){
+  const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+  const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+  vec3 i = floor(v + dot(v, C.yyy));
+  vec3 x0 = v - i + dot(i, C.xxx);
+  vec3 g = step(x0.yzx, x0.xyz);
+  vec3 l = 1.0 - g;
+  vec3 i1 = min(g.xyz, l.zxy);
+  vec3 i2 = max(g.xyz, l.zxy);
+  vec3 x1 = x0 - i1 + C.xxx;
+  vec3 x2 = x0 - i2 + C.yyy;
+  vec3 x3 = x0 - D.yyy;
+  i = mod289(i);
+  vec4 p = permute(permute(permute(i.z + vec4(0.0, i1.z, i2.z, 1.0)) + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+  float n_ = 0.142857142857;
+  vec3 ns = n_*D.wyz - D.xzx;
+  vec4 j = p - 49.0*floor(p*ns.z*ns.z);
+  vec4 x_ = floor(j*ns.z);
+  vec4 y_ = floor(j - 7.0*x_);
+  vec4 x = x_*ns.x + ns.yyyy;
+  vec4 y = y_*ns.x + ns.yyyy;
+  vec4 h = 1.0 - abs(x) - abs(y);
+  vec4 b0 = vec4(x.xy, y.xy);
+  vec4 b1 = vec4(x.zw, y.zw);
+  vec4 s0 = floor(b0)*2.0 + 1.0;
+  vec4 s1 = floor(b1)*2.0 + 1.0;
+  vec4 sh = -step(h, vec4(0.0));
+  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+  vec3 p0 = vec3(a0.xy, h.x);
+  vec3 p1 = vec3(a0.zw, h.y);
+  vec3 p2 = vec3(a1.xy, h.z);
+  vec3 p3 = vec3(a1.zw, h.w);
+  vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+  vec4 m = max(0.5 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+  m = m*m;
+  return 105.0*dot(m*m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
+}
+`;
+  /* поле швидкостей потоків: curl-шум + вітер + маска (обтікання / радіально). Потрібен u_res вище. */
+  const VEL = `
+uniform sampler2D u_mask;
+uniform float u_t, u_scale, u_curl, u_oct, u_wind, u_dir, u_mr, u_frad;
+uniform int u_fmask, u_hasMask;
+vec2 curlN(vec2 q, float t){
+  const float e = 0.015;
+  float a = snoise(vec3(q.x, q.y + e, t)) - snoise(vec3(q.x, q.y - e, t));
+  float b = snoise(vec3(q.x + e, q.y, t)) - snoise(vec3(q.x - e, q.y, t));
+  return vec2(a, -b)/(2.0*e);
+}
+vec2 vel(vec2 p){
+  vec2 uv = p/u_res;
+  vec2 q = vec2(uv.x*u_res.x/u_res.y, uv.y)*u_scale;
+  vec2 c = curlN(q, u_t);
+  if(u_oct > 0.0) c += curlN(q*2.3 + 17.3, u_t*1.6)*(0.45*u_oct);
+  vec2 v = c*(0.6*u_curl) + vec2(cos(u_dir), sin(u_dir))*u_wind;
+  if(u_hasMask == 1 && u_fmask > 0){
+    vec4 m = texture(u_mask, uv);
+    float sd = m.a - 0.5;                          // знакова відстань у частках висоти, + зовні
+    vec2 n = m.gb*2.0 - 1.0;
+    float nl = length(n);
+    n = nl > 0.001 ? n/nl : vec2(0.0);             // нормаль назовні
+    if(u_fmask == 1){
+      float w = 1.0 - smoothstep(0.0, u_mr, sd);
+      float dn = dot(v, n);
+      if(dn < 0.0) v -= n*dn*w;                    // прибираємо складову «в перешкоду»
+      v += n*(w*w*0.35*length(v));
+    } else {
+      float fall = u_mr/(u_mr + max(sd, 0.0));
+      v = mix(v, n*(0.6 + 0.8*fall), u_frad);      // силові лінії від силуету
+    }
+  }
+  return v;
+}
+`;
+
+  const VS_FULL = HDR + `
+void main(){
+  vec2 v[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
+  gl_Position = vec4(v[gl_VertexID], 0.0, 1.0);
+}`;
+
+  /* ---- Physarum ---- */
+  const FS_PH_INIT = HDR + HASH + SPAWNGL + `
+uniform vec2 u_res;
+uniform int u_aw, u_seed, u_mode;
+uniform float u_rad;
+out vec4 o;
+void main(){
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  uint id = uint(c.y*u_aw + c.x), sd = uint(u_seed);
+  float r1 = rnd(id, sd, 11u), r2 = rnd(id, sd, 12u), r3 = rnd(id, sd, 13u), r4 = rnd(id, sd, 14u);
+  vec2 ctr = u_res*0.5;
+  float R = min(u_res.x, u_res.y)*0.5;
+  vec2 p; float h;
+  if(u_mode == 0){ float a = r1*TAU; p = ctr + vec2(cos(a), sin(a))*sqrt(r2)*R*0.08*u_rad; h = a; }
+  else if(u_mode == 1){ float a = r1*TAU; p = ctr + vec2(cos(a), sin(a))*R*(0.42*u_rad + (r2 - 0.5)*0.015); h = a + (r3 - 0.5)*1.4; }
+  else if(u_mode == 3){ p = spawnPt(r1, 0)*u_res; h = r3*TAU; }
+  else { p = vec2(r1, r2)*u_res; h = r3*TAU; }
+  o = vec4(clamp(p, vec2(0.0), u_res - 0.01)/u_res, fract(h/TAU), r4);
+}`;
+
+  const FS_PH_STEP = HDR + HASH + `
+uniform sampler2D u_state, u_trail, u_mask;
+uniform vec2 u_res;
+uniform float u_sa, u_sd, u_ra, u_ss, u_maskK, u_jit;
+uniform int u_aw, u_iter, u_seed, u_bounce, u_hasMask;
+out vec4 o;
+float sense(vec2 p){
+  vec2 q = u_bounce == 1 ? clamp(p, vec2(0.0), u_res - 1.0) : mod(p, u_res);
+  float t = texelFetch(u_trail, ivec2(q), 0).r;
+  if(u_hasMask == 1) t += texture(u_mask, q/u_res).r*u_maskK;
+  return t;
+}
+void main(){
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  vec4 a = texelFetch(u_state, c, 0);
+  vec2 p = a.xy*u_res;
+  float h = a.z*TAU;
+  uint id = uint(c.y*u_aw + c.x);
+  float r = rnd(id, uint(u_iter), uint(u_seed));
+  float r2 = rnd(id, uint(u_iter) + 7919u, uint(u_seed));
+  float F = sense(p + u_sd*vec2(cos(h), sin(h)));
+  float L = sense(p + u_sd*vec2(cos(h + u_sa), sin(h + u_sa)));
+  float R = sense(p + u_sd*vec2(cos(h - u_sa), sin(h - u_sa)));
+  if(F > L && F > R){ }
+  else if(F < L && F < R){ h += (r < 0.5 ? 1.0 : -1.0)*u_ra; }
+  else if(L > R){ h += u_ra; }
+  else if(R > L){ h -= u_ra; }
+  h += (r2 - 0.5)*u_jit;
+  vec2 np = p + u_ss*vec2(cos(h), sin(h));
+  if(u_bounce == 1){
+    if(np.x < 0.0 || np.x > u_res.x - 0.01){ h = PI - h; np.x = clamp(np.x, 0.0, u_res.x - 0.01); }
+    if(np.y < 0.0 || np.y > u_res.y - 0.01){ h = -h; np.y = clamp(np.y, 0.0, u_res.y - 0.01); }
+  } else {
+    np = mod(np, u_res);
+  }
+  o = vec4(np/u_res, fract(h/TAU), a.w);
+}`;
+
+  const VS_PH_DEP = HDR + `
+uniform sampler2D u_state;
+uniform vec2 u_res;
+uniform int u_aw;
+void main(){
+  int id = gl_VertexID;
+  vec4 a = texelFetch(u_state, ivec2(id % u_aw, id/u_aw), 0);
+  vec2 p = (floor(a.xy*u_res) + 0.5)/u_res*2.0 - 1.0;
+  gl_Position = vec4(p, 0.0, 1.0);
+  gl_PointSize = 1.0;
+}`;
+  const FS_PH_DEP = HDR + `
+uniform float u_dep;
+out vec4 o;
+void main(){ o = vec4(u_dep, 0.0, 0.0, 1.0); }`;
+
+  const FS_PH_DIFF = HDR + `
+uniform sampler2D u_trail, u_mask;
+uniform vec2 u_res;
+uniform float u_decay, u_diff, u_madd;
+uniform int u_bounce, u_hasMask;
+uniform vec4 u_brush;
+out vec4 o;
+void main(){
+  ivec2 c = ivec2(gl_FragCoord.xy), R = ivec2(u_res);
+  float s = 0.0;
+  for(int j = -1; j <= 1; j++){
+    for(int i = -1; i <= 1; i++){
+      ivec2 q = c + ivec2(i, j);
+      q = u_bounce == 1 ? clamp(q, ivec2(0), R - 1) : (q + R) % R;
+      s += texelFetch(u_trail, q, 0).r;
+    }
+  }
+  float v0 = texelFetch(u_trail, c, 0).r;
+  float v = mix(v0, s/9.0, u_diff)*u_decay;
+  if(u_hasMask == 1) v += u_madd*texture(u_mask, gl_FragCoord.xy/u_res).r;
+  if(u_brush.z > 0.0) v += u_brush.w*(1.0 - smoothstep(0.0, u_brush.z, distance(gl_FragCoord.xy, u_brush.xy)));
+  o = vec4(v, 0.0, 0.0, 1.0);
+}`;
+
+  /* ---- Gray-Scott ---- */
+  const FS_RD_INIT = HDR + HASH + `
+uniform sampler2D u_mask;
+uniform vec2 u_res;
+uniform int u_seedMode, u_seed, u_hasMask;
+uniform float u_rad;
+out vec4 o;
+void main(){
+  vec2 p = gl_FragCoord.xy;
+  uint sd = uint(u_seed);
+  float n = rnd(uint(p.x) + uint(p.y)*8192u, sd, 21u);
+  vec2 ctr = u_res*0.5;
+  float R = min(u_res.x, u_res.y)*0.5;
+  bool on = false;
+  if(u_seedMode == 0){
+    on = u_hasMask == 1 && texture(u_mask, p/u_res).r > 0.5 && n < 0.55;
+  } else if(u_seedMode == 1){
+    vec2 cell = floor(p/24.0);
+    uint cid = uint(cell.x) + uint(cell.y)*1024u;
+    if(rnd(cid, sd, 22u) < 0.09*u_rad){
+      vec2 cp = (cell + 0.2 + 0.6*vec2(rnd(cid, sd, 23u), rnd(cid, sd, 24u)))*24.0;
+      on = distance(p, cp) < 2.5 + 4.0*rnd(cid, sd, 25u);
+    }
+  } else if(u_seedMode == 2){
+    on = distance(p, ctr) < max(3.0, R*0.07*u_rad) && n < 0.8;
+  } else {
+    on = abs(distance(p, ctr) - R*0.7*u_rad) < 2.5;
+  }
+  o = on ? vec4(0.5, 0.25 + 0.05*n, 0.0, 1.0) : vec4(1.0, 0.0, 0.0, 1.0);
+}`;
+
+  const FS_RD_STEP = HDR + `
+uniform sampler2D u_s, u_mask;
+uniform vec2 u_res;
+uniform float u_F, u_k, u_hold;
+uniform int u_hasMask;
+uniform vec4 u_brush;
+out vec4 o;
+vec2 at(ivec2 q, ivec2 R){ return texelFetch(u_s, (q + R) % R, 0).rg; }
+void main(){
+  ivec2 c = ivec2(gl_FragCoord.xy), R = ivec2(u_res);
+  vec2 s = texelFetch(u_s, c, 0).rg;
+  vec2 lap = -s
+    + 0.2*(at(c + ivec2(1, 0), R) + at(c + ivec2(-1, 0), R) + at(c + ivec2(0, 1), R) + at(c + ivec2(0, -1), R))
+    + 0.05*(at(c + ivec2(1, 1), R) + at(c + ivec2(-1, 1), R) + at(c + ivec2(1, -1), R) + at(c + ivec2(-1, -1), R));
+  float F = u_F, k = u_k;
+  if(u_hasMask == 1){
+    float m = texture(u_mask, (vec2(c) + 0.5)/u_res).r;
+    k += u_hold*0.045*(1.0 - m);                    // поза маскою V вимирає
+  }
+  float r = s.x*s.y*s.y;
+  vec2 ns = s + vec2(1.0*lap.x - r + F*(1.0 - s.x), 0.5*lap.y + r - (F + k)*s.y);
+  if(u_brush.z > 0.0 && distance(gl_FragCoord.xy, u_brush.xy) < u_brush.z) ns = vec2(0.5, 0.25);
+  o = vec4(clamp(ns, 0.0, 1.0), 0.0, 1.0);
+}`;
+
+  /* ---- потоки ---- */
+  const FS_FL_STEP = HDR + HASH + NOISE + `
+uniform vec2 u_res;
+` + VEL + SPAWNGL + `
+uniform sampler2D u_state;
+uniform float u_speed, u_life;
+uniform int u_aw, u_seed, u_iter, u_spawnMode, u_init;
+out vec4 o;
+vec2 fSpawn(uint id, uint a, uint b){
+  float r1 = rnd(id, a, b), r2 = rnd(id, a, b + 1u), r3 = rnd(id, a, b + 2u);
+  if(u_hasMask == 1){
+    if(u_spawnMode == 1) return spawnPt(r1, 0);
+    if(u_spawnMode == 2 || (u_spawnMode == 3 && r3 < 0.5)) return spawnPt(r1, 256);
+  }
+  return vec2(r1, r2);
+}
+void main(){
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  uint id = uint(c.y*u_aw + c.x);
+  if(u_init == 1){
+    o = vec4(fSpawn(id, uint(u_seed) + 7u, 3u), rnd(id, uint(u_seed), 5u), rnd(id, uint(u_seed), 6u));
+    return;
+  }
+  vec4 s = texelFetch(u_state, c, 0);
+  vec2 p = s.xy*u_res;
+  bool dead = s.z >= 1.0;
+  if(!dead){
+    p += vel(p)*u_speed;
+    s.z += 1.0/(u_life*(0.35 + 1.3*s.w));
+    if(p.x < 0.0 || p.y < 0.0 || p.x >= u_res.x || p.y >= u_res.y) dead = true;
+    else if(u_hasMask == 1 && u_fmask == 1 && texture(u_mask, p/u_res).a < 0.5) dead = true;
+  }
+  if(dead){
+    p = fSpawn(id, uint(u_iter), uint(u_seed))*u_res;
+    s.z = 0.0;
+    s.w = rnd(id, uint(u_iter), uint(u_seed) + 991u);
+  }
+  o = vec4(p/u_res, s.z, s.w);
+}`;
+
+  const VS_FL_LINE = HDR + NOISE + `
+uniform vec2 u_res;
+` + VEL + `
+uniform sampler2D u_state;
+uniform float u_speed, u_len;
+uniform int u_aw;
+out float vA;
+void main(){
+  int id = gl_VertexID >> 1;
+  vec4 s = texelFetch(u_state, ivec2(id % u_aw, id/u_aw), 0);
+  vec2 p = s.xy*u_res;
+  if((gl_VertexID & 1) == 0) p -= vel(p)*(u_speed*u_len);
+  vA = s.z > 0.0 ? sin(PI*clamp(s.z, 0.0, 1.0)) : 0.0;
+  gl_Position = vec4(p/u_res*2.0 - 1.0, 0.0, 1.0);
+}`;
+  const FS_FL_LINE = HDR + `
+in float vA;
+uniform float u_int;
+out vec4 o;
+void main(){ o = vec4(u_int*vA, 0.0, 0.0, 1.0); }`;
+
+  const FS_FADE = HDR + `
+uniform sampler2D u_src;
+uniform float u_fade;
+out vec4 o;
+void main(){ o = vec4(texelFetch(u_src, ivec2(gl_FragCoord.xy), 0).r*u_fade, 0.0, 0.0, 1.0); }`;
+
+  /* ---- відображення ---- */
+  const FS_PREP = HDR + `
+uniform sampler2D u_src;
+uniform vec2 u_res;
+uniform int u_kind;
+uniform float u_gain;
+out vec4 o;
+float val(ivec2 q){
+  q = clamp(q, ivec2(0), ivec2(u_res) - 1);
+  vec4 t = texelFetch(u_src, q, 0);
+  if(u_kind == 0) return 1.0 - exp(-max(t.r, 0.0)*u_gain*0.08);
+  if(u_kind == 1) return clamp(t.g*u_gain*2.6, 0.0, 1.0);
+  if(u_kind == 2) return 1.0 - exp(-max(t.r, 0.0)*u_gain);
+  return clamp(t.r*u_gain, 0.0, 1.0);
+}
+void main(){
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  float v = val(c);
+  float gx = (val(c + ivec2(1, 0)) - val(c - ivec2(1, 0)))*0.5;
+  float gy = (val(c + ivec2(0, 1)) - val(c - ivec2(0, 1)))*0.5;
+  o = vec4(v, gx, gy, 1.0);
+}`;
+
+  const FS_DISP = HDR + `
+uniform sampler2D u_prep, u_pal;
+uniform vec2 u_fres, u_ores;
+uniform float u_gamma, u_relief, u_height, u_lang;
+out vec4 o;
+vec4 tap(ivec2 q){ return texelFetch(u_prep, clamp(q, ivec2(0), ivec2(u_fres) - 1), 0); }
+vec4 cubic(vec2 x){                          // Catmull-Rom, 16 вибірок
+  vec2 i = floor(x);
+  vec2 f = x - i;
+  vec2 f2 = f*f;
+  vec2 f3 = f2*f;
+  vec2 w0 = -0.5*f3 + f2 - 0.5*f;
+  vec2 w1 = 1.5*f3 - 2.5*f2 + 1.0;
+  vec2 w2 = -1.5*f3 + 2.0*f2 + 0.5*f;
+  vec2 w3 = 0.5*f3 - 0.5*f2;
+  ivec2 b = ivec2(i);
+  vec4 r = vec4(0.0);
+  for(int j = 0; j < 4; j++){
+    float wy = j == 0 ? w0.y : (j == 1 ? w1.y : (j == 2 ? w2.y : w3.y));
+    vec4 row = tap(b + ivec2(-1, j - 1))*w0.x + tap(b + ivec2(0, j - 1))*w1.x
+             + tap(b + ivec2(1, j - 1))*w2.x + tap(b + ivec2(2, j - 1))*w3.x;
+    r += row*wy;
+  }
+  return r;
+}
+void main(){
+  vec4 f = (u_fres.x == u_ores.x && u_fres.y == u_ores.y)
+    ? tap(ivec2(gl_FragCoord.xy))
+    : cubic(gl_FragCoord.xy*(u_fres/u_ores) - 0.5);
+  float v = pow(clamp(f.r, 0.0, 1.0), u_gamma);
+  vec3 col = texture(u_pal, vec2(v*0.996 + 0.002, 0.5)).rgb;
+  if(u_relief > 0.0){
+    vec3 n = normalize(vec3(-f.g*u_height, -f.b*u_height, 1.0));
+    vec3 L = normalize(vec3(cos(u_lang), sin(u_lang), 0.8));
+    float dif = max(dot(n, L), 0.0);
+    vec3 hv = normalize(L + vec3(0.0, 0.0, 1.0));
+    float sp = pow(max(dot(n, hv), 0.0), 40.0);
+    vec3 lit = col*(0.3 + 0.95*dif) + vec3(sp*0.45);
+    col = mix(col, lit, u_relief);
+  }
+  o = vec4(col, 1.0);
+}`;
+
+  const FS_DOWN = HDR + `
+uniform sampler2D u_src;
+uniform vec2 u_ores, u_px;
+out vec4 o;
+void main(){
+  vec2 uv = gl_FragCoord.xy/u_ores;
+  vec3 c = texture(u_src, uv + vec2(-u_px.x, -u_px.y)).rgb + texture(u_src, uv + vec2(u_px.x, -u_px.y)).rgb
+         + texture(u_src, uv + vec2(-u_px.x, u_px.y)).rgb + texture(u_src, uv + u_px).rgb;
+  o = vec4(c*0.25, 1.0);
+}`;
+
+  const FS_BLUR = HDR + `
+uniform sampler2D u_src;
+uniform vec2 u_ores, u_dir;
+out vec4 o;
+void main(){
+  vec2 uv = gl_FragCoord.xy/u_ores;
+  vec3 c = texture(u_src, uv).rgb*0.2270270270;
+  c += (texture(u_src, uv + u_dir*1.3846153846).rgb + texture(u_src, uv - u_dir*1.3846153846).rgb)*0.3162162162;
+  c += (texture(u_src, uv + u_dir*3.2307692308).rgb + texture(u_src, uv - u_dir*3.2307692308).rgb)*0.0702702703;
+  o = vec4(c, 1.0);
+}`;
+
+  const FS_FINAL = HDR + `
+uniform sampler2D u_col, u_b1, u_b2, u_mask;
+uniform vec2 u_ores;
+uniform float u_bloom;
+uniform vec3 u_bg;
+uniform int u_invert, u_mshow;
+out vec4 o;
+void main(){
+  vec2 uv = gl_FragCoord.xy/u_ores;
+  vec3 c = texture(u_col, uv).rgb;
+  if(u_bloom > 0.0) c += u_bloom*(texture(u_b1, uv).rgb*0.55 + texture(u_b2, uv).rgb*0.45 - u_bg);
+  if(u_invert == 1) c = 1.0 - c;
+  if(u_mshow == 1) c = mix(c, vec3(1.0, 0.2, 0.35), texture(u_mask, uv).r*0.4);
+  float d = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453);
+  o = vec4(clamp(c + (d - 0.5)/255.0, 0.0, 1.0), 1.0);
+}`;
+
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      const log = gl.getShaderInfoLog(s);
+      console.error(log, src);
+      throw new Error(log);
+    }
+    return s;
+  }
+  function program(vs, fs){
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for(let i = 0; i < n; i++){
+      const a = gl.getActiveUniform(p, i);
+      u[a.name] = { loc:gl.getUniformLocation(p, a.name), type:a.type };
+    }
+    return { p, u };
+  }
+  let PR;
+  try{
+    PR = {
+      phInit:program(VS_FULL, FS_PH_INIT), phStep:program(VS_FULL, FS_PH_STEP),
+      phDep:program(VS_PH_DEP, FS_PH_DEP), phDiff:program(VS_FULL, FS_PH_DIFF),
+      rdInit:program(VS_FULL, FS_RD_INIT), rdStep:program(VS_FULL, FS_RD_STEP),
+      flStep:program(VS_FULL, FS_FL_STEP), flLine:program(VS_FL_LINE, FS_FL_LINE), fade:program(VS_FULL, FS_FADE),
+      prep:program(VS_FULL, FS_PREP), disp:program(VS_FULL, FS_DISP),
+      down:program(VS_FULL, FS_DOWN), blur:program(VS_FULL, FS_BLUR), final:program(VS_FULL, FS_FINAL),
+    };
+  }catch(e){
+    status("Помилка шейдера");
+    alert("Помилка WebGL: " + (e.message || e));
+    return;
+  }
+  gl.bindVertexArray(gl.createVertexArray());
+
+  function setU(pr, vals){
+    for(const k in vals){
+      const u = pr.u[k]; if(!u) continue;
+      const v = vals[k];
+      if(u.type === gl.FLOAT) gl.uniform1f(u.loc, v);
+      else if(u.type === gl.FLOAT_VEC2) gl.uniform2f(u.loc, v[0], v[1]);
+      else if(u.type === gl.FLOAT_VEC3) gl.uniform3f(u.loc, v[0], v[1], v[2]);
+      else if(u.type === gl.FLOAT_VEC4) gl.uniform4f(u.loc, v[0], v[1], v[2], v[3]);
+      else gl.uniform1i(u.loc, v | 0);                        // int, bool, sampler
+    }
+  }
+  /* один прохід: програма → ціль (null = екран); texs — семплери */
+  function run(pr, dst, vals, texs, prim, count){
+    gl.useProgram(pr.p);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, dst ? dst.f : null);
+    gl.viewport(0, 0, dst ? dst.w : W, dst ? dst.h : H);
+    const all = Object.assign({}, vals);
+    let unit = 0;
+    for(const k in texs){
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, texs[k].t || texs[k]);
+      all[k] = unit++;
+    }
+    setU(pr, all);
+    gl.drawArrays(prim === undefined ? gl.TRIANGLES : prim, 0, count || 3);
+    for(let i = 0; i < unit; i++){ gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, null); }
+  }
+
+  /* ---------- render targets ---------- */
+  const RT = {};
+  function texParams(lin){
+    const f = lin ? gl.LINEAR : gl.NEAREST;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+  function ensure(name, w, h, fmt, lin){
+    w = Math.max(1, w|0); h = Math.max(1, h|0);
+    const r = RT[name];
+    if(r && r.w === w && r.h === h && r.fmt === fmt) return r;
+    if(r){ gl.deleteTexture(r.t); gl.deleteFramebuffer(r.f); }
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, fmt.i, w, h, 0, fmt.f, fmt.t, null);
+    texParams(lin && fmt === U8);
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return (RT[name] = { t, f, w, h, fmt });
+  }
+  function drop(prefix){
+    for(const k of Object.keys(RT)) if(k.startsWith(prefix)){ gl.deleteTexture(RT[k].t); gl.deleteFramebuffer(RT[k].f); delete RT[k]; }
+  }
+  function clearRT(r){
+    gl.bindFramebuffer(gl.FRAMEBUFFER, r.f); gl.viewport(0, 0, r.w, r.h);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+  }
+  const pair = (n, w, h, fmt) => [ensure(n + "0", w, h, fmt), ensure(n + "1", w, h, fmt)];
+  const swap = a => { const t = a[0]; a[0] = a[1]; a[1] = t; };
+  function plainTex(lin){ const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); texParams(lin);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 128, 128, 255])); return t; }
+  const maskTex = plainTex(true), spawnTex = plainTex(false), palTex = plainTex(true), dlaTex = plainTex(false);
+
+  /* ================= розмір ================= */
+  const ASPECTS = { "1:1":[1080,1080], "4:5":[1080,1350], "9:16":[1080,1920], "16:9":[1920,1080] };
+  const simSize = () => [Math.max(64, Math.round(W*P.res/2)*2), Math.max(64, Math.round(H*P.res/2)*2)];
+  const dlaCv = document.createElement("canvas"), dctx = dlaCv.getContext("2d");
+  function resize(){
+    [W, H] = ASPECTS[P.aspect] || ASPECTS["4:5"];
+    out.width = W; out.height = H;
+    dlaCv.width = W; dlaCv.height = H;
+  }
+
+  /* ================= утиліти ================= */
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0)/4294967296;
+    };
+  }
+  const hash1 = i => (Math.imul(i + 1, 2654435761) >>> 0)/4294967296;
+  const hex01 = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16 & 255)/255, (n >> 8 & 255)/255, (n & 255)/255]; };
+
+  /* EDT (Felzenszwalb): для пікселів inside=1 — відстань до найближчого 0 */
+  function edt(inside, w, h){
+    const INF = 1e20, n = Math.max(w, h);
+    const f = new Float64Array(n), d = new Float64Array(n), z = new Float64Array(n + 1), v = new Int32Array(n);
+    const g = new Float64Array(w*h);
+    for(let i = 0; i < w*h; i++) g[i] = inside[i] ? INF : 0;
+    function dt1(len){
+      let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+      for(let q = 1; q < len; q++){
+        let s = ((f[q] + q*q) - (f[v[k]] + v[k]*v[k]))/(2*q - 2*v[k]);
+        while(s <= z[k]){ k--; s = ((f[q] + q*q) - (f[v[k]] + v[k]*v[k]))/(2*q - 2*v[k]); }
+        k++; v[k] = q; z[k] = s; z[k+1] = INF;
+      }
+      k = 0;
+      for(let q = 0; q < len; q++){ while(z[k+1] < q) k++; d[q] = (q - v[k])*(q - v[k]) + f[v[k]]; }
+    }
+    for(let x = 0; x < w; x++){
+      for(let y = 0; y < h; y++) f[y] = g[y*w + x];
+      dt1(h);
+      for(let y = 0; y < h; y++) g[y*w + x] = d[y];
+    }
+    for(let y = 0; y < h; y++){
+      const o = y*w;
+      for(let x = 0; x < w; x++) f[x] = g[o + x];
+      dt1(w);
+      for(let x = 0; x < w; x++) g[o + x] = Math.sqrt(d[x]);
+    }
+    return g;
+  }
+
+  /* ================= маска ================= */
+  const SHAPES = {
+    star:  "M50 4 L61.8 37.6 L97.6 38.2 L69 59.8 L79.4 94 L50 73.6 L20.6 94 L31 59.8 L2.4 38.2 L38.2 37.6 Z",
+    heart: "M50 92 C50 92 6 64 6 34 C6 17 19 6 32 6 C41 6 47 11 50 18 C53 11 59 6 68 6 C81 6 94 17 94 34 C94 64 50 92 50 92 Z",
+  };
+  function rr(x, a, b, w, h, r){
+    x.moveTo(a + r, b);
+    x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r);
+    x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath();
+  }
+  function drawShape(x, key){                // коробка 100×100
+    x.beginPath();
+    if(key === "circle") x.arc(50, 50, 48, 0, TAU);
+    else if(key === "ellipse") x.ellipse(50, 50, 48, 30, 0, 0, TAU);
+    else if(key === "ring"){ x.arc(50, 50, 48, 0, TAU); x.moveTo(84, 50); x.arc(50, 50, 34, 0, TAU, true); }
+    else if(key === "figure"){
+      x.moveTo(57.5, 11); x.ellipse(50, 11, 7.5, 9, 0, 0, TAU);       // голова
+      rr(x, 46, 18, 8, 7, 2);                                          // шия
+      rr(x, 36.5, 22, 27, 33, 7);                                      // тулуб
+      x.save(); x.translate(38, 24); x.rotate(0.22); rr(x, -6, 0, 7, 32, 3.5); x.restore();
+      x.save(); x.translate(62, 24); x.rotate(-0.22); rr(x, -1, 0, 7, 32, 3.5); x.restore();
+      rr(x, 38, 50, 11, 49, 4); rr(x, 51, 50, 11, 49, 4);              // ноги
+    }
+    else { x.fill(new Path2D(SHAPES[key] || SHAPES.star)); return; }
+    x.fill(key === "ring" ? "evenodd" : "nonzero");
+  }
+  const fontStr = px => `900 ${px}px "${P.font}", Onest, Inter, sans-serif`;
+
+  let userImg = null, hasMask = 0;
+  let MK = { w:2, h:2, m:new Float32Array(4), ins:new Int32Array(0), edge:new Int32Array(0) };
+  function buildMask(){
+    const mw = Math.max(16, Math.round(W/2)), mh = Math.max(16, Math.round(H/2));
+    const c = document.createElement("canvas"); c.width = mw; c.height = mh;
+    const x = c.getContext("2d", { willReadFrequently:true });
+    x.fillStyle = "#000"; x.fillRect(0, 0, mw, mh);
+    x.fillStyle = "#fff";
+    const cx = mw/2 + P.mx*mw, cy = mh/2 + P.my*mh;
+    let src = P.src;
+    if(src === "image" && !userImg) src = "none";
+    if(src === "text" && !(P.text || "").trim()) src = "none";
+    if(src === "text"){
+      x.font = fontStr(100);
+      const cap = (x.measureText("H").actualBoundingBoxAscent || 72)/100;
+      let px = P.msize*mh*0.42/cap;
+      x.font = fontStr(px);
+      const tw = x.measureText(P.text).width;
+      if(tw > mw*0.92){ px *= mw*0.92/tw; x.font = fontStr(px); }
+      x.textAlign = "center"; x.textBaseline = "alphabetic";
+      x.fillText(P.text, cx, cy + cap*px/2);
+    } else if(src === "shape"){
+      const s = P.msize*Math.min(mw, mh)*(P.shape === "figure" ? 1.3 : 1);
+      x.save(); x.translate(cx - s/2, cy - s/2); x.scale(s/100, s/100); drawShape(x, P.shape); x.restore();
+    } else if(src === "image"){
+      const iw = userImg.naturalWidth || userImg.width || 1000, ih = userImg.naturalHeight || userImg.height || 1000;
+      const k = Math.min(mw/iw, mh/ih)*P.msize/0.6;
+      x.imageSmoothingQuality = "high";
+      x.drawImage(userImg, cx - iw*k/2, cy - ih*k/2, iw*k, ih*k);
+    }
+    const d = x.getImageData(0, 0, mw, mh).data, n = mw*mh;
+    const m = new Float32Array(n), inside = new Uint8Array(n), outside = new Uint8Array(n);
+    let cnt = 0;
+    for(let i = 0; i < n; i++){
+      let v = 0;
+      if(src === "image"){
+        const l = (d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114)/255;
+        const t = Math.min(1, Math.max(0, (l - P.mth + 0.08)/0.16));
+        v = t*t*(3 - 2*t);
+      } else if(src !== "none") v = d[i*4]/255;
+      if(P.minv && src !== "none") v = 1 - v;
+      m[i] = v;
+      inside[i] = v > 0.5 ? 1 : 0; outside[i] = 1 - inside[i]; cnt += inside[i];
+    }
+    hasMask = src !== "none" && cnt > 0 ? 1 : 0;
+    const dIn = edt(inside, mw, mh), dOut = edt(outside, mw, mh);
+    const sd = new Float32Array(n);
+    for(let i = 0; i < n; i++){
+      const s = inside[i] ? -(Math.min(dIn[i], 1e4) - 0.5) : (Math.min(dOut[i], 1e4) - 0.5);
+      sd[i] = s/mh;
+    }
+    const rgba = new Uint8Array(n*4), ins = [], edge = [];
+    for(let y = 0; y < mh; y++){
+      for(let xx = 0; xx < mw; xx++){
+        const i = y*mw + xx;
+        const gx = sd[y*mw + Math.min(mw - 1, xx + 1)] - sd[y*mw + Math.max(0, xx - 1)];
+        const gy = sd[Math.min(mh - 1, y + 1)*mw + xx] - sd[Math.max(0, y - 1)*mw + xx];
+        const l = Math.hypot(gx, gy) || 1;
+        const o = ((mh - 1 - y)*mw + xx)*4;                 // GL: рядок 0 — низ
+        rgba[o] = Math.round(m[i]*255);
+        rgba[o+1] = Math.round((gx/l*0.5 + 0.5)*255);
+        rgba[o+2] = Math.round((-gy/l*0.5 + 0.5)*255);
+        rgba[o+3] = Math.round(Math.min(1, Math.max(0, 0.5 + sd[i]))*255);
+        if(inside[i]) ins.push(i);
+        else if(dOut[i] <= 2.5) edge.push(i);
+      }
+    }
+    gl.bindTexture(gl.TEXTURE_2D, maskTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, mw, mh, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
+    texParams(true);
+    MK = { w:mw, h:mh, m, ins:hasMask ? Int32Array.from(ins) : new Int32Array(0), edge:hasMask ? Int32Array.from(edge) : new Int32Array(0) };
+    buildSpawn();
+  }
+  /* таблиця точок старту з маски (детермінована від сіду) */
+  function buildSpawn(){
+    const R = mulberry32(P.seed*977 + 3);
+    const data = new Uint8Array(256*512*4);
+    const put = (k, u, v) => {
+      const xu = Math.min(65535, Math.max(0, Math.floor(u*65536))), yv = Math.min(65535, Math.max(0, Math.floor(v*65536)));
+      const o = k*4; data[o] = xu >> 8; data[o+1] = xu & 255; data[o+2] = yv >> 8; data[o+3] = yv & 255;
+    };
+    const lists = [MK.ins, MK.edge.length ? MK.edge : MK.ins];
+    for(let b = 0; b < 2; b++){
+      const list = lists[b], base = b*65536;
+      for(let k = 0; k < 65536; k++){
+        if(list.length){
+          const id = list[(R()*list.length)|0], x = id % MK.w, y = (id/MK.w)|0;
+          put(base + k, (x + R())/MK.w, 1 - (y + R())/MK.h);
+        } else put(base + k, R(), R());
+      }
+    }
+    gl.bindTexture(gl.TEXTURE_2D, spawnTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 256, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    texParams(false);
+  }
+  const maskAt = (x, y) => MK.m[Math.min(MK.h - 1, Math.max(0, (y*MK.h/D.gh)|0))*MK.w + Math.min(MK.w - 1, Math.max(0, (x*MK.w/D.gw)|0))];
+  const usesMask = () => (P.mode === "phys" && P.spawn === "mask") || (P.mode === "rd" && P.rdseed === "mask") ||
+    (P.mode === "dla" && (P.dseed === "mask" || (P.dalg === "sc" && P.dregion === "mask")));
+
+  let maskTimer = 0;
+  function rebuildMask(resetToo){
+    clearTimeout(maskTimer);
+    maskTimer = setTimeout(async () => {
+      if(P.src === "text"){ try{ await document.fonts.load(fontStr(100), P.text || "G"); }catch(e){} }
+      buildMask();
+      if(resetToo === true || (resetToo !== false && usesMask())) resetSim();
+      needRender = true;
+    }, 60);
+  }
+
+  /* ================= палітра ================= */
+  let bgCol = [0, 0, 0];
+  function paletteStops(){
+    if(P.palette === "custom") return [[0, P.c1], [0.5, P.c2], [1, P.c3]];
+    return (PALETTES[P.palette] || PALETTES.mono).stops;
+  }
+  function buildPal(){
+    const st = paletteStops();
+    const c = document.createElement("canvas"); c.width = 256; c.height = 1;
+    const x = c.getContext("2d"), g = x.createLinearGradient(0, 0, 256, 0);
+    st.forEach(s => g.addColorStop(s[0], s[1]));
+    x.fillStyle = g; x.fillRect(0, 0, 256, 1);
+    gl.bindTexture(gl.TEXTURE_2D, palTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, c);
+    texParams(true);
+    bgCol = hex01(st[0][1]);
+  }
+
+  /* ================= симуляції ================= */
+  let simW = 2, simH = 2, simFrame = 0, iter = 0, flowT = 0, phN = 0, flN = 0, simMode = "";
+  let st = null, tr = null, rd = null, fs = null, fb = null;
+  let brush = null;                                         // [x, y] у px виходу (y вниз)
+  function brushVec(k){
+    if(!brush) return [0, 0, 0, 0];
+    return [brush[0]*simW/W, (H - brush[1])*simH/H, Math.max(3, simH*0.025), k];
+  }
+
+  function resetSim(){
+    simFrame = 0; iter = 0; flowT = 0; simMode = P.mode;
+    [simW, simH] = simSize();
+    if(P.mode !== "phys"){ drop("st"); drop("tr"); }
+    if(P.mode !== "rd") drop("rd");
+    if(P.mode !== "flow"){ drop("fs"); drop("fb"); }
+    if(P.mode === "phys"){
+      phN = Math.max(16, P.agents|0)*1024;
+      st = pair("st", 1024, phN/1024, STATE);
+      tr = pair("tr", simW, simH, ACC);
+      clearRT(tr[0]); clearRT(tr[1]);
+      run(PR.phInit, st[0], { u_res:[simW, simH], u_aw:1024, u_seed:P.seed, u_mode:SPAWN[P.spawn] ?? 2, u_rad:P.rad }, { u_spawn:spawnTex });
+    } else if(P.mode === "rd"){
+      rd = pair("rd", simW, simH, STATE);
+      let sm = RDSEED[P.rdseed] ?? 1;
+      if(sm === 0 && !hasMask) sm = 1;
+      run(PR.rdInit, rd[0], { u_res:[simW, simH], u_seedMode:sm, u_seed:P.seed, u_hasMask:hasMask, u_rad:P.rrad }, { u_mask:maskTex });
+    } else if(P.mode === "flow"){
+      flN = Math.max(8, P.fcount|0)*1024;
+      fs = pair("fs", 1024, flN/1024, STATE);
+      fb = pair("fb", simW, simH, ACC);
+      clearRT(fb[0]); clearRT(fb[1]);
+      run(PR.flStep, fs[0], Object.assign(flowU(), { u_init:1, u_seed:P.seed, u_aw:1024, u_iter:0, u_life:P.flife, u_spawnMode:FSPAWN[P.fspawn] ?? 0 }),
+        { u_state:fs[1], u_mask:maskTex, u_spawn:spawnTex });
+    } else {
+      dlaReset();
+    }
+    needRender = true;
+  }
+
+  function physStep(){
+    const res = [simW, simH];
+    run(PR.phStep, st[1], { u_res:res, u_sa:P.sa*D2R, u_sd:P.sd, u_ra:P.ra*D2R, u_ss:P.ss, u_maskK:P.mattr, u_jit:P.jit,
+      u_aw:1024, u_iter:iter, u_seed:P.seed, u_bounce:P.bounce, u_hasMask:hasMask }, { u_state:st[0], u_trail:tr[0], u_mask:maskTex });
+    swap(st);
+    if(ACC_BLEND){
+      gl.enable(gl.BLEND); gl.blendEquation(gl.FUNC_ADD); gl.blendFunc(gl.ONE, gl.ONE);
+      run(PR.phDep, tr[0], { u_res:res, u_aw:1024, u_dep:P.dep }, { u_state:st[0] }, gl.POINTS, phN);
+      gl.disable(gl.BLEND);
+    }
+    run(PR.phDiff, tr[1], { u_res:res, u_decay:P.decay, u_diff:P.diff, u_bounce:P.bounce, u_brush:brushVec(25*P.dep),
+      u_hasMask:hasMask, u_madd:Math.max(0, P.mattr)*0.12*P.dep }, { u_trail:tr[0], u_mask:maskTex });
+    swap(tr);
+    iter++;
+  }
+  function rdStep(){
+    run(PR.rdStep, rd[1], { u_res:[simW, simH], u_F:P.feed, u_k:P.kill, u_hold:P.hold, u_hasMask:hasMask, u_brush:brushVec(1) },
+      { u_s:rd[0], u_mask:maskTex });
+    swap(rd);
+    iter++;
+  }
+  function flowU(){
+    return { u_res:[simW, simH], u_t:flowT, u_scale:P.fscale, u_curl:P.fcurl, u_oct:P.foct, u_wind:P.fwind, u_dir:P.fdir*D2R,
+      u_mr:P.fmr, u_frad:P.frad, u_fmask:FMASK[P.fmask] ?? 0, u_hasMask:hasMask, u_speed:P.fspeed*simH/H };
+  }
+  function flowStep(){
+    run(PR.fade, fb[1], { u_fade:P.ffade }, { u_src:fb[0] });
+    swap(fb);
+    const U = flowU();
+    run(PR.flStep, fs[1], Object.assign({ u_init:0, u_iter:iter + 1, u_seed:P.seed, u_aw:1024, u_life:P.flife, u_spawnMode:FSPAWN[P.fspawn] ?? 0 }, U),
+      { u_state:fs[0], u_mask:maskTex, u_spawn:spawnTex });
+    swap(fs);
+    if(ACC_BLEND){
+      gl.enable(gl.BLEND); gl.blendEquation(gl.FUNC_ADD); gl.blendFunc(gl.ONE, gl.ONE);
+      run(PR.flLine, fb[0], Object.assign({ u_aw:1024, u_len:P.flen, u_int:P.fint }, U), { u_state:fs[0], u_mask:maskTex }, gl.LINES, flN*2);
+      gl.disable(gl.BLEND);
+    }
+    flowT += 0.01*P.fevo;
+    iter++;
+  }
+
+  /* ---------- DLA / space colonisation (CPU) ---------- */
+  const DX = [1, 1, 0, -1, -1, -1, 0, 1], DY = [0, 1, 1, 1, 0, -1, -1, -1];
+  const DIR9 = [5, 6, 7, 4, -1, 0, 3, 2, 1];   // напрямок за (sy+1)*3 + (sx+1)
+  const BS = 8;                                // блоки для безпечних стрибків
+  const D = { n:0, gw:2, gh:2, cap:0, done:true, dirty:true, lastAdd:0 };
+
+  function dlaReset(){
+    const [gw, gh] = simSize(), cap = Math.max(1000, P.dmax|0);
+    Object.assign(D, {
+      gw, gh, cap, n:0,
+      x:new Float32Array(cap), y:new Float32Array(cap), par:new Int32Array(cap), born:new Int32Array(cap), wt:new Float32Array(cap),
+      key:new Uint16Array(cap), ord:new Int32Array(cap),
+      occ:new Int32Array(gw*gh).fill(-1), bw:Math.ceil(gw/BS), bh:Math.ceil(gh/BS), block:null,
+      rng:mulberry32(P.seed*7919 + 101), walker:false, wx:0, wy:0, lx:0, ly:0, lr:0,
+      done:false, dirty:true, lastAdd:0, sc:P.dalg === "sc",
+      cx:gw/2, cy:gh/2, rmax:0, ymax:0, xmin:gw, xmax:0, lm:"radial",
+    });
+    D.blk = new Int32Array(D.bw*D.bh);
+    let seed = P.dseed;
+    if(seed === "mask" && !hasMask) seed = "centre";
+    if(seed === "bottom") D.cy = gh - 3;
+    if(seed === "top") D.cy = 2;
+    D.lm = seed === "top" ? "line" : seed === "mask" ? "local" : "radial";
+    if(D.sc) scInit();
+    if(seed === "mask"){
+      const ins = (x, y) => maskAt(x, y) > 0.5;
+      if(!D.sc){
+        D.block = new Uint8Array(gw*gh);
+        for(let y = 0; y < gh; y++) for(let x = 0; x < gw; x++)
+          if(ins(x, y)){ D.block[y*gw + x] = 1; D.blk[((y/BS)|0)*D.bw + ((x/BS)|0)]++; }
+      }
+      const cand = [];
+      for(let y = 1; y < gh - 1; y++) for(let x = 1; x < gw - 1; x++){
+        const a = ins(x, y), nb = ins(x + 1, y) || ins(x - 1, y) || ins(x, y + 1) || ins(x, y - 1);
+        const nbOut = !ins(x + 1, y) || !ins(x - 1, y) || !ins(x, y + 1) || !ins(x, y - 1);
+        if(D.sc ? (a && nbOut) : (!a && nb)) cand.push(y*gw + x);
+      }
+      const want = D.sc ? 5 : Math.min(600, cand.length);
+      for(let k = 0; k < want && cand.length; k++){
+        const id = cand[(D.rng()*cand.length)|0];
+        if(D.occ[id] < 0) dlaAdd(id % gw, (id/gw)|0, -1);
+      }
+      if(!D.n) dlaAdd(Math.round(D.cx), Math.round(D.cy), -1);
+    } else {
+      dlaAdd(Math.round(D.cx), Math.round(D.cy), -1);
+    }
+    D.ymax = Math.max(D.ymax, 2);
+  }
+  function dlaAdd(x, y, p){
+    if(D.n >= D.cap) return -1;
+    const i = D.n++;
+    D.x[i] = x; D.y[i] = y; D.par[i] = p; D.born[i] = simFrame; D.wt[i] = 1;
+    if(!D.sc){
+      const xi = x|0, yi = y|0;
+      D.occ[yi*D.gw + xi] = i;
+      D.blk[((yi/BS)|0)*D.bw + ((xi/BS)|0)]++;
+    }
+    for(let k = p; k >= 0; k = D.par[k]) D.wt[k]++;
+    const r = Math.hypot(x - D.cx, y - D.cy);
+    if(r > D.rmax) D.rmax = r;
+    if(y > D.ymax) D.ymax = y;
+    if(x < D.xmin) D.xmin = x;
+    if(x > D.xmax) D.xmax = x;
+    D.lastAdd = simFrame; D.dirty = true;
+    if(D.sc) scTouch(i);
+    return i;
+  }
+  function dlaLaunch(){
+    const r = D.rng, gw = D.gw, gh = D.gh;
+    if(D.lm === "radial"){
+      const half = P.dseed === "bottom";
+      const rr = D.rmax + 5;
+      if(rr > Math.min(gw, half ? gh*2 : gh)*0.5 - 3){ D.done = true; return false; }
+      const a = half ? Math.PI + r()*Math.PI : r()*TAU;
+      D.wx = D.cx + Math.cos(a)*rr; D.wy = D.cy + Math.sin(a)*rr;
+    } else if(D.lm === "line"){
+      if(D.ymax > gh - 4){ D.done = true; return false; }
+      D.wx = D.xmin - 30 + r()*(D.xmax - D.xmin + 60); D.wy = D.ymax + 6;
+    } else {
+      const j = (r()*D.n)|0, a = r()*TAU, rr = 4 + r()*18;
+      D.lx = D.x[j] + Math.cos(a)*rr; D.ly = D.y[j] + Math.sin(a)*rr; D.lr = rr;
+      D.wx = D.lx; D.wy = D.ly;
+      if(D.wx < 0 || D.wy < 0 || D.wx > gw - 1 || D.wy > gh - 1) return false;
+    }
+    D.wx = Math.min(gw - 1, Math.max(0, D.wx)); D.wy = Math.min(gh - 1, Math.max(0, D.wy));
+    const c = Math.round(D.wy)*gw + Math.round(D.wx);
+    if(D.occ[c] >= 0 || (D.block && D.block[c])) return false;
+    D.walker = true;
+    return true;
+  }
+  function dlaJump(x, y){
+    let r = 0;
+    if(D.lm === "radial") r = Math.hypot(x - D.cx, y - D.cy) - D.rmax - 3;
+    else if(D.lm === "line") r = y - D.ymax - 3;
+    if(r < BS - 1){
+      const bx = (Math.round(x)/BS)|0, by = (Math.round(y)/BS)|0;
+      let empty = true;
+      for(let j = by - 1; j <= by + 1 && empty; j++){
+        if(j < 0 || j >= D.bh) continue;
+        for(let i = bx - 1; i <= bx + 1; i++){
+          if(i < 0 || i >= D.bw) continue;
+          if(D.blk[j*D.bw + i]){ empty = false; break; }
+        }
+      }
+      if(empty) r = Math.max(r, BS - 1);
+    }
+    return r;
+  }
+  function dlaKill(x, y){
+    if(D.lm === "radial") return Math.hypot(x - D.cx, y - D.cy) > Math.max(D.rmax*2 + 30, D.rmax + 90);
+    if(D.lm === "line") return y < -1 || y > D.ymax + 90;
+    return Math.hypot(x - D.lx, y - D.ly) > D.lr*3 + 30;
+  }
+  function dlaDrift(x, y){
+    let sx, sy;
+    if(D.lm === "line"){ sx = 0; sy = -1; }
+    else if(D.lm === "radial"){ sx = Math.sign(Math.round(D.cx - x)); sy = Math.sign(Math.round(D.cy - y)); }
+    else return -1;
+    return DIR9[(sy + 1)*3 + (sx + 1)];
+  }
+  function dlaNeighbour(xi, yi){
+    const k0 = (D.rng()*8)|0;
+    for(let q = 0; q < 8; q++){
+      const k = (k0 + q) & 7, nx = xi + DX[k], ny = yi + DY[k];
+      if(nx < 0 || ny < 0 || nx >= D.gw || ny >= D.gh) continue;
+      const o = D.occ[ny*D.gw + nx];
+      if(o >= 0) return o;
+    }
+    return -1;
+  }
+  function dlaGrow(budget){
+    const gw = D.gw, gh = D.gh, occ = D.occ, rng = D.rng;
+    let steps = 0;
+    while(steps < budget && D.n < D.cap && !D.done){
+      if(!D.walker){ if(!dlaLaunch()){ steps += 8; continue; } }
+      let x = D.wx, y = D.wy;
+      const jr = dlaJump(x, y);
+      if(jr > 1.5){
+        const a = rng()*TAU; x += Math.cos(a)*jr; y += Math.sin(a)*jr;
+      } else {
+        let d = (rng()*8)|0;
+        if(P.ddrift > 0 && rng() < P.ddrift*0.6){ const dd = dlaDrift(x, y); if(dd >= 0) d = dd; }
+        x = Math.round(x) + DX[d]; y = Math.round(y) + DY[d];
+      }
+      steps++;
+      if(dlaKill(x, y)){ D.walker = false; continue; }
+      if(x < 0) x = -x;
+      if(y < 0) y = -y;
+      if(x > gw - 1) x = 2*(gw - 1) - x;
+      if(y > gh - 1) y = 2*(gh - 1) - y;
+      x = Math.min(gw - 1, Math.max(0, x)); y = Math.min(gh - 1, Math.max(0, y));
+      const xi = Math.round(x), yi = Math.round(y), c = yi*gw + xi;
+      if(occ[c] >= 0 || (D.block && D.block[c])) continue;
+      D.wx = x; D.wy = y;
+      if(jr > 1.5) continue;
+      const p = dlaNeighbour(xi, yi);
+      if(p >= 0 && rng() < P.dstick){ dlaAdd(xi, yi, p); D.walker = false; }
+    }
+  }
+  function scInit(){
+    const gw = D.gw, gh = D.gh, rng = D.rng, A = Math.max(50, P.dattr|0), di = Math.max(4, P.dinfl);
+    D.di = di;
+    D.ax = new Float32Array(A); D.ay = new Float32Array(A); D.alive = new Uint8Array(A);
+    D.best = new Int32Array(A).fill(-1); D.bestD = new Float32Array(A).fill(1e30);
+    const reg = P.dregion === "mask" && !hasMask ? "full" : P.dregion;
+    let k = 0, tries = 0;
+    while(k < A && tries < A*400){
+      tries++;
+      const x = rng()*(gw - 1), y = rng()*(gh - 1);
+      if(reg === "semi"){ const R = Math.min(gw*0.5, gh)*0.96; if(Math.hypot(x - gw/2, y - (gh - 3)) > R) continue; }
+      else if(reg === "mask"){ if(maskAt(x, y) < 0.5) continue; }
+      D.ax[k] = x; D.ay[k] = y; D.alive[k] = 1; k++;
+    }
+    D.A = k;
+    const cw = Math.ceil(gw/di), ch = Math.ceil(gh/di);
+    D.cw = cw; D.ch = ch;
+    const cnt = new Int32Array(cw*ch + 1), cellOf = new Int32Array(k);
+    for(let i = 0; i < k; i++){
+      const c = Math.min(ch - 1, (D.ay[i]/di)|0)*cw + Math.min(cw - 1, (D.ax[i]/di)|0);
+      cellOf[i] = c; cnt[c + 1]++;
+    }
+    for(let c = 0; c < cw*ch; c++) cnt[c + 1] += cnt[c];
+    D.cs = cnt; D.ci = new Int32Array(k);
+    const fill = cnt.slice();
+    for(let i = 0; i < k; i++) D.ci[fill[cellOf[i]]++] = i;
+    D.sx = new Float32Array(D.cap); D.sy = new Float32Array(D.cap); D.cn = new Int32Array(D.cap); D.touched = new Int32Array(D.cap);
+  }
+  function scTouch(i){                          // новий вузол оновлює найближчий вузол атракторів поруч
+    const x = D.x[i], y = D.y[i], di = D.di, di2 = di*di, dk = Math.max(1.2, P.dseg*1.7), dk2 = dk*dk;
+    const cx0 = (x/di)|0, cy0 = (y/di)|0;
+    for(let cy = cy0 - 1; cy <= cy0 + 1; cy++){
+      if(cy < 0 || cy >= D.ch) continue;
+      for(let cx = cx0 - 1; cx <= cx0 + 1; cx++){
+        if(cx < 0 || cx >= D.cw) continue;
+        const c = cy*D.cw + cx;
+        for(let q = D.cs[c]; q < D.cs[c + 1]; q++){
+          const a = D.ci[q];
+          if(!D.alive[a]) continue;
+          const dx = D.ax[a] - x, dy = D.ay[a] - y, d2 = dx*dx + dy*dy;
+          if(d2 < dk2) D.alive[a] = 0;
+          else if(d2 < di2 && d2 < D.bestD[a]){ D.bestD[a] = d2; D.best[a] = i; }
+        }
+      }
+    }
+  }
+  function scGrow(iters){
+    const rng = D.rng;
+    for(let it = 0; it < iters && !D.done; it++){
+      let nt = 0;
+      for(let a = 0; a < D.A; a++){
+        if(!D.alive[a]) continue;
+        const j = D.best[a];
+        if(j < 0) continue;
+        const dx = D.ax[a] - D.x[j], dy = D.ay[a] - D.y[j], l = Math.sqrt(dx*dx + dy*dy) || 1;
+        if(!D.cn[j]) D.touched[nt++] = j;
+        D.sx[j] += dx/l; D.sy[j] += dy/l; D.cn[j]++;
+      }
+      if(!nt){ D.done = true; break; }
+      for(let t = 0; t < nt; t++){
+        const j = D.touched[t];
+        let vx = D.sx[j], vy = D.sy[j];
+        D.sx[j] = 0; D.sy[j] = 0; D.cn[j] = 0;
+        let l = Math.hypot(vx, vy);
+        if(l < 1e-4){ const a = rng()*TAU; vx = Math.cos(a); vy = Math.sin(a); l = 1; }
+        vx /= l; vy /= l;
+        const ja = (rng() - 0.5)*P.djit*1.6, cs = Math.cos(ja), sn = Math.sin(ja);
+        const nx = D.x[j] + (vx*cs - vy*sn)*P.dseg, ny = D.y[j] + (vx*sn + vy*cs)*P.dseg;
+        if(nx < 0 || ny < 0 || nx > D.gw - 1 || ny > D.gh - 1) continue;
+        if(dlaAdd(nx, ny, j) < 0){ D.done = true; break; }
+      }
+    }
+  }
+  function dlaStep(n){
+    if(D.done || D.n >= D.cap) return;
+    if(D.sc) scGrow(n); else dlaGrow(n*2500);
+  }
+  /* полілінії: кошики «вік × товщина», старі знизу, свіжі кінчики зверху */
+  function dlaDraw(){
+    const c = dctx, n = D.n;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = "source-over"; c.globalAlpha = 1;
+    c.fillStyle = "#000"; c.fillRect(0, 0, W, H);
+    if(n < 2) return;
+    const kx = W/D.gw, ky = H/D.gh, NL = 24, NW = 6, NB = NL*NW;
+    const cnt = new Int32Array(NB + 1), key = D.key, ord = D.ord;
+    const tau = Math.max(1, P.fps*3), jit = D.sc ? 0 : 0.7, off = D.sc ? 0 : 0.5;
+    for(let i = 0; i < n; i++){
+      if(D.par[i] < 0){ key[i] = 65535; continue; }
+      const age = simFrame - D.born[i];
+      const lum = 1 - P.dage*(1 - Math.exp(-age/tau));
+      const li = Math.min(NL - 1, Math.max(0, (lum*NL)|0));
+      const wi = Math.min(NW - 1, Math.max(0, (P.dthick*Math.log2(D.wt[i])*0.7)|0));
+      const k = li*NW + wi;
+      key[i] = k; cnt[k + 1]++;
+    }
+    for(let b = 0; b < NB; b++) cnt[b + 1] += cnt[b];
+    const pos = cnt.slice(0, NB);
+    for(let i = 0; i < n; i++) if(key[i] !== 65535) ord[pos[key[i]]++] = i;
+    const hx = i => (D.x[i] + (jit ? (hash1(i) - 0.5)*jit : 0) + off)*kx;
+    const hy = i => (D.y[i] + (jit ? (hash1(i + 7777777) - 0.5)*jit : 0) + off)*ky;
+    c.lineCap = "round"; c.lineJoin = "round";
+    for(let b = 0; b < NB; b++){
+      const s = cnt[b], e = cnt[b + 1];
+      if(e <= s) continue;
+      const li = (b/NW)|0, wi = b % NW, g = Math.round(255*(li + 1)/NL);
+      c.strokeStyle = `rgb(${g},${g},${g})`;
+      c.lineWidth = P.dw*(1 + wi*0.6);
+      c.beginPath();
+      for(let q = s; q < e; q++){ const i = ord[q], p = D.par[i]; c.moveTo(hx(p), hy(p)); c.lineTo(hx(i), hy(i)); }
+      c.stroke();
+    }
+  }
+  let dlaForce = true;
+  function dlaUpload(){
+    const ageing = P.dage > 0 && simFrame - D.lastAdd < P.fps*12;
+    if(!(D.dirty || ageing || dlaForce)) return;
+    dlaDraw();
+    gl.bindTexture(gl.TEXTURE_2D, dlaTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, dlaCv);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    texParams(false);
+    D.dirty = false; dlaForce = false;
+  }
+
+  function simFrameStep(){
+    const n = Math.max(1, P.speed|0);
+    if(simMode === "phys"){ for(let i = 0; i < n; i++) physStep(); }
+    else if(simMode === "rd"){ for(let i = 0; i < n; i++) rdStep(); }
+    else if(simMode === "flow"){ for(let i = 0; i < n; i++) flowStep(); }
+    else dlaStep(n);
+    simFrame++;
+  }
+
+  /* ================= кадр ================= */
+  let fieldW = 2, fieldH = 2;
+  function render(){
+    let src, kind;
+    if(simMode === "phys"){ src = tr[0]; kind = 0; fieldW = simW; fieldH = simH; }
+    else if(simMode === "rd"){ src = rd[0]; kind = 1; fieldW = simW; fieldH = simH; }
+    else if(simMode === "flow"){ src = fb[0]; kind = 2; fieldW = simW; fieldH = simH; }
+    else { dlaUpload(); src = dlaTex; kind = 3; fieldW = W; fieldH = H; }
+    const prep = ensure("vprep", fieldW, fieldH, HAS16 ? F16 : STATE);
+    run(PR.prep, prep, { u_res:[fieldW, fieldH], u_kind:kind, u_gain:P.gain }, { u_src:src });
+    const col = ensure("vcol", W, H, U8, true);
+    run(PR.disp, col, { u_fres:[fieldW, fieldH], u_ores:[W, H], u_gamma:P.gamma, u_relief:P.relief, u_height:P.height, u_lang:P.lang*D2R },
+      { u_prep:prep, u_pal:palTex });
+    const w4 = Math.max(1, W >> 2), h4 = Math.max(1, H >> 2), w8 = Math.max(1, W >> 3), h8 = Math.max(1, H >> 3);
+    const b1a = ensure("vb1a", w4, h4, U8, true), b1b = ensure("vb1b", w4, h4, U8, true);
+    const b2a = ensure("vb2a", w8, h8, U8, true), b2b = ensure("vb2b", w8, h8, U8, true);
+    if(P.bloom > 0){
+      const r = P.bloomR;
+      run(PR.down, b1a, { u_ores:[w4, h4], u_px:[1/W, 1/H] }, { u_src:col });
+      run(PR.blur, b1b, { u_ores:[w4, h4], u_dir:[r/w4, 0] }, { u_src:b1a });
+      run(PR.blur, b1a, { u_ores:[w4, h4], u_dir:[0, r/h4] }, { u_src:b1b });
+      run(PR.down, b2a, { u_ores:[w8, h8], u_px:[0.5/w4, 0.5/h4] }, { u_src:b1a });
+      run(PR.blur, b2b, { u_ores:[w8, h8], u_dir:[r*1.5/w8, 0] }, { u_src:b2a });
+      run(PR.blur, b2a, { u_ores:[w8, h8], u_dir:[0, r*1.5/h8] }, { u_src:b2b });
+    }
+    run(PR.final, null, { u_ores:[W, H], u_bloom:P.bloom, u_bg:bgCol, u_invert:P.invert, u_mshow:P.mshow && hasMask },
+      { u_col:col, u_b1:b1a, u_b2:b2a, u_mask:maskTex });
+  }
+  function updDims(){
+    let s = `${W}×${H} · sim ${simW}×${simH} · ${(simFrame/P.fps).toFixed(1)} s`;
+    if(simMode === "dla") s += ` · ${D.n} pts`;
+    $("dims").textContent = s;
+  }
+
+  /* ================= цикл ================= */
+  const now = () => performance.now()/1000;
+  let playing = true, acc = 0, lastNow = now(), needRender = true, busy = false, webmRec = null, tickN = 0, lastStatus = "";
+  function liveStatus(){
+    if(busy || webmRec) return;
+    const m = !playing ? "Пауза" : (simMode === "dla" && (D.done || D.n >= D.cap)) ? "Ріст завершено" : "";
+    if(m !== lastStatus){ lastStatus = m; status(m); }
+  }
+  function tick(){
+    requestAnimationFrame(tick);
+    if(busy) return;
+    const t = now(), dt = Math.min(0.25, t - lastNow);
+    lastNow = t;
+    let stepped = 0;
+    if(playing){
+      acc += dt;
+      const fd = 1/P.fps;
+      while(acc >= fd && stepped < 2){ simFrameStep(); acc -= fd; stepped++; }
+      if(acc > fd) acc = 0;                       // не наздоганяємо — краще повільніше, ніж ривками
+    }
+    if(stepped || needRender){
+      needRender = false;
+      render();
+      if(++tickN % 6 === 0 || !playing) updDims();
+      liveStatus();
+    }
+  }
+  $("playBtn").addEventListener("click", () => {
+    playing = !playing; lastNow = now(); acc = 0;
+    $("icoPause").classList.toggle("hide", !playing);
+    $("icoPlay").classList.toggle("hide", playing);
+    needRender = true; liveStatus();
+  });
+  const restart = () => { resetSim(); dlaForce = true; lastNow = now(); acc = 0; };
+  $("restartBtn").addEventListener("click", restart);
+  $("restart").addEventListener("click", restart);
+  $("newSeed").addEventListener("click", () => {
+    P.seed = 1 + Math.floor(Math.random()*999);
+    $("seed").value = P.seed; $("vSeed").textContent = P.seed;
+    buildSpawn(); restart();
+  });
+
+  /* ---------- пензель по превʼю ---------- */
+  function toCanvas(e){
+    const r = out.getBoundingClientRect();
+    return [(e.clientX - r.left)/r.width*W, (e.clientY - r.top)/r.height*H];
+  }
+  out.addEventListener("pointerdown", e => {
+    if(busy) return;
+    const p = toCanvas(e);
+    if(simMode === "dla"){
+      const gx = Math.min(D.gw - 1, Math.max(0, Math.round(p[0]*D.gw/W))), gy = Math.min(D.gh - 1, Math.max(0, Math.round(p[1]*D.gh/H)));
+      if(D.sc || D.occ[gy*D.gw + gx] < 0){ dlaAdd(gx, gy, -1); D.done = false; needRender = true; }
+      return;
+    }
+    brush = p;
+    try{ out.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  out.addEventListener("pointermove", e => { if(brush) brush = toCanvas(e); });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => out.addEventListener(ev, () => { brush = null; }));
+
+  /* ================= exports ================= */
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  const fname = ext => `grow-${P.mode}-${P.seed}.${ext}`;
+
+  $("exPng").addEventListener("click", () => out.toBlob(b => { if(b) downloadBlob(b, fname("png")); }, "image/png"));
+  $("exJpg").addEventListener("click", () => {
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, W, H); x.drawImage(out, 0, 0);
+    c.toBlob(b => { if(b) downloadBlob(b, fname("jpg")); }, "image/jpeg", 0.95);
+  });
+
+  let mp4Abort = false;
+  $("exMp4").addEventListener("click", async () => {
+    if(busy){ mp4Abort = true; return; }
+    if(webmRec) return;
+    if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+    busy = true; mp4Abort = false; brush = null;
+    $("mp4Label").textContent = "■ Скасувати";
+    const fps = P.fps, fdur = Math.round(1e6/fps);
+    let err = null, enc = null;
+    try{
+      const muxer = new Mp4Muxer.Muxer({ target:new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:W, height:H }, fastStart:"in-memory" });
+      enc = new VideoEncoder({
+        output:(c, m) => {
+          const b = new Uint8Array(c.byteLength); c.copyTo(b);
+          muxer.addVideoChunkRaw(b, c.type, c.timestamp, c.duration ?? fdur, m);
+        },
+        error:e => { err = e; },
+      });
+      enc.configure({ codec: W*H*fps > 1500000*30 ? "avc1.640033" : "avc1.640028", width:W, height:H, bitrate:P.bitrate*1e6, framerate:fps });
+      resetSim(); dlaForce = true;                 // запис з зародка, той самий сід
+      const total = Math.max(1, Math.round(P.dur*fps));
+      for(let i = 0; i < total && !err && !mp4Abort; i++){
+        simFrameStep();
+        render();
+        const fr = new VideoFrame(out, { timestamp:i*fdur, duration:fdur });
+        enc.encode(fr, { keyFrame: i % (fps*2) === 0 }); fr.close();
+        if(enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 0));
+        if(i % 6 === 0){ status(`Рендер ${Math.round(i/total*100)}%`, true); updDims(); await new Promise(r => setTimeout(r, 0)); }
+      }
+      if(!err && !mp4Abort){
+        status("Кодування…", true);
+        await Promise.race([enc.flush(), new Promise((_, rej) => setTimeout(() => rej(new Error("flush timeout")), 20000))]);
+        muxer.finalize();
+        downloadBlob(new Blob([muxer.target.buffer], { type:"video/mp4" }), fname("mp4"));
+      }
+    }catch(e){ err = err || e; }
+    try{ if(enc && enc.state !== "closed") enc.close(); }catch(e){}
+    if(err) alert("Помилка кодування MP4: " + (err.message || err));
+    busy = false; needRender = true; lastNow = now(); acc = 0; lastStatus = null;
+    $("mp4Label").textContent = `MP4 (${P.fps} fps)`; status(""); liveStatus();
+  });
+
+  $("exWebm").addEventListener("click", () => {
+    if(webmRec){ webmRec.stop(); return; }
+    if(busy) return;
+    if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+    if(!playing) $("playBtn").click();
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    let rec;
+    try{ rec = new MediaRecorder(out.captureStream(P.fps), { mimeType:mime, videoBitsPerSecond:P.bitrate*1e6 }); }
+    catch(e){ alert("Запис недоступний у цьому браузері."); return; }
+    restart();                                     // запис з зародка
+    webmRec = rec;
+    rec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      if(chunks.length) downloadBlob(new Blob(chunks, { type:"video/webm" }), fname("webm"));
+      webmRec = null; $("webmLabel").textContent = "WebM"; lastStatus = null; status(""); liveStatus();
+    };
+    rec.start(200); $("webmLabel").textContent = "■ Стоп"; status("Запис…", true);
+    setTimeout(() => { if(webmRec === rec) rec.stop(); }, P.dur*1000);
+  });
+
+  /* ================= фото-маска ================= */
+  function loadImageFile(file){
+    if(!file || !/^image\//.test(file.type) && !/\.svg$/i.test(file.name || "")) return;
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      if(!im.naturalWidth){ im.width = 1000; im.height = 1000; }
+      userImg = im; P.src = "image"; syncUI(); rebuildMask(true);
+    };
+    im.onerror = () => alert("Не вдалося відкрити файл як зображення.");
+    im.src = url;
+  }
+  $("imgLoad").addEventListener("click", () => $("imgFile").click());
+  $("imgFile").addEventListener("change", e => { loadImageFile(e.target.files[0]); e.target.value = ""; });
+  const stage = $("stage");
+  ["dragenter", "dragover"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("dragging"); }));
+  ["dragleave", "drop"].forEach(ev => stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove("dragging"); }));
+  stage.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if(f) loadImageFile(f); });
+  window.addEventListener("paste", e => {
+    const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith("image/"));
+    if(it){ e.preventDefault(); loadImageFile(it.getAsFile()); }
+  });
+
+  /* ================= UI ================= */
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  const palBox = $("palettes");
+  for(const [key, p] of Object.entries(PALETTES)){
+    const el = document.createElement("div");
+    el.className = "preset"; el.dataset.pal = key;
+    el.innerHTML = `<div>${p.name}</div><div class="pal"></div>`;
+    palBox.appendChild(el);
+  }
+  function paintPalSwatches(){
+    palBox.querySelectorAll(".preset").forEach(el => {
+      const st = el.dataset.pal === "custom" ? [[0, P.c1], [0.5, P.c2], [1, P.c3]] : PALETTES[el.dataset.pal].stops;
+      el.querySelector(".pal").style.background = `linear-gradient(90deg,${st.map(s => `${s[1]} ${s[0]*100}%`).join(",")})`;
+    });
+  }
+  palBox.addEventListener("click", e => {
+    const el = e.target.closest(".preset"); if(!el) return;
+    P.palette = el.dataset.pal; syncUI(); buildPal(); needRender = true;
+  });
+
+  const stBox = $("styles");
+  STYLES.forEach((s, i) => {
+    const el = document.createElement("div");
+    el.className = "preset"; el.textContent = s.name; el.dataset.i = i;
+    el.addEventListener("click", () => {
+      const keep = { aspect:P.aspect, fps:P.fps, dur:P.dur, bitrate:P.bitrate, seed:P.seed, text:P.text, font:P.font, mshow:P.mshow };
+      if(P.src === "image" && userImg && !s.p.src) keep.src = "image";
+      Object.assign(P, JSON.parse(JSON.stringify(BASE)), keep, s.p);
+      stBox.querySelectorAll(".preset").forEach(x => x.classList.toggle("active", x === el));
+      syncUI(); buildPal(); rebuildMask(true);
+    });
+    stBox.appendChild(el);
+  });
+
+  function bindPresets(sel, key, attr, after){
+    document.querySelectorAll(sel + " .preset").forEach(p => p.addEventListener("click", () => {
+      document.querySelectorAll(sel + " .preset").forEach(x => x.classList.remove("active"));
+      p.classList.add("active"); P[key] = p.dataset[attr];
+      if(after) after(); needRender = true;
+    }));
+  }
+  bindPresets("#modes", "mode", "mode", () => { syncUI(); restart(); });
+  bindPresets("#spawns", "spawn", "spawn", restart);
+  bindPresets("#rdseeds", "rdseed", "rdseed", restart);
+  bindPresets("#rdps", "rdp", "rdp", () => { [P.feed, P.kill] = RDP[P.rdp]; syncUI(); });
+  bindPresets("#fmasks", "fmask", "fmask");
+  bindPresets("#fspawns", "fspawn", "fspawn");
+  bindPresets("#dalgs", "dalg", "dalg", () => { syncUI(); restart(); });
+  bindPresets("#dseeds", "dseed", "dseed", restart);
+  bindPresets("#dregions", "dregion", "dregion", restart);
+  bindPresets("#srcs", "src", "src", () => {
+    if(P.src === "image" && !userImg){ $("imgFile").click(); }
+    syncUI(); rebuildMask();
+  });
+  bindPresets("#fonts", "font", "font", () => rebuildMask());
+  bindPresets("#shapes", "shape", "shape", () => rebuildMask());
+  bindPresets("#aspects", "aspect", "aspect", () => { resize(); buildMask(); restart(); });
+  bindPresets("#fpss", "fps", "fps", () => { P.fps = +P.fps || 30; $("mp4Label").textContent = `MP4 (${P.fps} fps)`; acc = 0; });
+
+  const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2), f3 = x => x.toFixed(3), f4 = x => x.toFixed(4);
+  /* [id, value-span, формат, дія]: reset — перезапуск, mask — перебудова маски, draw — перемалювати гілки, seed */
+  const RANGES = [
+    ["seed","vSeed",null,"seed"], ["speed","vSpeed",null], ["res","vRes",f2,"reset"],
+    ["agents","vAgents",null,"reset"], ["sa","vSa",f1], ["sd","vSd",f1], ["ra","vRa",f1], ["ss","vSs",f2],
+    ["dep","vDep",f2], ["decay","vDecay",f3], ["diff","vDiff",f2], ["jit","vJit",f2], ["rad","vRad",f2,"reset"], ["mattr","vMattr",f2],
+    ["feed","vFeed",f4,"rdp"], ["kill","vKill",f4,"rdp"], ["rrad","vRrad",f2,"reset"], ["hold","vHold",f2],
+    ["fcount","vFcount",null,"reset"], ["fspeed","vFspeed",f2], ["fscale","vFscale",f2], ["fcurl","vFcurl",f2], ["foct","vFoct",f2],
+    ["fevo","vFevo",f2], ["fwind","vFwind",f2], ["fdir","vFdir",null], ["flen","vFlen",f2], ["ffade","vFfade",f3], ["fint","vFint",f2],
+    ["flife","vFlife",null], ["fmr","vFmr",f2], ["frad","vFrad",f2],
+    ["dstick","vDstick",f2], ["ddrift","vDdrift",f2], ["dattr","vDattr",null,"reset"], ["dseg","vDseg",f1], ["dinfl","vDinfl",null,"reset"],
+    ["djit","vDjit",f2], ["dw","vDw",f2,"draw"], ["dthick","vDthick",f2,"draw"], ["dage","vDage",f2,"draw"], ["dmax","vDmax",null,"reset"],
+    ["msize","vMsize",f2,"mask"], ["mx","vMx",f2,"mask"], ["my","vMy",f2,"mask"], ["mth","vMth",f2,"mask"],
+    ["gain","vGain",f2], ["gamma","vGamma",f2], ["relief","vRelief",f2], ["height","vHeight",f1], ["lang","vLang",null],
+    ["bloom","vBloom",f2], ["bloomR","vBloomR",f2],
+    ["dur","vDur",null], ["bitrate","vBitrate",null],
+  ];
+  let resetTimer = 0;
+  const softReset = () => { clearTimeout(resetTimer); resetTimer = setTimeout(restart, 120); };
+  for(const [id, vid, fmt, kind] of RANGES){
+    $(id).addEventListener("input", e => {
+      P[id] = parseFloat(e.target.value);
+      $(vid).textContent = fmt ? fmt(P[id]) : P[id];
+      if(kind === "reset") softReset();
+      else if(kind === "mask") rebuildMask();
+      else if(kind === "seed"){ clearTimeout(resetTimer); resetTimer = setTimeout(() => { buildSpawn(); restart(); }, 120); }
+      else if(kind === "draw") dlaForce = true;
+      else if(kind === "rdp") markRdp();
+      needRender = true;
+    });
+  }
+  let textTimer = 0;
+  $("text").addEventListener("input", e => { P.text = e.target.value; clearTimeout(textTimer); textTimer = setTimeout(() => rebuildMask(), 150); });
+  ["c1", "c2", "c3"].forEach(id => $(id).addEventListener("input", e => { P[id] = e.target.value; P.palette = "custom"; syncUI(); buildPal(); needRender = true; }));
+  $("bounce").addEventListener("change", e => { P.bounce = e.target.checked; });
+  $("minv").addEventListener("change", e => { P.minv = e.target.checked; rebuildMask(); });
+  $("mshow").addEventListener("change", e => { P.mshow = e.target.checked; needRender = true; });
+  $("invert").addEventListener("change", e => { P.invert = e.target.checked; needRender = true; });
+
+  function markRdp(){
+    let hit = "";
+    for(const [k, v] of Object.entries(RDP)) if(Math.abs(v[0] - P.feed) < 1e-4 && Math.abs(v[1] - P.kill) < 1e-4) hit = k;
+    P.rdp = hit;
+    document.querySelectorAll("#rdps .preset").forEach(x => x.classList.toggle("active", x.dataset.rdp === hit));
+  }
+  function syncUI(){
+    for(const [id, vid, fmt] of RANGES){ $(id).value = P[id]; $(vid).textContent = fmt ? fmt(P[id]) : P[id]; }
+    $("text").value = P.text;
+    ["c1", "c2", "c3"].forEach(id => $(id).value = P[id]);
+    $("bounce").checked = P.bounce; $("minv").checked = P.minv; $("mshow").checked = P.mshow; $("invert").checked = P.invert;
+    const mark = (sel, attr, val) => document.querySelectorAll(sel + " .preset").forEach(x => x.classList.toggle("active", x.dataset[attr] === String(val)));
+    mark("#modes", "mode", P.mode); mark("#spawns", "spawn", P.spawn); mark("#rdseeds", "rdseed", P.rdseed);
+    mark("#fmasks", "fmask", P.fmask); mark("#fspawns", "fspawn", P.fspawn);
+    mark("#dalgs", "dalg", P.dalg); mark("#dseeds", "dseed", P.dseed); mark("#dregions", "dregion", P.dregion);
+    mark("#srcs", "src", P.src); mark("#fonts", "font", P.font); mark("#shapes", "shape", P.shape);
+    mark("#aspects", "aspect", P.aspect); mark("#fpss", "fps", P.fps); mark("#palettes", "pal", P.palette);
+    markRdp();
+    $("gPhys").style.display = P.mode === "phys" ? "block" : "none";
+    $("gRd").style.display = P.mode === "rd" ? "block" : "none";
+    $("gFlow").style.display = P.mode === "flow" ? "block" : "none";
+    $("gDla").style.display = P.mode === "dla" ? "block" : "none";
+    $("scBox").style.display = P.dalg === "sc" ? "block" : "none";
+    $("dlaBox").style.display = P.dalg === "sc" ? "none" : "block";
+    $("textGroup").style.display = P.src === "text" ? "block" : "none";
+    $("shapeGroup").style.display = P.src === "shape" ? "block" : "none";
+    $("imageGroup").style.display = P.src === "image" ? "block" : "none";
+    $("modeNote").textContent = MODE_NOTES[P.mode] || "";
+    $("mp4Label").textContent = `MP4 (${P.fps} fps)`;
+    paintPalSwatches();
+  }
+  $("reset").addEventListener("click", () => {
+    Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
+    stBox.querySelectorAll(".preset").forEach((x, i) => x.classList.toggle("active", i === 0));
+    syncUI(); resize(); buildPal(); buildMask(); restart();
+  });
+
+  /* ================= boot ================= */
+  stBox.firstChild.classList.add("active");
+  resize(); syncUI(); buildPal(); buildMask(); resetSim();
+  if(LOWQ) status("Без float-текстур — якість знижено");
+  if(document.fonts) document.fonts.ready.then(() => rebuildMask());
+  tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
