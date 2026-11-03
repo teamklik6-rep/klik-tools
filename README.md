@@ -6,7 +6,7 @@
 
 | # | Студія | Що робить |
 |---|--------|-----------|
-| 01 | **LumaGrid Studio** | CellMap · PixelSynth · ASCII · Dither — сітки за яскравістю, ретро-дизеринг з палітрами, glow/glitch пост-ефекти, експорт PNG / SVG / MP4 |
+| 01 | **LumaGrid Studio** | CellMap · PixelSynth · ASCII · Dither — сітки за яскравістю, бібліотека гліфів у дусі Script Slayer (48 наборів × 11 категорій, глибина / зсув / вставка символів, палітри, анімація), ретро-дизеринг з палітрами, glow/glitch пост-ефекти, експорт PNG / SVG / TXT / MP4 |
 | 02 | **Sphere Studio** | 3D генератор світлових сфер на WebGL, пресети, запис MP4 |
 | 03 | **X-Ray Studio** | Фото → wireframe/рентген (Canny), експорт PNG / SVG |
 | 04 | **Thermo Studio** | Термо-ґлоу типографіка: echo-шлейфи + градієнт-мапа (як Echo + Colorama в AE), 12 пресетів, луп-анімація, експорт PNG / JPG / WEBP / SVG / MP4 / WebM |

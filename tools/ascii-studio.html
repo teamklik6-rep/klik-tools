@@ -200,6 +200,36 @@
   .zone .zmeta small{font-size:11px;color:hsl(var(--muted-foreground))}
   .zone .zbtns{display:flex;gap:6px;flex:none}
   .zone .iconbtn{width:28px;height:28px}
+
+  /* ---------- Script Slayer: glyph library ---------- */
+  .ss-pick{display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-bottom:9px}
+  .ss-pick .iconbtn{width:36px;height:36px}
+  .ssgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:262px;overflow-y:auto;padding-right:2px}
+  .sscard{padding:7px 9px;border-radius:8px;cursor:pointer;min-width:0;background:hsl(var(--card-2));border:1px solid hsl(var(--border));
+    color:hsl(var(--muted-foreground));transition:.12s}
+  .sscard:hover{color:hsl(var(--foreground));border-color:hsl(240 4% 22%)}
+  .sscard.active{background:hsl(0 0% 98%/.08);border-color:hsl(0 0% 98%/.55);color:hsl(var(--foreground))}
+  .sscard b{display:block;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sscard .gl{display:block;font-size:14px;line-height:1.35;margin-top:3px;white-space:nowrap;overflow:hidden;color:hsl(var(--foreground));letter-spacing:1px}
+  .ramp{display:flex;flex-wrap:wrap;gap:3px}
+  .ramp i{font-style:normal;min-width:20px;height:22px;padding:0 2px;display:grid;place-items:center;border-radius:5px;font-size:13px;
+    background:hsl(var(--input));border:1px solid hsl(var(--border))}
+  .ramp i.sp{background:transparent;border-style:dashed}
+  .palgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+  .palchip{padding:7px 8px;border-radius:8px;cursor:pointer;font-size:11.5px;font-weight:600;background:hsl(var(--card-2));
+    border:1px solid hsl(var(--border));color:hsl(var(--muted-foreground));transition:.12s}
+  .palchip:hover{color:hsl(var(--foreground))}
+  .palchip.active{border-color:hsl(0 0% 98%/.55);color:hsl(var(--foreground));background:hsl(0 0% 98%/.08)}
+  .palchip .sw{display:flex;height:9px;border-radius:3px;overflow:hidden;margin-top:5px}
+  .palchip .sw i{flex:1}
+  .userp{display:flex;flex-wrap:wrap;gap:6px}
+  .userp:not(:empty){margin-top:9px}
+  .uchip{display:inline-flex;align-items:center;gap:4px;padding:4px 4px 4px 10px;border-radius:999px;font-size:12px;cursor:pointer;
+    background:hsl(var(--card-2));border:1px solid hsl(var(--border));color:hsl(var(--foreground))}
+  .uchip:hover{border-color:hsl(240 4% 26%)}
+  .uchip .x{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;color:hsl(var(--muted-foreground))}
+  .uchip .x:hover{background:hsl(var(--muted));color:hsl(var(--foreground))}
+  .uchip .x svg{width:11px;height:11px}
 </style>
 </head>
 <body>
@@ -318,30 +348,73 @@
             </div>
           </div>
           <div class="group">
-            <h2>Набір символів</h2>
-            <div class="presets c2" id="charsets">
-              <div class="preset" data-cs="standard">Standard<span class="mono">.:-=+*#@</span></div>
-              <div class="preset" data-cs="detailed">Detailed<span class="mono">$@B%8&amp;W#*</span></div>
-              <div class="preset" data-cs="blocks">Блоки<span class="mono">░▒▓█</span></div>
-              <div class="preset" data-cs="blocks2">Шкала<span class="mono">▁▃▅▇█</span></div>
-              <div class="preset" data-cs="simple">Простий<span class="mono">.:*#@</span></div>
-              <div class="preset" data-cs="binary">Binary<span class="mono">0 1</span></div>
-              <div class="preset" data-cs="dots">Крапки<span class="mono">·•●</span></div>
-              <div class="preset" data-cs="custom">Custom<span class="mono">abc…</span></div>
+            <h2>Пресети Script Slayer</h2>
+            <div class="presets c3" id="ssPresets"></div>
+            <div class="userp" id="ssUser"></div>
+            <button class="btn full" id="ssSave" style="width:100%;margin-top:9px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+              Зберегти пресет</button>
+          </div>
+          <div class="group">
+            <h2>Бібліотека символів</h2>
+            <div class="ss-pick">
+              <select id="ssCat"></select>
+              <div class="iconbtn" id="ssPrev" title="Попередній набір"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+              <div class="iconbtn" id="ssNext" title="Наступний набір"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
             </div>
+            <div class="ssgrid" id="charsets"></div>
             <input type="text" id="customChars" class="hide" placeholder="символи від темного → світлого" style="margin-top:9px" spellcheck="false">
+            <div class="row mt"><label class="lbl">Активна шкала</label><span class="val" id="vRampN">10</span></div>
+            <div class="ramp" id="rampView"></div>
+          </div>
+          <div class="group">
+            <h2>Глибина та зсув</h2>
+            <div class="row"><label class="lbl">Глибина (рівнів)</label><span class="val" id="vSsDepth">10/10</span></div>
+            <input type="range" id="ssDepth" min="2" max="64" step="1" value="64">
+            <div class="row mt"><label class="lbl">Зсув символів</label><span class="val" id="vSsOff">0/9</span></div>
+            <input type="range" id="ssOffset" min="0" max="9" step="1" value="0">
+            <div class="row mt"><label class="lbl">Вставити символи</label><span class="val" id="vSsInj">0/10</span></div>
+            <input type="text" id="ssInject" placeholder="до 10 символів, напр. KLIK" spellcheck="false">
+            <div class="switch-row">
+              <span class="lbl">Сортувати за щільністю</span>
+              <label class="switch"><input type="checkbox" id="ssSort" checked><span class="track"></span></label>
+            </div>
+            <div class="note">Глибина — скільки гліфів набору бере шкала яскравості. Зсув циклічно зміщує відповідність «яскравість → гліф». Вставлені символи стають у шкалу за власною щільністю чорнила.</div>
+          </div>
+          <div class="group">
+            <h2>Анімація символів</h2>
+            <div class="switch-row" style="margin-top:0">
+              <span class="lbl">Анімувати глибину</span>
+              <label class="switch"><input type="checkbox" id="ssAnimDepth"><span class="track"></span></label>
+            </div>
+            <div class="row mt"><label class="lbl">Темп глибини (циклів/с)</label><span class="val" id="vSsDSpd">0.25</span></div>
+            <input type="range" id="ssDepthSpeed" min="0.05" max="2" step="0.05" value="0.25">
+            <div class="switch-row">
+              <span class="lbl">Анімувати зсув</span>
+              <label class="switch"><input type="checkbox" id="ssAnimOff"><span class="track"></span></label>
+            </div>
+            <div class="row mt"><label class="lbl">Темп зсуву (кроків/с)</label><span class="val" id="vSsOSpd">6</span></div>
+            <input type="range" id="ssOffSpeed" min="1" max="30" step="1" value="6">
+            <div class="note">Працює і на фото: MP4 тоді рендерить цикл заданої тривалості (вкладка «Експорт»).</div>
           </div>
           <div class="group">
             <h2>Колір</h2>
             <select id="colorMode">
               <option value="mono">Монохром (текст/фон)</option>
               <option value="color">Кольоровий (з джерела)</option>
+              <option value="pal">Палітра (за яскравістю)</option>
+              <option value="palnear">Палітра (найближчий колір)</option>
             </select>
+            <div class="palgrid hide" id="asPals"></div>
             <div class="colors" id="colorPick" style="margin-top:12px">
               <div class="color-field"><span>Текст</span>
                 <div class="color-wrap"><input type="color" id="fg" value="#e6e6e6"><span class="hex" id="fgHex">#E6E6E6</span></div></div>
               <div class="color-field"><span>Фон</span>
                 <div class="color-wrap"><input type="color" id="bg" value="#0a0a0c"><span class="hex" id="bgHex">#0A0A0C</span></div></div>
+            </div>
+            <div class="switch-row">
+              <span class="lbl">Прозорий фон</span>
+              <label class="switch"><input type="checkbox" id="transBg2"><span class="track"></span></label>
             </div>
           </div>
           <div class="group">
@@ -359,12 +432,24 @@
           </div>
           <div class="group">
             <h2>Типографіка</h2>
-            <div class="row"><label class="lbl">Розмір шрифту</label><span class="val" id="vFs">9</span></div>
-            <input type="range" id="fontSize" min="4" max="22" step="1" value="9">
-            <div class="switch-row">
-              <span class="lbl">Жирний</span>
-              <label class="switch"><input type="checkbox" id="bold"><span class="track"></span></label>
+            <div class="colors">
+              <select id="fontFam">
+                <option value="mono">Mono</option>
+                <option value="sans">Sans</option>
+                <option value="serif">Serif</option>
+                <option value="chancery">Chancery</option>
+                <option value="type">Typewriter</option>
+                <option value="courier">Courier</option>
+              </select>
+              <select id="fontStyle">
+                <option value="regular">Regular</option>
+                <option value="bold">Bold</option>
+                <option value="italic">Italic</option>
+                <option value="bolditalic">Bold Italic</option>
+              </select>
             </div>
+            <div class="row mt"><label class="lbl">Розмір шрифту</label><span class="val" id="vFs">9</span></div>
+            <input type="range" id="fontSize" min="4" max="22" step="1" value="9">
           </div>
         </div>
 
@@ -539,6 +624,8 @@
             <option value="30" selected>30 fps</option>
             <option value="60">60 fps</option>
           </select>
+          <div class="row mt"><label class="lbl">Тривалість циклу для фото (с)</label><span class="val" id="vLoop">4</span></div>
+          <input type="range" id="loopSec" min="1" max="20" step="1" value="4">
           <button class="btn primary full" id="exMp4" disabled style="margin-top:12px">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>
             <span id="mp4Label">Рендер у .mp4</span></button>
@@ -588,16 +675,99 @@
 (() => {
   "use strict";
 
-  // ---------------- charsets (dark → light) ----------------
+  // ---------------- glyph library (Script Slayer-style: 48 sets × 11 categories) ----------------
+  // chars are listed roughly dark → light; the live ramp is re-sorted by measured ink density
+  const CHAR_CATS = [
+    ["ascii","ASCII"], ["num","Числа"], ["sym","Символи"], ["arrows","Стрілки"], ["blocks","Блоки"], ["braille","Брайль"],
+    ["geo","Геометрія"], ["lang","Мови"], ["cards","Карти та ігри"], ["uni","Юнікод"], ["medieval","Середньовіччя"],
+  ];
+  const brailleMix = (()=>{ let s=" "; for(let k=1;k<=8;k++){ let n=0; for(let b=1;b<256&&n<3;b++){ let c=0; for(let t=b;t;t>>=1) c+=t&1; if(c===k){ s+=String.fromCodePoint(0x2800+b); n++; } } } return s; })();
   const CHARSETS = {
-    standard: " .:-=+*#%@",
-    detailed: " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
-    blocks:   " ░▒▓█",
-    blocks2:  " ▁▂▃▄▅▆▇█",
-    simple:   " .:*#@",
-    binary:   "  ..::01",
-    dots:     "  ..::··•●",
+    standard:  { cat:"ascii", name:"Standard", chars:" .:-=+*#%@" },
+    detailed:  { cat:"ascii", name:"Detailed", chars:" .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$" },
+    simple:    { cat:"ascii", name:"Простий",  chars:" .:*#@" },
+    minimal:   { cat:"ascii", name:"Minimal",  chars:" .oO@" },
+    bourke:    { cat:"ascii", name:"Bourke",   chars:" .,:;irsXA253hMHGS#9B&@" },
+    binary:    { cat:"num", name:"Binary",   chars:"  ..::01" },
+    digits:    { cat:"num", name:"Digits",   chars:" 1723456980" },
+    hex:       { cat:"num", name:"Hex",      chars:" 0123456789ABCDEF" },
+    roman:     { cat:"num", name:"Roman",    chars:" IVXLCDM" },
+    punct:     { cat:"sym", name:"Punctuation", chars:" .,'`:;!?" },
+    math:      { cat:"sym", name:"Math",     chars:" ·-+×÷=±≠≈∑∏√∞" },
+    currency:  { cat:"sym", name:"Currency", chars:" ¢$€£¥₴₿" },
+    hash:      { cat:"sym", name:"Hash",     chars:" -=+#" },
+    arrows:    { cat:"arrows", name:"Arrows",        chars:" ←↑→↓↔↕↖↗↘↙" },
+    darrows:   { cat:"arrows", name:"Double arrows", chars:" ⇐⇑⇒⇓⇔⇕" },
+    triarrows: { cat:"arrows", name:"Pointers",      chars:" ▴▸▾◂▲▶▼◀" },
+    blocks:    { cat:"blocks", name:"Блоки",     chars:" ░▒▓█" },
+    blocks2:   { cat:"blocks", name:"Шкала",     chars:" ▁▂▃▄▅▆▇█" },
+    hblocks:   { cat:"blocks", name:"Bars",      chars:" ▏▎▍▌▋▊▉█" },
+    quads:     { cat:"blocks", name:"Quadrants", chars:" ▖▘▝▗▚▞▙▛▜▟█" },
+    boxlines:  { cat:"blocks", name:"Box lines", chars:" ─│┼═║╬" },
+    braille:   { cat:"braille", name:"Braille",       chars:" ⠁⠃⠇⠏⠟⠿⡿⣿" },
+    braillemix:{ cat:"braille", name:"Braille mix",   chars:brailleMix },
+    braille6:  { cat:"braille", name:"Braille 6-dot", chars:" ⠂⠆⠖⠶⠷⠿" },
+    dots:      { cat:"geo", name:"Крапки",    chars:"  ..::··•●" },
+    circles:   { cat:"geo", name:"Circles",   chars:" ◦○◎◉●" },
+    squares:   { cat:"geo", name:"Squares",   chars:" ▫□▢▣■" },
+    triangles: { cat:"geo", name:"Triangles", chars:" ▵△▴▲" },
+    diamonds:  { cat:"geo", name:"Diamonds",  chars:" ⋄◇◈◆" },
+    katakana:  { cat:"lang", name:"Katakana", chars:" ｰｨｩｪｫｬｭｮｯｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ" },
+    greek:     { cat:"lang", name:"Greek",    chars:" ιτνγλπσρκοαεζδβμξηθφψωΓΣΘΦΨΩ" },
+    cyrillic:  { cat:"lang", name:"Cyrillic", chars:" іїгтлпкезбвджшщфЖШЩЮЯ" },
+    hangul:    { cat:"lang", name:"Hangul",   chars:" ㅡㅣㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ한글" },
+    arabic:    { cat:"lang", name:"Arabic",   chars:" ءاددرزوىبتثنجحخسشصضطظعغفقكلمهي" },
+    cards:     { cat:"cards", name:"Cards",       chars:" ♤♧♡♢♠♣♥♦" },
+    hearts:    { cat:"cards", name:"Lovehearts",  chars:" ♡❥❣♥" },
+    chess:     { cat:"cards", name:"Chess",       chars:" ♙♘♗♖♕♔♟♞♝♜♛♚" },
+    dice:      { cat:"cards", name:"Dice",        chars:" ⚀⚁⚂⚃⚄⚅" },
+    flowers:   { cat:"uni", name:"Flowers",  chars:" ✿❀❁✾❃❋" },
+    orbs:      { cat:"uni", name:"Orbs",     chars:" ⋅∙∘○◌◍◎●" },
+    stars:     { cat:"uni", name:"Stars",    chars:" ·✧✦☆✩✪★✯" },
+    music:     { cat:"uni", name:"Music",    chars:" ♩♪♫♬" },
+    fraktur:   { cat:"medieval", name:"Fraktur",      chars:" 𝔦𝔩𝔯𝔱𝔠𝔢𝔬𝔞𝔡𝔤𝔥𝔫𝔪𝔴" },
+    frakturb:  { cat:"medieval", name:"Fraktur Bold", chars:" 𝖎𝖑𝖗𝖙𝖈𝖊𝖔𝖆𝖉𝖌𝖍𝖓𝖒𝖜" },
+    frakcaps:  { cat:"medieval", name:"Fraktur Caps", chars:" 𝔍ℑ𝔗𝔏𝔉𝔈𝔅𝔇𝔄𝔊ℌℜ𝔑𝔐𝔚" },
+    runes:     { cat:"medieval", name:"Runes",        chars:" ᛁᛚᛏᚲᚾᚢᚱᚦᚠᛒᛗᛞᛟ" },
+    crosses:   { cat:"medieval", name:"Crosses",      chars:" ·+†‡✝✞✟✠☩" },
+    heraldry:  { cat:"medieval", name:"Heraldry",     chars:" ·⚜♝♞♜♛♚" },
   };
+  const FONT_FAMS = {
+    mono:"ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
+    sans:"Inter,-apple-system,Helvetica,Arial,sans-serif",
+    serif:"Georgia,'Times New Roman',serif",
+    chancery:"'Apple Chancery','URW Chancery L',Palatino,serif",
+    type:"'American Typewriter','Courier New',monospace",
+    courier:"'Courier New',Courier,monospace",
+  };
+  // ASCII palettes (sorted by luminance when used)
+  const APALS = {
+    cyberpunk:{ name:"Cyberpunk", c:["#120424","#3d1a6e","#8a3ab9","#ff5e3a","#ffb38a","#fff4ec"] },
+    bloodgold:{ name:"Blood & Gold", c:["#0d0806","#4a0d0d","#8c1c13","#bf4a1c","#d9a441","#f3e3b5"] },
+    parchment:{ name:"Parchment", c:["#2b1d0e","#5a3e1b","#8b6b3d","#c2a36b","#ead9b0"] },
+    sunset:   { name:"Sunset", c:["#1a0b1e","#5c1a3b","#b33a3a","#f2803c","#ffd166","#fff5d6"] },
+    vapor:    { name:"Vaporwave", c:["#1b1035","#4b2a85","#ff71ce","#01cdfe","#05ffa1","#fffb96"] },
+    fire:     { name:"Fire", c:["#0a0000","#5a0000","#c21807","#ff6a00","#ffc300","#fff6d5"] },
+    ocean:    { name:"Ocean", c:["#03111f","#0a3d62","#1e7fa8","#4fc3dc","#b8f2ff"] },
+    toxic:    { name:"Toxic", c:["#020a02","#0b3d0b","#1f8a1f","#39ff14","#d4ffb2"] },
+    gameboy:  { name:"Game Boy", c:["#0f380f","#306230","#8bac0f","#9bbc0f"] },
+    pico8:    { name:"PICO-8", c:["#000000","#1d2b53","#7e2553","#008751","#ab5236","#5f574f","#c2c3c7","#fff1e8","#ff004d","#ffa300","#ffec27","#00e436","#29adff","#83769c","#ff77a8","#ffccaa"] },
+    c64:      { name:"C64", c:["#000000","#626262","#898989","#adadad","#ffffff","#9f4e44","#cb7e75","#6d5412","#a1683c","#c9d487","#9ae29b","#5cab5e","#6abfc6","#887ecb","#50459b","#a057a3"] },
+    auto8:    { name:"Auto-8", c:null },
+  };
+  // built-in looks after the Script Slayer reference renders
+  const SS_PRESETS = [
+    { id:"cards",    name:"Cards",      p:{ charset:"cards", ssDepth:8, colorMode:"pal", asPal:"cyberpunk", bg:"#000000", fg:"#ffffff", cols:110, aspect:1.15, fxGlow:0.55, fxGlowR:10 } },
+    { id:"hearts",   name:"Lovehearts", p:{ charset:"hearts", ssDepth:8, ssInject:"KLIK", colorMode:"color", bg:"#000000", cols:120, aspect:1.5, fxGlow:0.45, fxGlowR:9, fxChroma:2 } },
+    { id:"fraktur",  name:"Fraktur",    p:{ charset:"fraktur", ssDepth:12, colorMode:"pal", asPal:"bloodgold", bg:"#0d0806", fontFam:"serif", cols:100, aspect:1.45, fxGlow:0.3 } },
+    { id:"braille",  name:"Braille",    p:{ charset:"braille", ssDepth:9, colorMode:"mono", fg:"#f2f2f2", bg:"#050505", cols:150, aspect:1.9, fxGlow:0.2 } },
+    { id:"katakana", name:"Katakana",   p:{ charset:"katakana", ssDepth:16, colorMode:"mono", fg:"#39ff14", bg:"#020703", cols:110, aspect:1.5, ssAnimOff:true, ssOffSpeed:8, fxGlow:0.4 } },
+    { id:"codex",    name:"Codex",      p:{ charset:"crosses", ssDepth:10, colorMode:"pal", asPal:"parchment", bg:"#efe3c4", invert:true, fontFam:"chancery", cols:100, aspect:1.5 } },
+  ];
+  // keys a preset may touch (everything else — media, tone, other modes — stays)
+  const PRESET_KEYS = ["charset","customChars","ssDepth","ssOffset","ssInject","ssSort","ssAnimDepth","ssDepthSpeed","ssAnimOff","ssOffSpeed",
+    "colorMode","fg","bg","asPal","transBg","fontFam","fontStyle","fontSize","cols","aspect","invert","edges","dither",
+    "fxGlow","fxGlowR","fxChroma","fxGlitch","fxScan","fxRays","fxSpark","fxDots"];
 
   // ---------------- themes ----------------
   const THEMES = {
@@ -615,8 +785,11 @@
     charset:"standard", customChars:"", cols:140, invert:false,
     colorMode:"mono", fg:"#e6e6e6", bg:"#0a0a0c",
     bri:0, con:0, gam:1.0, edges:false, edgeThresh:35, dither:false,
-    aspect:1.0, fontSize:9, bold:false,
-    transBg:false, exScale:3,
+    aspect:1.0, fontSize:9, fontFam:"mono", fontStyle:"regular",
+    transBg:false, exScale:3, loopSec:4,
+    // Script Slayer glyph engine (ASCII)
+    ssCat:"all", ssDepth:64, ssOffset:0, ssInject:"", ssSort:true,
+    ssAnimDepth:false, ssDepthSpeed:0.25, ssAnimOff:false, ssOffSpeed:6, asPal:"cyberpunk",
     // CellMap
     cellGap:2, cellRadius:0, tileFrames:44, drift:0, tileTint:false,
     // PixelSynth
@@ -669,14 +842,84 @@
   let lastGeom = null;       // {cols,rows,srcAspect}
   let phase0=0, livePhase=0;  // seconds since first animation tick (drives drift / zone clips)
 
-  function charset(){
-    if(P.charset==="custom"){ const c=P.customChars; return c && c.length>=2 ? c : CHARSETS.standard; }
-    return CHARSETS[P.charset] || CHARSETS.standard;
+  // ---------------- glyph ramps: ink-density sort, inject, depth, offset ----------------
+  function fontParts(){ const s=P.fontStyle; return { italic:s==="italic"||s==="bolditalic", weight:(s==="bold"||s==="bolditalic")?700:400 }; }
+  function fontStr(px){ const f=fontParts(); return (f.italic?"italic ":"")+f.weight+" "+px+"px "+(FONT_FAMS[P.fontFam]||FONT_FAMS.mono); }
+  const inkCv=document.createElement("canvas"); inkCv.width=inkCv.height=40;
+  const inkX=inkCv.getContext("2d",{ willReadFrequently:true });
+  const inkCache=new Map();
+  function inkOf(ch){                          // share of a 40×40 cell covered by the glyph
+    const font=fontStr(26), k=font+"\u0000"+ch;
+    let v=inkCache.get(k); if(v!==undefined) return v;
+    if(ch===" "){ inkCache.set(k,0); return 0; }
+    inkX.clearRect(0,0,40,40); inkX.font=font; inkX.textAlign="center"; inkX.textBaseline="middle"; inkX.fillStyle="#000";
+    inkX.fillText(ch,20,20);
+    const d=inkX.getImageData(0,0,40,40).data; let s=0;
+    for(let i=3;i<d.length;i+=4) s+=d[i];
+    v=s/(1600*255); inkCache.set(k,v); return v;
+  }
+  const sortByInk = arr => arr.map((c,i)=>[c,inkOf(c),i]).sort((a,b)=>a[1]-b[1]||a[2]-b[2]).map(e=>e[0]);
+  function setChars(id){
+    if(id==="custom"){ const c=Array.from(P.customChars||""); return c.length>=2 ? c : Array.from(CHARSETS.standard.chars); }
+    return Array.from((CHARSETS[id]||CHARSETS.standard).chars);
+  }
+  const injected = () => Array.from(P.ssInject||"").filter(c=>c.trim()).slice(0,10);
+  let rampCache={ key:"", full:null };
+  function fullRamp(){                         // unique glyphs of the set + injected, dark → light
+    const key=P.charset+"|"+P.customChars+"|"+P.ssInject+"|"+P.ssSort+"|"+fontStr(26);
+    if(rampCache.key===key) return rampCache.full;
+    let base=[...new Set(setChars(P.charset))];
+    const inj=[...new Set(injected())].filter(c=>!base.includes(c));
+    let full;
+    if(P.ssSort) full=sortByInk(base.concat(inj));
+    else {                                     // keep the set's own order, slot injected glyphs in by ink
+      full=base.slice();
+      for(const c of sortByInk(inj)){ const v=inkOf(c); let at=full.findIndex(b=>inkOf(b)>v); if(at<0) at=full.length; full.splice(at,0,c); }
+    }
+    if(full.length<2) full=[" "].concat(full);
+    rampCache={ key, full }; return full;
+  }
+  // depth-resampled ramp + current offset (both animatable over phase seconds)
+  function activeRamp(phase){
+    const full=fullRamp(), n=full.length;
+    const Dset=clamp(P.ssDepth|0,2,n);
+    let D=Dset;
+    if(P.ssAnimDepth){ const t=0.5-0.5*Math.cos((phase||0)*P.ssDepthSpeed*2*Math.PI); D=Math.max(2,Math.round(2+(Dset-2)*t)); }
+    const r=new Array(D);
+    for(let k=0;k<D;k++) r[k]=full[Math.round(k*(n-1)/(D-1))];
+    let off=(P.ssOffset|0)%D;
+    if(P.ssAnimOff) off=(off+Math.floor((phase||0)*P.ssOffSpeed))%D;
+    return { r, D, off, n, Dset };
+  }
+  const asciiAnim = () => P.mode==="ascii" && !P.edges && (P.ssAnimDepth||P.ssAnimOff);
+
+  // palette-mapped glyph colours
+  let apCache={ key:"", hex:null, lut:null };
+  const lumOf = c => 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+  function asciiPal(){
+    let cols, key;
+    if(P.asPal==="auto8"){
+      const k=(masterURL||"demo")+"|"+gCols+"x"+gRows;
+      if(autoPals.key!==k) autoPals={ key:k, p8:null, p16:null };
+      if(!autoPals.p8) autoPals.p8=medianCut(8);
+      cols=autoPals.p8; key="auto|"+k;
+    } else { const p=APALS[P.asPal]||APALS.cyberpunk; cols=p.c.map(hexToRgb); key=P.asPal; }
+    if(apCache.key!==key){ const s=cols.slice().sort((a,b)=>lumOf(a)-lumOf(b)); apCache={ key, hex:s.map(rgbHex), lut:paletteLUT(s) }; }
+    return apCache;
+  }
+  // per-cell glyph colour for the current colour mode (mono returns P.fg)
+  function glyphColorFn(){
+    const cm=P.colorMode;
+    if(cm==="color") return i=>"rgb("+cr[i]+","+cg[i]+","+cb[i]+")";
+    if(cm==="pal"){ const h=asciiPal().hex, n=h.length-1; return i=>h[clamp(Math.round(gBright[i]*n),0,n)]; }
+    if(cm==="palnear"){ const {hex,lut}=asciiPal(); return i=>hex[lut[(cr[i]>>3)<<10|(cg[i]>>3)<<5|(cb[i]>>3)]]; }
+    return ()=>P.fg;
   }
 
   // ---------------- core: build the ascii grid ----------------
-  function buildGrid(){
+  function buildGrid(phase){
     if(!media) return false;
+    if(phase===undefined) phase=livePhase;
     const sw=media.w, sh=media.h;
     if(!sw||!sh) return false;
 
@@ -721,12 +964,11 @@
       if(P.edges){
         buildEdges(bright);
       } else {
-        const ramp = charset();
-        const L = ramp.length;
+        const { r:ramp, D:L, off } = activeRamp(phase);
         if(P.dither) ditherGrid(bright, L);     // note: mutates gBright (rebuilt each frame)
         for(let i=0;i<N;i++){
           const idx = clamp(Math.round(bright[i]*(L-1)),0,L-1);
-          const ch = ramp[idx];
+          const ch = ramp[(idx+off)%L];
           cellChar[i] = ch===" " ? null : ch;
         }
       }
@@ -1107,28 +1349,31 @@
   // ---------------- paint grid to a 2d context ----------------
   const meas = document.createElement("canvas").getContext("2d");   // for measuring only (never resized)
   function cellMetrics(fontPx){
-    const font = (P.bold?"700 ":"400 ") + fontPx + "px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
+    const font = fontStr(fontPx);
     meas.font = font;
     const cellW = meas.measureText("M").width || fontPx*0.6;
     return { cellW, cellH: cellW*P.aspect, font };
   }
-  // draws the current grid into an already-sized & transformed ctx (font must be set by caller)
+  // draws the current grid into an already-sized & transformed ctx (font must be set by caller);
+  // glyphs are centred in their cell so symbol / braille / fraktur fallbacks stay on the grid
   function drawGrid(ctx, cellW, cellH, transparent){
     if(!transparent){ ctx.fillStyle=P.bg; ctx.fillRect(0,0,gCols*cellW,gRows*cellH); }
-    const colour = P.colorMode==="color";
+    const mono = P.colorMode==="mono", colorOf = glyphColorFn();
     let last="";
-    if(!colour){ ctx.fillStyle=P.fg; last=P.fg; }
+    if(mono){ ctx.fillStyle=P.fg; last=P.fg; }
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    const hx=cellW/2, hy=cellH/2;
     for(let y=0;y<gRows;y++){
-      const py=y*cellH;
+      const py=y*cellH+hy;
       for(let x=0;x<gCols;x++){
         const i=y*gCols+x;
         const ch=cellChar[i];
         if(!ch) continue;
-        if(colour){
-          const col = "rgb("+cr[i]+","+cg[i]+","+cb[i]+")";
+        if(!mono){
+          const col = colorOf(i);
           if(col!==last){ ctx.fillStyle=col; last=col; }
         }
-        ctx.fillText(ch, x*cellW, py);
+        ctx.fillText(ch, x*cellW+hx, py);
       }
     }
   }
@@ -1348,7 +1593,7 @@
   function updateExportAvail(){
     const has=!!media, vid=has&&media.type==="video", ascii=P.mode==="ascii";
     $("exCopy").disabled=!(has&&ascii); $("exTxt").disabled=!(has&&ascii);
-    $("exPng").disabled=!has; $("exSvg").disabled=!has; $("exMp4").disabled=!vid;
+    $("exPng").disabled=!has; $("exSvg").disabled=!has; $("exMp4").disabled=!(vid || isAnimated());
   }
 
   // ===================================================================
@@ -1377,15 +1622,17 @@
     else { drawPixelSynth(ctx,cellW,cellH,transparent,phase); }
   }
 
-  function render(){ if(!buildGrid()) return; paint(octx,1,DPR(),false,livePhase); updateDims(); }
+  function render(){ if(!buildGrid()) return; paint(octx,1,DPR(),P.transBg,livePhase); updateDims(); }
   // debounced rebuild+paint for still images / param changes; live video & drift use frameTick
   let renderQueued=false;
   function requestRender(){
+    updateExportAvail(); updateRampUI();
+    if(media && !rafId && isAnimated()) rafId=requestAnimationFrame(frameTick);
     if(media && media.type==="video") return;   // frameTick handles live video
     if(renderQueued) return; renderQueued=true;
     requestAnimationFrame(()=>{ renderQueued=false; render(); });
   }
-  function isAnimated(){ return !!media && (media.type==="video" || (P.mode==="cellmap"&&P.drift>0) || (P.mode==="pixelsynth"&&zonesHaveClip()) || P.fxGlitch>0 || P.fxSpark>0); }
+  function isAnimated(){ return !!media && (media.type==="video" || (P.mode==="cellmap"&&P.drift>0) || (P.mode==="pixelsynth"&&zonesHaveClip()) || asciiAnim() || P.fxGlitch>0 || P.fxSpark>0); }
   function frameTick(ts){
     rafId=requestAnimationFrame(frameTick);
     if(exporting || !media) return;             // MP4 export drives rendering itself
@@ -1394,7 +1641,8 @@
     if(!isAnimated()) return;
     if(ts-lastTick < 33) return; lastTick=ts;   // ~30fps cap
     if(media.type==="video"){ if(video.readyState>=2){ buildGrid(); syncScrub(); } else return; }
-    paint(octx,1,DPR(),false,livePhase);
+    else if(asciiAnim()) buildGrid();           // animated depth / offset re-maps glyphs on a still
+    paint(octx,1,DPR(),P.transBg,livePhase);
   }
 
   // ---------------- ascii text (for copy / txt) ----------------
@@ -1525,8 +1773,146 @@
     });
   });
   // switches
-  [["invert","invert"],["edges","edges"],["dither","dither"],["bold","bold"],["transBg","transBg"],["tileTint","tileTint"],["psFeather","psFeather"]].forEach(([id,key])=>{
-    $(id).addEventListener("change",e=>{ P[key]=e.target.checked; requestRender(); });
+  [["invert","invert"],["edges","edges"],["dither","dither"],["transBg","transBg"],["transBg2","transBg"],["tileTint","tileTint"],["psFeather","psFeather"],
+   ["ssSort","ssSort"],["ssAnimDepth","ssAnimDepth"],["ssAnimOff","ssAnimOff"]].forEach(([id,key])=>{
+    $(id).addEventListener("change",e=>{ P[key]=e.target.checked;
+      if(key==="transBg"){ $("transBg").checked=$("transBg2").checked=P.transBg; }
+      requestRender(); });
+  });
+
+  // ---- Script Slayer glyph engine ----
+  [
+    ["ssDepth","ssDepth",true],
+    ["ssOffset","ssOffset",true],
+    ["ssDepthSpeed","ssDepthSpeed",false],
+    ["ssOffSpeed","ssOffSpeed",true],
+    ["loopSec","loopSec",true],
+  ].forEach(([id,key,int])=>{
+    $(id).addEventListener("input",()=>{ P[key]=int?(+$(id).value|0):+$(id).value; syncSsVals(); if(key!=="loopSec") requestRender(); });
+  });
+  $("ssInject").addEventListener("input",e=>{
+    const a=Array.from(e.target.value);
+    if(a.length>10){ e.target.value=a.slice(0,10).join(""); }
+    P.ssInject=e.target.value; syncSsVals(); requestRender();
+  });
+  $("fontFam").addEventListener("change",e=>{ P.fontFam=e.target.value; renderSetGrid(); requestRender(); });
+  $("fontStyle").addEventListener("change",e=>{ P.fontStyle=e.target.value; renderSetGrid(); requestRender(); });
+  $("ssCat").addEventListener("change",e=>{ P.ssCat=e.target.value; renderSetGrid(); });
+  function catSetIds(){ return Object.keys(CHARSETS).filter(id=>P.ssCat==="all"||CHARSETS[id].cat===P.ssCat); }
+  function stepSet(d){
+    const ids=catSetIds(); if(!ids.length) return;
+    let i=ids.indexOf(P.charset); i = i<0 ? (d>0?0:ids.length-1) : (i+d+ids.length)%ids.length;
+    pickSet(ids[i]);
+  }
+  $("ssPrev").addEventListener("click",()=>stepSet(-1));
+  $("ssNext").addEventListener("click",()=>stepSet(1));
+  function pickSet(id){
+    P.charset=id;
+    document.querySelectorAll("#charsets .sscard").forEach(c=>c.classList.toggle("active",c.dataset.cs===id));
+    const act=document.querySelector('#charsets .sscard.active'); if(act) act.scrollIntoView({block:"nearest"});
+    $("customChars").classList.toggle("hide", id!=="custom");
+    requestRender();
+  }
+  function glyphPreview(id){
+    if(id==="custom") return "abc…";
+    return sortByInk([...new Set(setChars(id))]).filter(c=>c!==" ").slice(-12).join("");
+  }
+  function cssFont(el){ const f=fontParts(); el.style.fontFamily=FONT_FAMS[P.fontFam]||FONT_FAMS.mono; el.style.fontWeight=f.weight; el.style.fontStyle=f.italic?"italic":"normal"; }
+  function renderSetGrid(){
+    const g=$("charsets"); g.innerHTML="";
+    catSetIds().concat(["custom"]).forEach(id=>{
+      const c=document.createElement("div"); c.className="sscard"+(id===P.charset?" active":""); c.dataset.cs=id;
+      const b=document.createElement("b"); b.textContent=id==="custom"?"Custom":CHARSETS[id].name;
+      const s=document.createElement("span"); s.className="gl"; s.textContent=glyphPreview(id); cssFont(s);
+      c.append(b,s); g.appendChild(c);
+    });
+  }
+  function renderCats(){
+    const sel=$("ssCat"); sel.innerHTML="";
+    [["all","Усі набори"]].concat(CHAR_CATS).forEach(([v,t])=>{ const o=document.createElement("option"); o.value=v; o.textContent=t; sel.appendChild(o); });
+    sel.value=P.ssCat;
+  }
+  // depth / offset / inject value badges + slider ranges follow the active set
+  function syncSsVals(){
+    const full=fullRamp(), n=full.length, D=clamp(P.ssDepth|0,2,n);
+    $("vSsDepth").textContent=D+"/"+n;
+    const om=$("ssOffset"); om.max=D-1; if(P.ssOffset>D-1){ P.ssOffset=D-1; } om.value=P.ssOffset;
+    $("vSsOff").textContent=P.ssOffset+"/"+(D-1);
+    $("vSsInj").textContent=injected().length+"/10";
+    $("vSsDSpd").textContent=(+P.ssDepthSpeed).toFixed(2);
+    $("vSsOSpd").textContent=P.ssOffSpeed;
+    $("vLoop").textContent=P.loopSec;
+  }
+  function updateRampUI(){
+    if(P.mode!=="ascii") return;
+    syncSsVals();
+    const { r, D, off }=activeRamp(0), box=$("rampView"); box.innerHTML="";
+    for(let k=0;k<D;k++){
+      const ch=r[(k+off)%D], i=document.createElement("i");
+      if(ch===" "){ i.className="sp"; } else i.textContent=ch;
+      cssFont(i); box.appendChild(i);
+    }
+    $("vRampN").textContent=D+(P.edges?" · Sobel":"");
+  }
+  function renderPals(){
+    const g=$("asPals"); g.innerHTML="";
+    Object.keys(APALS).forEach(id=>{
+      const p=APALS[id], c=document.createElement("div"); c.className="palchip"+(id===P.asPal?" active":""); c.dataset.pal=id;
+      c.textContent=p.name;
+      const sw=document.createElement("span"); sw.className="sw";
+      if(p.c) p.c.slice().sort((a,b)=>lumOf(hexToRgb(a))-lumOf(hexToRgb(b))).forEach(h=>{ const i=document.createElement("i"); i.style.background=h; sw.appendChild(i); });
+      else sw.style.background="linear-gradient(90deg,#3a1d5c,#c2402a,#e9b44c,#7bd3c4)";   // Auto-8 is extracted from the source
+      c.appendChild(sw); g.appendChild(c);
+    });
+  }
+  $("asPals").addEventListener("click",e=>{
+    const el=e.target.closest("[data-pal]"); if(!el) return;
+    P.asPal=el.dataset.pal;
+    document.querySelectorAll("#asPals .palchip").forEach(p=>p.classList.toggle("active",p===el));
+    requestRender();
+  });
+
+  // presets: built-ins + user presets in localStorage
+  const UP_KEY="lumagridAsciiPresets";
+  function loadUserPresets(){ try{ const a=JSON.parse(localStorage.getItem(UP_KEY)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function saveUserPresets(a){ try{ localStorage.setItem(UP_KEY,JSON.stringify(a)); }catch(e){} }
+  function applyPreset(p){
+    if(P.mode!=="ascii") setMode("ascii");       // first, so the tile-mode aspect is stashed untouched
+    PRESET_KEYS.forEach(k=>{ P[k]=JSON.parse(JSON.stringify(DEFAULTS[k])); });
+    P.aspect=2.0;
+    Object.assign(P,p);
+    P.aspAscii=P.aspect;
+    syncFromState(); renderSetGrid(); requestRender();
+  }
+  function renderPresets(){
+    const g=$("ssPresets"); g.innerHTML="";
+    SS_PRESETS.forEach(pr=>{ const d=document.createElement("div"); d.className="preset"; d.dataset.ssp=pr.id; d.textContent=pr.name; g.appendChild(d); });
+    const u=$("ssUser"); u.innerHTML="";
+    loadUserPresets().forEach((pr,idx)=>{
+      const c=document.createElement("span"); c.className="uchip"; c.dataset.up=idx;
+      const t=document.createElement("span"); t.textContent=pr.name;
+      const x=document.createElement("span"); x.className="x"; x.dataset.del=idx; x.title="Видалити пресет";
+      x.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      c.append(t,x); u.appendChild(c);
+    });
+  }
+  $("ssPresets").addEventListener("click",e=>{
+    const el=e.target.closest("[data-ssp]"); if(!el) return;
+    const pr=SS_PRESETS.find(p=>p.id===el.dataset.ssp); if(pr) applyPreset(pr.p);
+    document.querySelectorAll("#ssPresets .preset").forEach(p=>p.classList.toggle("active",p===el));
+  });
+  $("ssUser").addEventListener("click",e=>{
+    const del=e.target.closest("[data-del]");
+    const list=loadUserPresets();
+    if(del){ list.splice(+del.dataset.del,1); saveUserPresets(list); renderPresets(); return; }
+    const el=e.target.closest("[data-up]"); if(!el) return;
+    const pr=list[+el.dataset.up]; if(pr) applyPreset(pr.p);
+  });
+  $("ssSave").addEventListener("click",()=>{
+    const name=prompt("Назва пресету","Мій пресет"); if(!name) return;
+    const p={}; PRESET_KEYS.forEach(k=>{ p[k]=P[k]; });
+    const list=loadUserPresets().filter(x=>x.name!==name); list.push({ name:name.slice(0,32), p }); saveUserPresets(list);
+    renderPresets();
   });
 
   // ---- tile-mode sliders ----
@@ -1610,15 +1996,15 @@
     $(id).addEventListener("input",e=>{ P[key]=e.target.value; $(hexId).textContent=e.target.value.toUpperCase(); requestRender(); });
   }
   bindColor("fg","fg","fgHex"); bindColor("bg","bg","bgHex");
-  function syncColorPick(){ $("colorPick").style.opacity = P.colorMode==="color" ? .5 : 1; }
+  function syncColorPick(){
+    $("colorPick").style.opacity = P.colorMode==="mono" ? 1 : .5;
+    $("asPals").classList.toggle("hide", !(P.colorMode==="pal"||P.colorMode==="palnear"));
+  }
 
-  // charset presets
+  // glyph set cards
   $("charsets").addEventListener("click",e=>{
     const el=e.target.closest("[data-cs]"); if(!el) return;
-    P.charset=el.dataset.cs;
-    document.querySelectorAll("#charsets .preset").forEach(p=>p.classList.toggle("active",p===el));
-    $("customChars").classList.toggle("hide", P.charset!=="custom");
-    requestRender();
+    pickSet(el.dataset.cs);
   });
   $("customChars").addEventListener("input",e=>{ P.customChars=e.target.value; requestRender(); });
 
@@ -1702,20 +2088,23 @@
   function buildSVGAscii(){
     const fontPx=P.fontSize, { cellW, cellH }=cellMetrics(fontPx);
     const W=+(gCols*cellW).toFixed(2), H=+(gRows*cellH).toFixed(2);
-    const XS=Array.from({length:gCols},(_,x)=>+(x*cellW).toFixed(2)).join(" ");
-    const colour=P.colorMode==="color", weight=P.bold?700:400;
+    // cell centres: every positioned glyph is its own text chunk, so text-anchor="middle" centres each one
+    const XS=Array.from({length:gCols},(_,x)=>+((x+0.5)*cellW).toFixed(2));
+    const colour=P.colorMode!=="mono", colorOf=glyphColorFn(), fp=fontParts();
     let s='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">';
     if(!P.transBg) s+='<rect width="100%" height="100%" fill="'+P.bg+'"/>';
-    s+='<g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="'+fontPx+'" font-weight="'+weight+'" xml:space="preserve" dominant-baseline="text-before-edge">';
+    s+='<g font-family="'+svgEsc(FONT_FAMS[P.fontFam]||FONT_FAMS.mono)+'" font-size="'+fontPx+'" font-weight="'+fp.weight+'"'+(fp.italic?' font-style="italic"':'')+' xml:space="preserve" text-anchor="middle" dominant-baseline="central">';
     for(let y=0;y<gRows;y++){
-      const ty=+(y*cellH).toFixed(2);
+      const ty=+((y+0.5)*cellH).toFixed(2);
       if(colour){
         for(let x=0;x<gCols;x++){ const i=y*gCols+x, c=cellChar[i]; if(!c) continue;
-          s+='<text x="'+(+(x*cellW).toFixed(2))+'" y="'+ty+'" fill="rgb('+cr[i]+','+cg[i]+','+cb[i]+')">'+svgEsc(c)+'</text>'; }
+          s+='<text x="'+XS[x]+'" y="'+ty+'" fill="'+colorOf(i)+'">'+svgEsc(c)+'</text>'; }
       } else {
-        let row=""; for(let x=0;x<gCols;x++){ const c=cellChar[y*gCols+x]; row+=c?c:" "; }
-        row=row.replace(/\s+$/,""); if(!row) continue;
-        s+='<text x="'+XS+'" y="'+ty+'" fill="'+P.fg+'">'+svgEsc(row)+'</text>';
+        // one x per code point (fraktur glyphs are surrogate pairs); trailing blanks dropped
+        const row=[]; for(let x=0;x<gCols;x++){ const c=cellChar[y*gCols+x]; row.push(c?c:" "); }
+        while(row.length && row[row.length-1]===" ") row.pop();
+        if(!row.length) continue;
+        s+='<text x="'+XS.slice(0,row.length).join(" ")+'" y="'+ty+'" fill="'+P.fg+'">'+svgEsc(row.join(""))+'</text>';
       }
     }
     return s+'</g></svg>';
@@ -1865,7 +2254,9 @@
   }
   async function renderToMp4(){
     if(exportingMp4){ cancelMp4=true; return; }               // 2nd click = cancel
-    if(!media || media.type!=="video") return;
+    if(!media) return;
+    const isVid=media.type==="video";           // a still renders a loop of P.loopSec when something animates
+    if(!isVid && !isAnimated()) return;
     if(!window.VideoEncoder || !window.VideoFrame || typeof Mp4Muxer==="undefined") return fallbackRecord();
 
     const fps=+$("mp4fps").value||30;
@@ -1904,13 +2295,13 @@
     encoder.configure({ codec, width:EW, height:EH, framerate:fps,
       bitrate:Math.min(12_000_000, Math.round(EW*EH*fps*0.1)) });
 
-    const dur=video.duration||0;
+    const dur=isVid ? (video.duration||0) : P.loopSec;
     const total=Math.max(1, Math.min(Math.round(dur*fps), fps*120));   // cap 120 s
     try{
       for(let f=0; f<total; f++){
         if(cancelMp4 || encErr) break;
-        await seekTo(Math.min(Math.max(0,dur-1e-3), f/fps));
-        buildGrid();
+        if(isVid) await seekTo(Math.min(Math.max(0,dur-1e-3), f/fps));
+        buildGrid(f/fps);
         ectx.setTransform(s,0,0,s,0,0);
         drawMode(ectx, cellW, cellH, font, false, f/fps);
         applyFX(ectx, cellW, cellH, f/fps, false);
@@ -1967,7 +2358,7 @@
   function flash(btn,txt){ const o=btn.querySelector("span")||btn; const old=o.textContent; o.textContent=txt; setTimeout(()=>o.textContent=old,1100); }
 
   // ---------------- reset / sync ----------------
-  $("reset").addEventListener("click",()=>{ Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS))); syncFromState(); requestRender(); });
+  $("reset").addEventListener("click",()=>{ Object.assign(P,JSON.parse(JSON.stringify(DEFAULTS))); syncFromState(); renderSetGrid(); requestRender(); });
 
   // push P → all controls
   function syncFromState(){
@@ -1984,12 +2375,20 @@
     $("dither").checked=P.dither;
     $("aspect").value=P.aspect; $("vAsp").textContent=(+P.aspect).toFixed(2);
     $("fontSize").value=P.fontSize; $("vFs").textContent=P.fontSize;
-    $("bold").checked=P.bold;
-    $("transBg").checked=P.transBg;
+    $("fontFam").value=P.fontFam; $("fontStyle").value=P.fontStyle;
+    $("transBg").checked=$("transBg2").checked=P.transBg;
     $("exScale").value=P.exScale; $("vScale").textContent=P.exScale+"×";
+    $("loopSec").value=P.loopSec;
     $("customChars").value=P.customChars;
     $("customChars").classList.toggle("hide", P.charset!=="custom");
-    document.querySelectorAll("#charsets .preset").forEach(p=>p.classList.toggle("active",p.dataset.cs===P.charset));
+    document.querySelectorAll("#charsets .sscard").forEach(p=>p.classList.toggle("active",p.dataset.cs===P.charset));
+    // Script Slayer controls
+    $("ssCat").value=P.ssCat;
+    $("ssDepth").value=P.ssDepth; $("ssInject").value=P.ssInject; $("ssSort").checked=P.ssSort;
+    $("ssAnimDepth").checked=P.ssAnimDepth; $("ssDepthSpeed").value=P.ssDepthSpeed;
+    $("ssAnimOff").checked=P.ssAnimOff; $("ssOffSpeed").value=P.ssOffSpeed;
+    document.querySelectorAll("#asPals .palchip").forEach(p=>p.classList.toggle("active",p.dataset.pal===P.asPal));
+    syncSsVals(); updateRampUI();
     // tile-mode controls
     $("cellGap").value=P.cellGap; $("vGap").textContent=P.cellGap;
     $("cellRadius").value=P.cellRadius; $("vRad").textContent=P.cellRadius;
@@ -2032,7 +2431,7 @@
   }
 
   // ---------------- init ----------------
-  document.querySelector('#charsets [data-cs="standard"]').classList.add("active");
+  renderCats(); renderSetGrid(); renderPals(); renderPresets();
   document.querySelector('#themes [data-theme="classic"]').classList.add("active");
   ensureCellClip();     // prepare the default CellMap demo clip + thumbnail
   renderZones();        // build the PixelSynth zone rows
