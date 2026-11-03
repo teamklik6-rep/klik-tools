@@ -352,6 +352,36 @@
   .prev-minis i:nth-child(7){background:repeating-linear-gradient(90deg,#151515 0 2px,#fff 2px 6px)}
   .prev-minis i:nth-child(8){background:linear-gradient(90deg,#ff4d1a 0 25%,#ffd23f 0 50%,#2741ff 0 75%,#151515 0)}
   @keyframes minibob{50%{transform:translateY(-5px)}}
+  /* preview art: casberry particles (a 3D galaxy swarm of glowing points) */
+  .prev-swarm{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,#1a1240 0,#05040c 70%);overflow:hidden;perspective:500px}
+  .prev-swarm .gal{position:absolute;left:50%;top:50%;width:0;height:0;transform:rotateX(64deg);transform-style:preserve-3d}
+  .prev-swarm .spin{position:absolute;inset:0;transform-style:preserve-3d;animation:galspin 14s linear infinite}
+  .prev-swarm i{position:absolute;width:4px;height:4px;margin:-2px;border-radius:50%;
+    background:hsl(calc(190 + var(--n) * 1.6) 100% 76%);box-shadow:0 0 8px 1px hsl(calc(190 + var(--n) * 1.6) 100% 62%);
+    transform:rotate(calc(var(--n) * 17.5deg)) translateX(calc(10px + var(--n) * 2.1px))}
+  @keyframes galspin{to{transform:rotate(360deg)}}
+  /* preview art: effect.app (a gradient photo through halftone + glitch slices) */
+  .prev-effect{position:absolute;inset:0;overflow:hidden;
+    background:radial-gradient(circle at 30% 40%,#ff3d7f,transparent 45%),radial-gradient(circle at 72% 62%,#3d6bff,transparent 50%),radial-gradient(circle at 60% 20%,#ffd23f,transparent 40%),#140a22}
+  .prev-effect:before{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle,transparent 1.2px,#140a22 2.6px) 0 0/7px 7px;mix-blend-mode:multiply;
+    -webkit-mask:linear-gradient(90deg,transparent 48%,#000 52%);mask:linear-gradient(90deg,transparent 48%,#000 52%)}
+  .prev-effect i{position:absolute;left:0;right:0;height:var(--h);top:var(--t);background:inherit;background-size:100% 190px;
+    background-position:0 calc(var(--t) * -1);animation:fxglitch 2.4s steps(1) infinite;animation-delay:var(--d)}
+  .prev-effect i:nth-child(1){--t:22%;--h:9%;--d:0s}
+  .prev-effect i:nth-child(2){--t:51%;--h:5%;--d:-.8s}
+  .prev-effect i:nth-child(3){--t:70%;--h:12%;--d:-1.6s}
+  @keyframes fxglitch{0%{transform:translateX(0)}12%{transform:translateX(-26px);filter:hue-rotate(90deg)}24%{transform:translateX(18px)}36%{transform:translateX(0);filter:none}}
+  /* preview art: meshic (one pattern as ASCII / LEGO studs / dither) */
+  .prev-meshic{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr 1fr;background:#0e0e0e}
+  .prev-meshic b{display:block;position:relative;overflow:hidden}
+  .prev-meshic b:nth-child(1){font:700 10px/11px "JetBrains Mono",ui-monospace,monospace;color:#ffb21a;padding:10px 8px;word-break:break-all;
+    white-space:pre-wrap;letter-spacing:1px;animation:meshfade 2.6s ease-in-out infinite alternate}
+  .prev-meshic b:nth-child(2){background:radial-gradient(circle at 50% 46%,#ff6b4a 0 5px,#c9301a 5.5px 6.5px,transparent 7px) 0 0/16px 16px,
+    linear-gradient(#e8452a,#e8452a);box-shadow:inset 0 0 0 1px #0e0e0e}
+  .prev-meshic b:nth-child(3){background:conic-gradient(#e9e6dc 25%,#0e0e0e 0 50%,#e9e6dc 0 75%,#0e0e0e 0) 0 0/4px 4px;
+    -webkit-mask:radial-gradient(circle at 50% 50%,#000 30%,#0008 55%,#0003 75%);mask:radial-gradient(circle at 50% 50%,#000 30%,#0008 55%,#0003 75%)}
+  @keyframes meshfade{to{opacity:.45}}
 
   /* ---------------- footnote strip ---------------- */
   .strip{
@@ -1050,6 +1080,39 @@
         en: "A curated directory of small tools made by designers, each doing one job properly: colour, type, motion, icons — plus dithering, grain, mosaics and shaders. 100+ tools, free, freemium and paid.",
         ru: "Кураторский каталог маленьких тулов от дизайнеров — каждый делает одну вещь, но хорошо: цвет, типографика, моушн, иконки, а ещё дизеринг, зерно, мозаики и шейдеры. 100+ инструментов — бесплатные, freemium и платные.",
         uk: "Кураторський каталог маленьких тулів від дизайнерів — кожен робить одну річ, але добре: колір, типографіка, моушн, іконки, а ще дизеринг, зерно, мозаїки й шейдери. 100+ інструментів — безкоштовні, freemium і платні.",
+      },
+    },
+    {
+      url: "https://particles.casberry.in/",
+      name: "Casberry Particle Simulator",
+      art: `<div class="prev-swarm"><div class="gal"><div class="spin">${nth(84, n => `<i style="--n:${n}"></i>`)}</div></div></div>`,
+      tags: ["50K particles", "Galaxy", "DNA", "3D text", "Gestures", "Code export"],
+      desc: {
+        en: "A WebGL2 3D particle-swarm playground: 50,000+ live particles, 20+ formations (galaxy, quantum, torus, DNA), 3D text and a drawing pad, hand-gesture navigation from the webcam, AI-written custom formations and code export.",
+        ru: "WebGL2-песочница 3D-роёв частиц: 50 000+ живых частиц, 20+ формаций (галактика, квант, тор, ДНК), 3D-текст и панель рисования, управление жестами рук с вебкамеры, свои формации, написанные ИИ, и экспорт кода.",
+        uk: "WebGL2-пісочниця 3D-роїв частинок: 50 000+ живих частинок, 20+ формацій (галактика, квант, тор, ДНК), 3D-текст і панель малювання, керування жестами рук з вебкамери, власні формації, написані ШІ, та експорт коду.",
+      },
+    },
+    {
+      url: "https://effect.app/",
+      name: "Effect.app",
+      art: `<div class="prev-effect"><i></i><i></i><i></i></div>`,
+      tags: ["Glitch", "Blur", "Distort", "Halftone", "Keyframes", "Figma plugin"],
+      desc: {
+        en: "A real-time effect generator for images and video: glitch, blur, distortion, halftone and dozens of other stackable filters, community presets and keyframe animation. Free in the browser with a watermark; Pro adds 4K export, desktop app and Figma / Photoshop / After Effects plugins.",
+        ru: "Генератор эффектов для фото и видео в реальном времени: глитч, блюр, искажения, халфтон и десятки других фильтров стопкой, пресеты сообщества и анимация по ключам. Бесплатно в браузере с вотермаркой; Pro даёт 4K-экспорт, десктоп-приложение и плагины для Figma / Photoshop / After Effects.",
+        uk: "Генератор ефектів для фото й відео в реальному часі: глітч, блюр, спотворення, халфтон і десятки інших фільтрів стосом, пресети спільноти та анімація за ключами. Безкоштовно в браузері з вотермаркою; Pro дає 4K-експорт, десктоп-застосунок і плагіни для Figma / Photoshop / After Effects.",
+      },
+    },
+    {
+      url: "https://meshic.app/",
+      name: "Meshic",
+      art: `<div class="prev-meshic"><b>@#%*+=-:. .:-=+*%#@ #%*+=-:..:-=+*%# %*+=-:. .:-=+*% *+=-:.  .:-=+* +=-:.    .:-=+ =-:. :@: .:-= -:. :%#%: .:- :. :#@@@#: .: :. :#@@@#: .: -:. :%#%: .:- =-:. :@: .:-=</b><b></b><b></b></div>`,
+      tags: ["ASCII", "Dithering", "Shimmer", "LEGO", "Patterns"],
+      desc: {
+        en: "A free procedural pattern generator: turns an image or a generated pattern into ASCII art, dithering, shimmer, LEGO bricks and other procedural textures — right in the browser.",
+        ru: "Бесплатный генератор процедурных паттернов: превращает картинку или сгенерированный узор в ASCII-арт, дизеринг, шиммер, LEGO-кубики и другие процедурные текстуры — прямо в браузере.",
+        uk: "Безкоштовний генератор процедурних патернів: перетворює картинку чи згенерований візерунок на ASCII-арт, дизеринг, шимер, LEGO-цеглинки та інші процедурні текстури — просто в браузері.",
       },
     },
   ];
