@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klik Tools — Creative Studio Toolkit</title>
-<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph, Glass, Trace, Halo, Press, Ember, Halftone, Grow, Tracker. Everything runs locally in your browser." />
+<meta name="description" content="Klik Studio's in-house creative tools: LumaGrid, Sphere, X-Ray, Thermo, Flux, Flare, CRT, Glitch, Displace, Particles, Shaders, Cascade, DotMatrix, Orbit, Echo, Sweep, Morph, Glass, Trace, Halo, Press, Ember, Halftone, Grow, Tracker, Scan, Root. Everything runs locally in your browser." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23bbff32'/%3E%3Cpath d='M10 7v18M10 16l9-9M10 16l9 9' stroke='%23060612' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -466,6 +466,35 @@
   .prev-tracker .bx:nth-of-type(5):before{background:#ff3b30;color:#fff}
   .prev-tracker .bx:nth-of-type(6){left:43%;top:12%;width:36px;height:30px;animation-delay:-1s}
   .prev-tracker svg{position:absolute;inset:0;width:100%;height:100%}
+  /* preview art: scan (a wireframe cube swept by a scanner beam over a dot grid) */
+  .prev-scan{position:absolute;inset:0;overflow:hidden;perspective:420px;
+    background:radial-gradient(circle,#2bff7a55 1px,transparent 1.6px) 0 0/12px 12px,radial-gradient(circle at 50% 55%,#06202c,#010407 70%)}
+  .prev-scan .cube{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px;transform-style:preserve-3d;animation:scanspin 9s linear infinite}
+  .prev-scan .cube i{position:absolute;inset:0;border:1.5px solid #5cf2ffcc;background:linear-gradient(#5cf2ff10,#5cf2ff26);
+    box-shadow:0 0 14px #5cf2ff55,inset 0 0 18px #5cf2ff40}
+  .prev-scan .cube i:nth-child(1){transform:translateZ(42px)}
+  .prev-scan .cube i:nth-child(2){transform:rotateY(180deg) translateZ(42px)}
+  .prev-scan .cube i:nth-child(3){transform:rotateY(90deg) translateZ(42px)}
+  .prev-scan .cube i:nth-child(4){transform:rotateY(-90deg) translateZ(42px)}
+  .prev-scan .cube i:nth-child(5){transform:rotateX(90deg) translateZ(42px)}
+  .prev-scan .cube i:nth-child(6){transform:rotateX(-90deg) translateZ(42px)}
+  .prev-scan .beam{position:absolute;left:0;right:0;height:2px;background:#bffaff;box-shadow:0 0 12px 3px #5cf2ff,0 0 40px 8px #5cf2ff55;
+    animation:scanbeam 3s ease-in-out infinite alternate}
+  .prev-scan .hud{position:absolute;inset:12px;border:0;font:700 9px/1 "JetBrains Mono",ui-monospace,monospace;color:#5cf2ff;letter-spacing:.06em}
+  .prev-scan .hud:before,.prev-scan .hud:after{content:"";position:absolute;width:16px;height:16px;border:1.5px solid #5cf2ff}
+  .prev-scan .hud:before{left:0;top:0;border-right:0;border-bottom:0}
+  .prev-scan .hud:after{right:0;bottom:0;border-left:0;border-top:0}
+  .prev-scan .hud b{position:absolute;right:4px;top:4px;font-weight:700}
+  @keyframes scanspin{from{transform:rotateX(-24deg) rotateY(0)}to{transform:rotateX(-24deg) rotateY(360deg)}}
+  @keyframes scanbeam{from{top:22%}to{top:78%}}
+  /* preview art: root (a letter S whose strokes and branches grow in) */
+  .prev-root{position:absolute;inset:0;background:#f6f4ef}
+  .prev-root svg{position:absolute;left:50%;top:50%;height:78%;width:auto;transform:translate(-50%,-46%);overflow:visible}
+  .prev-root path{fill:none;stroke:#111;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;
+    animation:rootgrow 5s cubic-bezier(.3,.6,.4,1) infinite;animation-delay:var(--d,0s)}
+  .prev-root circle{fill:#111;transform-box:fill-box;transform-origin:center;animation:rootdrip 5s ease-out infinite;animation-delay:var(--d,0s)}
+  @keyframes rootgrow{0%{stroke-dashoffset:1}45%,82%{stroke-dashoffset:0}100%{stroke-dashoffset:1}}
+  @keyframes rootdrip{0%,40%{transform:scale(0)}52%,82%{transform:scale(1)}95%,100%{transform:scale(0)}}
   @keyframes trkmove{to{transform:translate(10px,-6px)}}
 
 </style>
@@ -512,6 +541,8 @@
     <div class="tab" data-tool="halftone">Halftone</div>
     <div class="tab" data-tool="grow">Grow</div>
     <div class="tab" data-tool="tracker">Tracker</div>
+    <div class="tab" data-tool="scan">Scan</div>
+    <div class="tab" data-tool="root">Root</div>
     <div class="tab" data-route="refs" data-i18n="navRefs">Similar sites</div>
   </nav>
 
@@ -534,7 +565,7 @@
     <div class="glow"></div>
     <div class="tagline"><span class="pulse"></span> <span data-i18n="tagline">In-house studio tools</span></div>
     <h1 data-i18n-html="heroTitle">Creative tools by <span class="green">Klik</span> — right in your browser.</h1>
-    <p class="lede" data-i18n="lede">Twenty-five studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos, pixel-contour animation, defocus-wave neon type, print effects, hot-shadow 3D forms, glowing halftone fields, slime-mould and reaction-diffusion growth and computer-vision tracking HUDs. No installs, no server — everything runs locally.</p>
+    <p class="lede" data-i18n="lede">Twenty-seven studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos, pixel-contour animation, defocus-wave neon type, print effects, hot-shadow 3D forms, glowing halftone fields, slime-mould and reaction-diffusion growth computer-vision tracking HUDs, X-ray scans of 3D models and letters that sprout roots. No installs, no server — everything runs locally.</p>
   </div>
 
   <div class="cards">
@@ -842,6 +873,28 @@
         <p data-i18n="trackerDesc">Computer-vision tracking boxes over your photo or video (or built-in flower, fish-swarm and word demos): features found by contrast, luma, edges or motion get stable IDs, brackets, crosshairs, confidence labels and constellation links. Reveal only inside the boxes, invert or zoom them; grades from B/W to thermal, night vision and depth; HUD layers — radial dial, rulers, corner frame, timecode, readouts. 11 presets, seamless loops, PNG / JPG / MP4 / WebM export.</p>
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
+    <!-- Scan -->
+    <div class="card" data-tool="scan">
+      <div class="preview">
+        <div class="prev-scan"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="beam"></span><span class="hud"><b>SCAN 072%</b></span></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">26</span> Scan Studio</h3>
+        <p data-i18n="scanDesc">Load a 3D model (GLB, glTF, OBJ, STL, PLY — or the built-in car, turbine, gears and knot) and scan it like an X-ray: rim glow, true material thickness, solid shading, wireframe and CT-style slice rings, swept by a scanner beam that can reveal the solid or materialise the model. Then the extras: pixel mosaic with a dot grid and ASCII glyphs, Bayer dither, stretched glitch bands, echo copies, slit-scan, trails, RGB split, invert flashes and a HUD frame. 12 presets, drag to orbit, seamless loops, transparent PNG, PNG / JPG / MP4 / WebM export.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+    <!-- Root -->
+    <div class="card" data-tool="root">
+      <div class="preview">
+        <div class="prev-root"><svg viewBox="0 0 120 150"><path pathLength="1" stroke-width="13" d="M88 30C80 16 58 10 42 18 24 27 26 48 44 58l22 11c20 10 24 30 8 44-15 13-40 10-52-4"/><path pathLength="1" stroke-width="5" style="--d:.5s" d="M42 18c-4-8-2-14 3-18M45 15c-8-4-14-1-18 3"/><path pathLength="1" stroke-width="4.5" style="--d:.7s" d="M88 30c8-4 12-11 13-18M93 27c7 2 11 7 13 13"/><path pathLength="1" stroke-width="5" style="--d:.9s" d="M54 63c-10 3-18 1-24-6M60 66c3-9 10-13 18-13"/><path pathLength="1" stroke-width="4.5" style="--d:1.1s" d="M82 100c9 1 15 7 17 15M78 108c4 8 2 16-4 21"/><path pathLength="1" stroke-width="5" style="--d:1.3s" d="M22 109c-9-1-14 4-16 11M26 112c-1 9 3 16 10 19"/><circle cx="45" cy="0" r="4" style="--d:.5s"/><circle cx="101" cy="12" r="3.5" style="--d:.7s"/><circle cx="30" cy="57" r="4" style="--d:.9s"/><circle cx="99" cy="115" r="3.5" style="--d:1.1s"/><circle cx="6" cy="120" r="4" style="--d:1.3s"/><circle cx="36" cy="131" r="3.5" style="--d:1.3s"/></svg></div>
+      </div>
+      <div class="body">
+        <h3><span class="idx">27</span> Root Studio</h3>
+        <p data-i18n="rootDesc">Type a word and its letters sprout roots: each glyph is thinned to a skeleton (or traced along its outline), trunks wobble and swell with knots, recursive branches fork, curl and end in drips, gravity pulls them down like ink or up like shoots, and metaball merging melts it all into one organic mass. Growth animates from the first sprout and retracts for a seamless loop; tip colour, glow, rough edges and a letter ghost. 8 presets, 5 fonts with Cyrillic, PNG / JPG / MP4 / WebM export.</p>
+        <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -882,7 +935,7 @@
       title: "Klik Tools — Creative Studio Toolkit",
       tagline: "In-house studio tools",
       heroTitle: 'Creative tools by <span class="green">Klik</span> — right in your browser.',
-      lede: "Twenty-five studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos, pixel-contour animation, defocus-wave neon type, print effects, hot-shadow 3D forms, glowing halftone fields, slime-mould and reaction-diffusion growth and computer-vision tracking HUDs. No installs, no server — everything runs locally.",
+      lede: "Twenty-seven studios for generating visuals: ASCII and dithering, spheres, x-rays, thermal typography, liquid gradients, lens flares, CRT, glitch, displacement, particles, live WebGL shaders, gradient cascades, dot-matrix silhouettes, 3D photo-card layouts, echo-ring typography, light-sweep text reveals, gradient-morph video, liquid-glass 3D logos, pixel-contour animation, defocus-wave neon type, print effects, hot-shadow 3D forms, glowing halftone fields, slime-mould and reaction-diffusion growth computer-vision tracking HUDs, X-ray scans of 3D models and letters that sprout roots. No installs, no server — everything runs locally.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Photos and videos → luminance grids, a Script Slayer-style glyph library (48 sets: braille, cards, fraktur, runes…) with depth, offset, injected characters and palettes, retro dithering, glow/glitch post-FX stack.",
       sphereDesc: "A 3D glowing-sphere generator on WebGL: noise, glow, orbiting particles, presets and MP4 recording — all in real time.",
       xrayDesc: "Photo → x-ray: Canny contour detection, thin 1px lines, Wireframe / Blueprint / Neon styles and export to PNG or vector SVG.",
@@ -908,6 +961,8 @@
       halftoneDesc: "Glowing halftone fields after a Pinterest lighting overlay: a grid of rounded tiles, dots, diamonds, crosses, strokes or rings whose size follows a soft moving noise field, metaballs, sonar rings, a word or your own photo / video. Gooey mode melts neighbouring dots into blobs, a gradient map turns small dots blue and the peaks white, then bloom and grain. 9 presets, seamless loops, transparent PNG, PNG / JPG / MP4 / WebM export.",
       growDesc: "Living simulations on the GPU: Physarum slime mould with up to a million agents, Gray-Scott reaction-diffusion (coral, maze, spots, mitosis, worms), curl-noise flow trails and iron-filing fields around a silhouette, plus lightning / frost growth (DLA and space colonisation). Seed from text, shapes or your own image, paint bait with the mouse, 9 palettes, relief lighting and bloom. 15 presets; MP4 replays the same seed from the start, PNG / JPG / WebM too.",
       trackerDesc: "Computer-vision tracking boxes over your photo or video (or built-in flower, fish-swarm and word demos): features found by contrast, luma, edges or motion get stable IDs, brackets, crosshairs, confidence labels and constellation links. Reveal only inside the boxes, invert or zoom them; grades from B/W to thermal, night vision and depth; HUD layers — radial dial, rulers, corner frame, timecode, readouts. 11 presets, seamless loops, PNG / JPG / MP4 / WebM export.",
+      scanDesc: "Load a 3D model (GLB, glTF, OBJ, STL, PLY — or the built-in car, turbine, gears and knot) and scan it like an X-ray: rim glow, true material thickness, solid shading, wireframe and CT-style slice rings, swept by a scanner beam that can reveal the solid or materialise the model. Then the extras: pixel mosaic with a dot grid and ASCII glyphs, Bayer dither, stretched glitch bands, echo copies, slit-scan, trails, RGB split, invert flashes and a HUD frame. 12 presets, drag to orbit, seamless loops, transparent PNG, PNG / JPG / MP4 / WebM export.",
+      rootDesc: "Type a word and its letters sprout roots: each glyph is thinned to a skeleton (or traced along its outline), trunks wobble and swell with knots, recursive branches fork, curl and end in drips, gravity pulls them down like ink or up like shoots, and metaball merging melts it all into one organic mass. Growth animates from the first sprout and retracts for a seamless loop; tip colour, glow, rough edges and a letter ghost. 8 presets, 5 fonts with Cyrillic, PNG / JPG / MP4 / WebM export.",
       open: "Open studio",
       navRefs: "Similar sites",
       refsKicker: "Inspiration",
@@ -923,7 +978,7 @@
       title: "Klik Tools — внутренние студии",
       tagline: "Внутренние инструменты студии",
       heroTitle: 'Креативные тулы <span class="green">Klik</span> — прямо в браузере.',
-      lede: "Двадцать пять студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света, градиент-морф видео, 3D-логотипы из жидкого стекла, анимация пиксельного контура, неоновый текст с волной расфокуса, печатные эффекты, горячие тени на 3D-формах, светящийся растр, рост слизевика и реакция-диффузия и CV-трекинг с HUD. Без установок и сервера — всё локально.",
+      lede: "Двадцать семь студий: ASCII/дизеринг, сферы, рентген, термо-типографика, жидкие градиенты, блики, CRT, глитч, дисплейсмент, частицы, живые WebGL-шейдеры, градиентные каскады, dot-matrix силуэты, 3D-раскладки фотокарточек, эхо-кольца из текста, текст-ревил лучами света, градиент-морф видео, 3D-логотипы из жидкого стекла, анимация пиксельного контура, неоновый текст с волной расфокуса, печатные эффекты, горячие тени на 3D-формах, светящийся растр, рост слизевика и реакция-диффузия CV-трекинг с HUD, рентген-скан 3D-моделей и буквы, прорастающие корнями. Без установок и сервера — всё локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото и видео → сетки по яркости, библиотека глифов в духе Script Slayer (48 наборов: брайль, карты, фрактура, руны…) с глубиной, сдвигом, вставкой символов и палитрами, ретро-дизеринг, стек glow/glitch пост-эффектов.",
       sphereDesc: "3D генератор световых сфер на WebGL: шум, свечение, орбитальные частицы, пресеты и запись в MP4 — всё в реальном времени.",
       xrayDesc: "Фото → рентген: детекция контуров Canny, тонкие 1px-линии, стили Wireframe / Blueprint / Neon и экспорт в PNG или вектор SVG.",
@@ -949,6 +1004,8 @@
       halftoneDesc: "Светящиеся растровые поля по Pinterest-оверлею: сетка скруглённых плиток, точек, ромбов, крестов, штрихов или колец, размер которых следует за мягким движущимся шумом, метаболами, сонар-кольцами, словом или своим фото / видео. Тягучий режим сливает соседние точки в капли, градиент-карта красит мелкие точки синим, пики — белым, дальше bloom и зерно. 9 пресетов, бесшовные лупы, PNG с прозрачностью, экспорт PNG / JPG / MP4 / WebM.",
       growDesc: "Живые симуляции на GPU: слизевик Physarum до миллиона агентов, реакция-диффузия Грея–Скотта (коралл, лабиринт, пятна, митоз, черви), потоки по curl-шуму и «железные опилки» вокруг силуэта, рост молнии и инея (DLA и space colonisation). Затравка из текста, фигур или своей картинки, приманка мышкой, 9 палитр, рельефный свет и bloom. 15 пресетов; MP4 проигрывает тот же сид с начала, также PNG / JPG / WebM.",
       trackerDesc: "Трекинг-боксы в стиле computer vision поверх фото или видео (или встроенных демо: цветы, рой рыб, слово): точки по контрасту, яркости, краям или движению получают стабильные ID, уголки, перекрестья, подписи с confidence и связи-созвездия. Показ только внутри боксов, инверсия или зум в них; грейды от Ч/Б до тепловизора, ночного видения и карты глубины; слои HUD — радиальный циферблат, линейки, рамка, таймкод, показания. 11 пресетов, бесшовные лупы, экспорт PNG / JPG / MP4 / WebM.",
+      scanDesc: "Загрузи 3D-модель (GLB, glTF, OBJ, STL, PLY — или встроенные авто, турбину, шестерни, узел) и просвети её как рентгеном: свечение ободка, настоящая толщина материала, солид, каркас и КТ-срезы, по которым идёт луч сканера — он раскрывает солид или материализует модель. И приколы сверху: пиксельная мозаика с точечной сеткой и ASCII-глифами, Bayer-дизер, растянутые глитч-полосы, эхо-копии, slit-scan, шлейфы, RGB-сдвиг, вспышки инверсии и HUD-рамка. 12 пресетов, вращение мышью, бесшовные лупы, прозрачный PNG, экспорт PNG / JPG / MP4 / WebM.",
+      rootDesc: "Напиши слово — и буквы прорастут корнями: каждый глиф истончается до скелета (или обводится по контуру), стволы виляют и набухают узелками, рекурсивные ветки разветвляются, закручиваются и заканчиваются каплями, гравитация тянет их вниз, как чернила, или вверх, как ростки, а metaball-слияние сплавляет всё в одну живую массу. Рост анимируется от первого ростка и втягивается обратно — бесшовный луп; цвет кончиков, свечение, шероховатый край и тень буквы. 8 пресетов, 5 шрифтов с кириллицей, экспорт PNG / JPG / MP4 / WebM.",
       open: "Открыть студию",
       navRefs: "Похожие сайты",
       refsKicker: "Вдохновение",
@@ -964,7 +1021,7 @@
       title: "Klik Tools — внутрішні студії",
       tagline: "Внутрішні інструменти студії",
       heroTitle: 'Креативні тули <span class="green">Klik</span> — прямо у браузері.',
-      lede: "Двадцять пʼять студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла, градієнт-морф відео, 3D-логотипи з рідкого скла, анімація піксельного контуру, неоновий текст із хвилею розфокусу, друк-ефекти, гарячі тіні на 3D-формах, сяючий растр, ріст слизовика й реакція-дифузія та CV-трекінг з HUD. Без інсталяцій, без сервера — все локально.",
+      lede: "Двадцять сім студій: ASCII/дизеринг, сфери, рентген, термо-типографіка, рідкі градієнти, відблиски, CRT, глітч, дисплейсмент, частинки, живі WebGL-шейдери, градієнтні каскади, dot-matrix силуети, 3D-розкладки фото-карток, ехо-кільця з тексту, текст-ревіл променями світла, градієнт-морф відео, 3D-логотипи з рідкого скла, анімація піксельного контуру, неоновий текст із хвилею розфокусу, друк-ефекти, гарячі тіні на 3D-формах, сяючий растр, ріст слизовика й реакція-дифузія CV-трекінг з HUD, рентген-скан 3D-моделей та літери, що проростають корінням. Без інсталяцій, без сервера — все локально.",
       lumaDesc: "CellMap · PixelSynth · ASCII · Dither. Фото й відео → сітки за яскравістю, бібліотека гліфів у дусі Script Slayer (48 наборів: брайль, карти, фрактура, руни…) з глибиною, зсувом, вставкою символів і палітрами, ретро-дизеринг, стек glow/glitch пост-ефектів.",
       sphereDesc: "3D генератор світлових сфер на WebGL: шум, ґлоу, орбітальні частинки, пресети та запис у MP4 — все в реальному часі.",
       xrayDesc: "Фото → рентген: детекція контурів Canny, тонкі 1px-лінії, стилі Wireframe / Blueprint / Neon і експорт у PNG або вектор SVG.",
@@ -990,6 +1047,8 @@
       halftoneDesc: "Сяйні растрові поля за Pinterest-оверлеєм: сітка заокруглених плиток, крапок, ромбів, хрестиків, штрихів чи кілець, розмір яких іде за мʼяким рухомим шумом, метаболами, сонар-кільцями, словом або своїм фото / відео. Тягучий режим зливає сусідні крапки в краплі, градієнт-мапа фарбує дрібні крапки синім, піки — білим, далі bloom і зерно. 9 пресетів, безшовні лупи, PNG з прозорістю, експорт PNG / JPG / MP4 / WebM.",
       growDesc: "Живі симуляції на GPU: слизовик Physarum до мільйона агентів, реакція-дифузія Грея–Скотта (корал, лабіринт, плями, мітоз, черви), потоки за curl-шумом і «залізні ошурки» навколо силуету, ріст блискавки й інею (DLA і space colonisation). Затравка з тексту, фігур або своєї картинки, приманка мишкою, 9 палітр, рельєфне світло й bloom. 15 пресетів; MP4 програє той самий сід з початку, також PNG / JPG / WebM.",
       trackerDesc: "Трекінг-бокси в стилі computer vision поверх фото чи відео (або вбудованих демо: квіти, рій риб, слово): точки за контрастом, яскравістю, краями чи рухом отримують стабільні ID, кутики, перехрестя, підписи з confidence і звʼязки-сузірʼя. Показ лише всередині боксів, інверсія чи зум у них; грейди від Ч/Б до тепловізора, нічного бачення й карти глибини; шари HUD — радіальний циферблат, лінійки, рамка, таймкод, показники. 11 пресетів, безшовні лупи, експорт PNG / JPG / MP4 / WebM.",
+      scanDesc: "Завантаж 3D-модель (GLB, glTF, OBJ, STL, PLY — або вбудовані авто, турбіну, шестерні, вузол) і просвіти її як рентгеном: світіння обідка, справжня товщина матеріалу, солід, каркас і КТ-зрізи, якими йде промінь сканера — він розкриває солід або матеріалізує модель. І приколи зверху: піксельна мозаїка з точковою сіткою й ASCII-гліфами, Bayer-дизер, розтягнуті глітч-смуги, ехо-копії, slit-scan, шлейфи, RGB-зсув, спалахи інверсії та HUD-рамка. 12 пресетів, оберт мишею, безшовні лупи, прозорий PNG, експорт PNG / JPG / MP4 / WebM.",
+      rootDesc: "Напиши слово — і літери проростуть корінням: кожен гліф стоншується до скелета (або обводиться по контуру), стовбури звиваються й набухають вузликами, рекурсивні гілки розгалужуються, закручуються й закінчуються краплями, гравітація тягне їх униз, як чорнило, чи вгору, як паростки, а metaball-злиття сплавляє все в одну живу масу. Ріст анімується від першого паростка і втягується назад — безшовний луп; колір кінчиків, світіння, шорсткий край і тінь літери. 8 пресетів, 5 шрифтів з кирилицею, експорт PNG / JPG / MP4 / WebM.",
       open: "Відкрити студію",
       navRefs: "Схожі сайти",
       refsKicker: "Натхнення",
@@ -1053,6 +1112,8 @@
     halftone: { src: "tools/halftone-studio.html",  title: "Halftone Studio" },
     grow:     { src: "tools/grow-studio.html",      title: "Grow Studio" },
     tracker:  { src: "tools/tracker-studio.html",   title: "Tracker Studio" },
+    scan:     { src: "tools/scan-studio.html",      title: "Scan Studio" },
+    root:     { src: "tools/root-studio.html",      title: "Root Studio" },
   };
 
   /* ---------------- similar sites ----------------
