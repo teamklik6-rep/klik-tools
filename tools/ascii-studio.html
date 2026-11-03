@@ -54,7 +54,7 @@
   .note{font-size:11px;color:hsl(var(--muted-foreground));line-height:1.5;margin-top:10px}
 
   /* ---------- tabs (segmented) ---------- */
-  .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;background:hsl(var(--muted));padding:3px;border-radius:9px;margin-bottom:16px}
+  .tabs{display:grid;grid-template-columns:1.1fr 1.25fr .7fr 1fr;gap:3px;background:hsl(var(--muted));padding:3px;border-radius:9px;margin-bottom:16px}
   .tab{font-size:12.5px;font-weight:550;padding:7px 6px;border-radius:6px;cursor:pointer;text-align:center;
     color:hsl(var(--muted-foreground));transition:.12s;user-select:none}
   .tab:hover{color:hsl(var(--foreground))}
@@ -258,6 +258,7 @@
       <div class="tabs">
         <div class="tab active" data-tab="effect">Ефект</div>
         <div class="tab" data-tab="grid">Сітка / тон</div>
+        <div class="tab" data-tab="m3">3D</div>
         <div class="tab" data-tab="export">Експорт</div>
       </div>
 
@@ -589,6 +590,63 @@
         </div>
       </div>
 
+      <!-- ===================== 3D MODEL (source for every effect) ===================== -->
+      <div data-pane="m3">
+        <div class="group" id="m3-model">
+          <h2>3D-модель</h2>
+          <div class="clip">
+            <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg></div>
+            <div class="meta"><b id="m3Name">Модель не завантажена</b><small id="m3Info">GLB · glTF · OBJ · STL · PLY</small></div>
+          </div>
+          <button class="btn primary" id="m3Upload" style="width:100%;margin-bottom:6px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            Завантажити 3D-модель</button>
+          <div class="minibtns">
+            <button class="btn" data-m3demo="knot">Вузол</button>
+            <button class="btn" data-m3demo="torus">Тор</button>
+            <button class="btn" data-m3demo="shape">Суперформа</button>
+          </div>
+          <div class="note">Модель стає джерелом для будь-якого ефекту — CellMap, PixelSynth, ASCII чи Dither. Її також можна завантажити кліпом у плитки CellMap або в зону PixelSynth: кадри = оберт на 360°. Для .gltf з окремим .bin виділи обидва файли; Draco не підтримується.</div>
+        </div>
+        <div class="group" id="m3-camera">
+          <h2>Камера</h2>
+          <div class="row"><label class="lbl">Обертів за цикл</label><span class="val" id="vM3Spin">1</span></div>
+          <input type="range" id="m3Spin" min="-4" max="4" step="1" value="1">
+          <div class="row mt"><label class="lbl">Нахил (°)</label><span class="val" id="vM3Tilt">18</span></div>
+          <input type="range" id="m3Tilt" min="-80" max="80" step="1" value="18">
+          <div class="row mt"><label class="lbl">Поворот (°)</label><span class="val" id="vM3Yaw">0</span></div>
+          <input type="range" id="m3Yaw" min="-180" max="180" step="1" value="0">
+          <div class="row mt"><label class="lbl">Зум</label><span class="val" id="vM3Zoom">1.00</span></div>
+          <input type="range" id="m3Zoom" min="0.5" max="2.5" step="0.05" value="1">
+          <div class="row mt"><label class="lbl">Кадр</label></div>
+          <select id="m3Aspect">
+            <option value="1:1">1:1 · 720×720</option>
+            <option value="4:3">4:3 · 800×600</option>
+            <option value="16:9">16:9 · 960×540</option>
+            <option value="9:16">9:16 · 540×960</option>
+          </select>
+          <div class="note">Тягни мишею по превʼю, щоб крутити модель. Цикл = «Тривалість циклу» з вкладки «Експорт», тож MP4 замикається без шва.</div>
+        </div>
+        <div class="group" id="m3-shade">
+          <h2>Світло та матеріал</h2>
+          <select id="m3Shade">
+            <option value="studio">Студійне світло</option>
+            <option value="xray">Рентген (обідок)</option>
+            <option value="normals">Нормалі (веселка)</option>
+            <option value="depth">Глибина</option>
+            <option value="wire">Каркас</option>
+          </select>
+          <div class="row mt"><label class="lbl">Напрям світла (°)</label><span class="val" id="vM3Light">40</span></div>
+          <input type="range" id="m3Light" min="0" max="360" step="1" value="40">
+          <div class="colors" style="margin-top:12px">
+            <div class="color-field"><span>Колір моделі</span>
+              <div class="color-wrap"><input type="color" id="m3Col" value="#ffffff"><span class="hex" id="m3ColHex">#FFFFFF</span></div></div>
+            <div class="color-field"><span>Фон сцени</span>
+              <div class="color-wrap"><input type="color" id="m3Bg" value="#000000"><span class="hex" id="m3BgHex">#000000</span></div></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== EXPORT ===== -->
       <div data-pane="export">
         <div class="group">
@@ -643,9 +701,9 @@
       <div class="card stage" id="stage">
         <div class="drop" id="drop">
           <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.6-3.6a2 2 0 0 0-2.8 0L7 19"/></svg></div>
-          <h3>Завантаж фото або відео</h3>
+          <h3>Завантаж фото, відео або 3D-модель</h3>
           <p>Перетягни сюди, клікни, або встав зображення (<kbd>⌘V</kbd>)</p>
-          <div class="hint">PNG · JPG · WEBP · GIF · MP4 · WEBM · MOV — нічого не вивантажується в мережу</div>
+          <div class="hint">PNG · JPG · WEBP · GIF · MP4 · WEBM · MOV · 3D: GLB · glTF · OBJ · STL · PLY — нічого не вивантажується в мережу</div>
         </div>
         <canvas id="out"></canvas>
         <div class="stage-bar hide" id="stageBar">
@@ -663,7 +721,7 @@
   <footer>один файл · нічого не встановлювати · обробка локальна у браузері · фото та відео → ascii · Sobel · Floyd–Steinberg · H.264 MP4 (WebCodecs)</footer>
 </div>
 
-<input type="file" id="file" accept="image/*,video/*" class="hide">
+<input type="file" id="file" accept="image/*,video/*,.glb,.gltf,.obj,.stl,.ply,.bin" multiple class="hide">
 
 <script>/**
  * Minified by jsDelivr using Terser v5.39.0.
@@ -789,6 +847,8 @@
     bri:0, con:0, gam:1.0, edges:false, edgeThresh:35, dither:false,
     aspect:1.0, fontSize:9, fontFam:"mono", fontStyle:"regular",
     transBg:false, exScale:3, loopSec:4,
+    // 3D model source (shared by every effect)
+    m3Spin:1, m3Tilt:18, m3Yaw:0, m3Zoom:1, m3Shade:"studio", m3Col:"#ffffff", m3Bg:"#000000", m3Light:40, m3Aspect:"1:1",
     // Script Slayer glyph engine (ASCII)
     ssCat:"all", ssDepth:64, ssOffset:0, ssInject:"", ssSort:true,
     ssAnimDepth:false, ssDepthSpeed:0.25, ssAnimOff:false, ssOffSpeed:6, asPal:"cyberpunk",
@@ -918,10 +978,422 @@
     return ()=>P.fg;
   }
 
+  // ===================================================================
+  //  3D MODELS — GLB / glTF / OBJ / STL / PLY → WebGL2 render → source frame for every effect
+  //  (parsers shared with Scan Studio; no Three.js)
+  // ===================================================================
+  const MODEL_RE = /\.(glb|gltf|obj|stl|ply)$/i;
+  const isModelFile = f => !!f && MODEL_RE.test(f.name||"");
+  const TAU = Math.PI*2;
+  const mul4 = (a, b) => { const o = new Float32Array(16);
+    for(let c = 0; c < 4; c++) for(let r = 0; r < 4; r++){ let s = 0; for(let k = 0; k < 4; k++) s += a[k*4 + r]*b[c*4 + k]; o[c*4 + r] = s; }
+    return o; };
+  const ident = () => { const o = new Float32Array(16); o[0] = o[5] = o[10] = o[15] = 1; return o; };
+  const rotX = a => { const o = ident(), c = Math.cos(a), s = Math.sin(a); o[5] = c; o[6] = s; o[9] = -s; o[10] = c; return o; };
+  const rotY = a => { const o = ident(), c = Math.cos(a), s = Math.sin(a); o[0] = c; o[2] = -s; o[8] = s; o[10] = c; return o; };
+  const trans = (x, y, z) => { const o = ident(); o[12] = x; o[13] = y; o[14] = z; return o; };
+  function persp(fy, asp, n, f){
+    const t = 1/Math.tan(fy/2), o = new Float32Array(16);
+    o[0] = t/asp; o[5] = t; o[10] = (f + n)/(n - f); o[11] = -1; o[14] = 2*f*n/(n - f);
+    return o;
+  }
+  // ---- parsers (from Scan Studio) ----
+  function soup(chunks){
+    let n = 0; chunks.forEach(c => n += c.pos.length);
+    const pos = new Float32Array(n), part = new Float32Array(n/3);
+    const hasN = chunks.every(c => c.nrm), nrm = hasN ? new Float32Array(n) : null;
+    let o = 0;
+    chunks.forEach(c => { pos.set(c.pos, o); if(hasN) nrm.set(c.nrm, o); part.fill(c.part, o/3, (o + c.pos.length)/3); o += c.pos.length; });
+    return { pos, nrm, part, parts:chunks.length };
+  }
+  function triIndices(idx, mode, count){
+    if(!idx){ idx = new Uint32Array(count); for(let i = 0; i < count; i++) idx[i] = i; }
+    if(mode === 4 || mode === undefined) return idx;
+    const o = [];
+    if(mode === 5) for(let i = 0; i + 2 < idx.length; i++){ if(i % 2) o.push(idx[i+1], idx[i], idx[i+2]); else o.push(idx[i], idx[i+1], idx[i+2]); }
+    else if(mode === 6) for(let i = 1; i + 1 < idx.length; i++) o.push(idx[0], idx[i], idx[i+1]);
+    return o;
+  }
+  async function parseGLTF(json, bin, files){
+    const req = (json.extensionsRequired || []).concat(json.extensionsUsed || []);
+    if(req.some(e => /draco|meshopt/i.test(e))) throw new Error("draco");
+    const buffers = await Promise.all((json.buffers || []).map(async b => {
+      if(b.uri === undefined) return bin;
+      if(/^data:/.test(b.uri)) return await (await fetch(b.uri)).arrayBuffer();
+      const f = files[decodeURIComponent(b.uri).split("/").pop().toLowerCase()];
+      if(!f) throw new Error("bin:" + b.uri);
+      return await f.arrayBuffer();
+    }));
+    const NC = { SCALAR:1, VEC2:2, VEC3:3, VEC4:4, MAT4:16 }, CS = { 5120:1, 5121:1, 5122:2, 5123:2, 5125:4, 5126:4 };
+    function acc(i){
+      const a = json.accessors[i], nc = NC[a.type], out = new Float32Array(a.count*nc);
+      if(a.bufferView === undefined) return out;
+      const bv = json.bufferViews[a.bufferView], buf = buffers[bv.buffer], ct = a.componentType, cs = CS[ct];
+      const stride = bv.byteStride || cs*nc, base = (bv.byteOffset || 0) + (a.byteOffset || 0), dv = new DataView(buf), nm = a.normalized;
+      for(let k = 0; k < a.count; k++) for(let c = 0; c < nc; c++){
+        const o = base + k*stride + c*cs; let v;
+        switch(ct){
+          case 5126: v = dv.getFloat32(o, true); break;
+          case 5125: v = dv.getUint32(o, true); break;
+          case 5123: v = dv.getUint16(o, true); if(nm) v /= 65535; break;
+          case 5122: v = dv.getInt16(o, true); if(nm) v = Math.max(v/32767, -1); break;
+          case 5121: v = dv.getUint8(o); if(nm) v /= 255; break;
+          default: v = dv.getInt8(o); if(nm) v = Math.max(v/127, -1);
+        }
+        out[k*nc + c] = v;
+      }
+      return out;
+    }
+    const trs = n => {
+      if(n.matrix) return Float32Array.from(n.matrix);
+      const [x, y, z, w] = n.rotation || [0, 0, 0, 1], [sx, sy, sz] = n.scale || [1, 1, 1], t = n.translation || [0, 0, 0];
+      return Float32Array.from([
+        (1 - 2*(y*y + z*z))*sx, 2*(x*y + z*w)*sx, 2*(x*z - y*w)*sx, 0,
+        2*(x*y - z*w)*sy, (1 - 2*(x*x + z*z))*sy, 2*(y*z + x*w)*sy, 0,
+        2*(x*z + y*w)*sz, 2*(y*z - x*w)*sz, (1 - 2*(x*x + y*y))*sz, 0,
+        t[0], t[1], t[2], 1]);
+    };
+    const chunks = [];
+    let partId = 0;
+    function visit(ni, parent){
+      const n = json.nodes[ni], m = mul4(parent, trs(n));
+      if(n.mesh !== undefined){
+        const a = m[0], b = m[1], c = m[2], d = m[4], e = m[5], f = m[6], g = m[8], h = m[9], k = m[10];
+        const det = a*(e*k - f*h) - d*(b*k - c*h) + g*(b*f - c*e);
+        /* нормальна матриця = (M⁻¹)ᵀ верхнього 3×3 (кофактори) */
+        const N = [e*k - f*h, g*f - d*k, d*h - g*e, h*c - b*k, a*k - g*c, g*b - a*h, b*f - e*c, d*c - a*f, a*e - d*b];
+        for(const pr of json.meshes[n.mesh].primitives){
+          if(pr.attributes.POSITION === undefined || (pr.mode !== undefined && pr.mode < 4)) continue;
+          const P3 = acc(pr.attributes.POSITION), N3 = pr.attributes.NORMAL !== undefined ? acc(pr.attributes.NORMAL) : null;
+          let idx = triIndices(pr.indices !== undefined ? acc(pr.indices) : null, pr.mode, P3.length/3);
+          const nt = Math.floor(idx.length/3), pos = new Float32Array(nt*9), nrm = N3 ? new Float32Array(nt*9) : null;
+          for(let t = 0; t < nt; t++) for(let j = 0; j < 3; j++){
+            const vi = idx[t*3 + (det < 0 ? [0, 2, 1][j] : j)], o = (t*3 + j)*3;
+            const x = P3[vi*3], y = P3[vi*3+1], z = P3[vi*3+2];
+            pos[o] = m[0]*x + m[4]*y + m[8]*z + m[12]; pos[o+1] = m[1]*x + m[5]*y + m[9]*z + m[13]; pos[o+2] = m[2]*x + m[6]*y + m[10]*z + m[14];
+            if(nrm){
+              const nx = N3[vi*3], ny = N3[vi*3+1], nz = N3[vi*3+2];
+              const X = N[0]*nx + N[3]*ny + N[6]*nz, Y = N[1]*nx + N[4]*ny + N[7]*nz, Z = N[2]*nx + N[5]*ny + N[8]*nz, l = Math.hypot(X, Y, Z) || 1;
+              nrm[o] = X/l; nrm[o+1] = Y/l; nrm[o+2] = Z/l;
+            }
+          }
+          chunks.push({ pos, nrm, part:partId });
+        }
+        partId++;
+      }
+      (n.children || []).forEach(ci => visit(ci, m));
+    }
+    const sc = json.scenes && json.scenes[json.scene || 0];
+    const roots = sc ? sc.nodes : (json.nodes || []).map((_, i) => i);
+    roots.forEach(i => visit(i, ident()));
+    if(!chunks.length) throw new Error("empty");
+    return soup(chunks);
+  }
+  async function parseGLB(buf, files){
+    const dv = new DataView(buf);
+    if(dv.getUint32(0, true) !== 0x46546C67) throw new Error("glb");
+    let o = 12, json = null, bin = null;
+    while(o < buf.byteLength){
+      const len = dv.getUint32(o, true), type = dv.getUint32(o + 4, true);
+      if(type === 0x4E4F534A) json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, o + 8, len)));
+      else if(type === 0x004E4942) bin = buf.slice(o + 8, o + 8 + len);
+      o += 8 + len;
+    }
+    return parseGLTF(json, bin, files);
+  }
+  function parseOBJ(text){
+    const V = [], VN = [], chunks = [];
+    let pos = [], nrm = [], allN = true, part = 0;
+    const flush = () => { if(pos.length){ chunks.push({ pos:new Float32Array(pos), nrm:allN ? new Float32Array(nrm) : null, part:part++ }); } pos = []; nrm = []; allN = true; };
+    for(const line of text.split(/\r?\n/)){
+      const s = line.trim();
+      if(s.startsWith("v ")){ const a = s.split(/\s+/); V.push(+a[1], +a[2], +a[3]); }
+      else if(s.startsWith("vn ")){ const a = s.split(/\s+/); VN.push(+a[1], +a[2], +a[3]); }
+      else if(s.startsWith("f ")){
+        const f = s.split(/\s+/).slice(1).map(tk => { const p = tk.split("/"); let vi = parseInt(p[0]), ni = p[2] ? parseInt(p[2]) : NaN;
+          if(vi < 0) vi = V.length/3 + vi + 1; if(ni < 0) ni = VN.length/3 + ni + 1; return [vi - 1, ni - 1]; });
+        for(let i = 1; i + 1 < f.length; i++) for(const [vi, ni] of [f[0], f[i], f[i+1]]){
+          pos.push(V[vi*3], V[vi*3+1], V[vi*3+2]);
+          if(!isNaN(ni) && ni >= 0) nrm.push(VN[ni*3], VN[ni*3+1], VN[ni*3+2]); else { allN = false; nrm.push(0, 0, 1); }
+        }
+      }
+      else if(/^(o|g)\s/.test(s)) flush();
+    }
+    flush();
+    if(!chunks.length) throw new Error("empty");
+    const r = soup(chunks);
+    return r;
+  }
+  function parseSTL(buf){
+    const dv = new DataView(buf);
+    if(buf.byteLength >= 84 && 84 + dv.getUint32(80, true)*50 === buf.byteLength){
+      const n = dv.getUint32(80, true), pos = new Float32Array(n*9);
+      for(let t = 0; t < n; t++) for(let k = 0; k < 9; k++) pos[t*9 + k] = dv.getFloat32(84 + t*50 + 12 + k*4, true);
+      return { pos, nrm:null, part:new Float32Array(n*3), parts:1 };
+    }
+    const txt = new TextDecoder().decode(buf), p = [];
+    for(const m of txt.matchAll(/vertex\s+([-+\d.eE]+)\s+([-+\d.eE]+)\s+([-+\d.eE]+)/g)) p.push(+m[1], +m[2], +m[3]);
+    return { pos:new Float32Array(p), nrm:null, part:new Float32Array(p.length/3), parts:1 };
+  }
+  function parsePLY(buf){
+    const u8 = new Uint8Array(buf), head = new TextDecoder().decode(u8.subarray(0, Math.min(u8.length, 65536)));
+    const he = head.indexOf("end_header");
+    if(!head.startsWith("ply") || he < 0) throw new Error("ply");
+    let dataStart = he + "end_header".length; while(u8[dataStart] !== 10) dataStart++; dataStart++;
+    const lines = head.slice(0, he).split(/\r?\n/), els = []; let fmt = "ascii";
+    for(const l of lines){
+      const a = l.trim().split(/\s+/);
+      if(a[0] === "format") fmt = a[1];
+      else if(a[0] === "element") els.push({ name:a[1], count:+a[2], props:[] });
+      else if(a[0] === "property" && els.length) els[els.length - 1].props.push(a[1] === "list" ? { list:true, ct:a[2], it:a[3], name:a[4] } : { t:a[1], name:a[2] });
+    }
+    const SZ = { char:1, int8:1, uchar:1, uint8:1, short:2, int16:2, ushort:2, uint16:2, int:4, int32:4, uint:4, uint32:4, float:4, float32:4, double:8, float64:8 };
+    const le = fmt !== "binary_big_endian", dv = new DataView(buf);
+    let off = dataStart, toks = null, ti = 0;
+    if(fmt === "ascii") toks = new TextDecoder().decode(u8.subarray(dataStart)).trim().split(/\s+/);
+    const rd = t => {
+      if(toks) return +toks[ti++];
+      let v;
+      switch(t){
+        case "char": case "int8": v = dv.getInt8(off); break;
+        case "uchar": case "uint8": v = dv.getUint8(off); break;
+        case "short": case "int16": v = dv.getInt16(off, le); break;
+        case "ushort": case "uint16": v = dv.getUint16(off, le); break;
+        case "int": case "int32": v = dv.getInt32(off, le); break;
+        case "uint": case "uint32": v = dv.getUint32(off, le); break;
+        case "double": case "float64": v = dv.getFloat64(off, le); break;
+        default: v = dv.getFloat32(off, le);
+      }
+      off += SZ[t] || 4; return v;
+    };
+    let V = null; const pos = [];
+    for(const el of els){
+      if(el.name === "vertex"){
+        V = new Float32Array(el.count*3);
+        const ix = el.props.findIndex(p => p.name === "x"), iy = el.props.findIndex(p => p.name === "y"), iz = el.props.findIndex(p => p.name === "z");
+        for(let i = 0; i < el.count; i++) el.props.forEach((p, k) => {
+          if(p.list){ const n = rd(p.ct); for(let j = 0; j < n; j++) rd(p.it); return; }
+          const v = rd(p.t); if(k === ix) V[i*3] = v; else if(k === iy) V[i*3+1] = v; else if(k === iz) V[i*3+2] = v;
+        });
+      } else if(el.name === "face"){
+        for(let i = 0; i < el.count; i++) el.props.forEach(p => {
+          if(!p.list){ rd(p.t); return; }
+          const n = rd(p.ct), f = []; for(let j = 0; j < n; j++) f.push(rd(p.it));
+          if(!/vertex_ind/.test(p.name)) return;
+          for(let j = 1; j + 1 < n; j++) for(const vi of [f[0], f[j], f[j+1]]) pos.push(V[vi*3], V[vi*3+1], V[vi*3+2]);
+        });
+      } else {
+        for(let i = 0; i < el.count; i++) el.props.forEach(p => { if(p.list){ const n = rd(p.ct); for(let j = 0; j < n; j++) rd(p.it); } else rd(p.t); });
+      }
+    }
+    if(!pos.length) throw new Error("empty");
+    return { pos:new Float32Array(pos), nrm:null, part:new Float32Array(pos.length/3), parts:1 };
+  }
+  // centre + scale to a unit sphere, fill in flat normals where the file had none
+  function prepMesh(m){
+    const p=m.pos, n=p.length/3;
+    let mn=[1e9,1e9,1e9], mx=[-1e9,-1e9,-1e9];
+    for(let i=0;i<n;i++) for(let c=0;c<3;c++){ const v=p[i*3+c]; if(v<mn[c]) mn[c]=v; if(v>mx[c]) mx[c]=v; }
+    const cx=(mn[0]+mx[0])/2, cy=(mn[1]+mx[1])/2, cz=(mn[2]+mx[2])/2;
+    let r=0;
+    for(let i=0;i<n;i++){ const x=p[i*3]-cx, y=p[i*3+1]-cy, z=p[i*3+2]-cz; r=Math.max(r,x*x+y*y+z*z); }
+    const s=1/(Math.sqrt(r)||1);
+    const pos=new Float32Array(p.length);
+    for(let i=0;i<n;i++){ pos[i*3]=(p[i*3]-cx)*s; pos[i*3+1]=(p[i*3+1]-cy)*s; pos[i*3+2]=(p[i*3+2]-cz)*s; }
+    let nrm=m.nrm;
+    if(!nrm){
+      nrm=new Float32Array(p.length);
+      for(let t=0;t<n/3;t++){
+        const o=t*9, ax=pos[o+3]-pos[o], ay=pos[o+4]-pos[o+1], az=pos[o+5]-pos[o+2], bx=pos[o+6]-pos[o], by=pos[o+7]-pos[o+1], bz=pos[o+8]-pos[o+2];
+        let X=ay*bz-az*by, Y=az*bx-ax*bz, Z=ax*by-ay*bx; const l=Math.hypot(X,Y,Z)||1; X/=l; Y/=l; Z/=l;
+        for(let j=0;j<3;j++){ nrm[o+j*3]=X; nrm[o+j*3+1]=Y; nrm[o+j*3+2]=Z; }
+      }
+    }
+    return { pos, nrm, tris:n/3, name:m.name||"Модель" };
+  }
+  async function parseModelFiles(list){
+    const files={}; [...list].forEach(f=>files[f.name.toLowerCase()]=f);
+    const main=[...list].find(isModelFile);
+    if(!main) throw new Error("format");
+    const ext=main.name.split(".").pop().toLowerCase();
+    let m;
+    if(ext==="glb") m=await parseGLB(await main.arrayBuffer(), files);
+    else if(ext==="gltf") m=await parseGLTF(JSON.parse(await main.text()), null, files);
+    else if(ext==="obj") m=parseOBJ(await main.text());
+    else if(ext==="stl") m=parseSTL(await main.arrayBuffer());
+    else m=parsePLY(await main.arrayBuffer());
+    m.name=main.name.replace(/\.[^.]+$/,"");
+    return prepMesh(m);
+  }
+  function modelError(e){
+    console.error(e);
+    const msg=String(e&&e.message||e);
+    if(msg==="format") alert("Формат не підтримується. Підійдуть GLB, glTF, OBJ, STL або PLY.");
+    else if(msg==="draco") alert("Ця модель стиснена Draco / Meshopt — перезбережи її без стиснення (Blender: Export glTF → без Compression).");
+    else if(msg.startsWith("bin:")) alert("Не знайдено файл буфера "+msg.slice(4)+" — виділи .gltf разом із .bin.");
+    else if(msg==="webgl") alert("WebGL2 не підтримується цим браузером.");
+    else alert("Не вдалося прочитати модель.");
+  }
+
+  // procedural demo models: parametric surfaces with analytic-ish normals (finite differences)
+  function surfMesh(nu, nv, f, name){
+    const pos=[], nrm=[], e=1e-3;
+    const N=(u,v)=>{ const p=f(u,v), a=f(u+e,v), b=f(u,v+e);
+      const du=[a[0]-p[0],a[1]-p[1],a[2]-p[2]], dv=[b[0]-p[0],b[1]-p[1],b[2]-p[2]];
+      const x=du[1]*dv[2]-du[2]*dv[1], y=du[2]*dv[0]-du[0]*dv[2], z=du[0]*dv[1]-du[1]*dv[0], l=Math.hypot(x,y,z)||1; return [x/l,y/l,z/l]; };
+    for(let i=0;i<nu;i++) for(let j=0;j<nv;j++){
+      const u0=i/nu, u1=(i+1)/nu, v0=j/nv, v1=(j+1)/nv;
+      for(const [u,v] of [[u0,v0],[u1,v0],[u1,v1],[u0,v0],[u1,v1],[u0,v1]]){ pos.push(...f(u,v)); nrm.push(...N(u,v)); }
+    }
+    return prepMesh({ pos:new Float32Array(pos), nrm:new Float32Array(nrm), name });
+  }
+  const DEMO3D = {
+    knot: ()=>{
+      const C=t=>{ const r=2+Math.cos(3*t); return [r*Math.cos(2*t)*0.34, r*Math.sin(2*t)*0.34, -Math.sin(3*t)*0.34]; };
+      return surfMesh(300, 24, (u,v)=>{
+        const t=u*TAU, e=1e-3, c=C(t), a=C(t+e), b=C(t-e);
+        let T=[a[0]-b[0],a[1]-b[1],a[2]-b[2]]; let l=Math.hypot(...T); T=T.map(x=>x/l);
+        let Nn=[a[0]+b[0]-2*c[0],a[1]+b[1]-2*c[1],a[2]+b[2]-2*c[2]]; l=Math.hypot(...Nn)||1; Nn=Nn.map(x=>x/l);
+        const B=[T[1]*Nn[2]-T[2]*Nn[1], T[2]*Nn[0]-T[0]*Nn[2], T[0]*Nn[1]-T[1]*Nn[0]], an=v*TAU, R=0.17;
+        return [0,1,2].map(k=>c[k]+R*(Math.cos(an)*Nn[k]+Math.sin(an)*B[k]));
+      }, "Вузол");
+    },
+    torus: ()=>surfMesh(120, 48, (u,v)=>{ const a=u*TAU, b=v*TAU, R=0.72, r=0.3;
+      return [(R+r*Math.cos(b))*Math.cos(a), r*Math.sin(b), (R+r*Math.cos(b))*Math.sin(a)]; }, "Тор"),
+    shape: ()=>{
+      const sf=(a,m,n1,n2,n3)=>Math.pow(Math.pow(Math.abs(Math.cos(m*a/4)),n2)+Math.pow(Math.abs(Math.sin(m*a/4)),n3),-1/n1);
+      return surfMesh(160, 80, (u,v)=>{ const th=u*TAU-Math.PI, ph=v*Math.PI-Math.PI/2;
+        const r1=sf(th,6,1,1,1), r2=sf(ph,6,2,1.4,1.4);
+        return [r1*Math.cos(th)*r2*Math.cos(ph), r2*Math.sin(ph), r1*Math.sin(th)*r2*Math.cos(ph)]; }, "Суперформа");
+    },
+  };
+
+  // WebGL2 renderer: one offscreen canvas shared by the live source and the clip baker
+  const M3 = (()=>{
+    const cv=document.createElement("canvas"); cv.width=cv.height=2;
+    let gl=null, pr=null, U={};
+    const VS=`#version 300 es
+in vec3 a_p; in vec3 a_n; in vec3 a_b;
+uniform mat4 u_mv, u_p;
+out vec3 v_n; out vec3 v_vp; out vec3 v_b;
+void main(){ vec4 vp=u_mv*vec4(a_p,1.); v_vp=vp.xyz; v_n=mat3(u_mv)*a_n; v_b=a_b; gl_Position=u_p*vp; }`;
+    const FS=`#version 300 es
+precision highp float;
+in vec3 v_n; in vec3 v_vp; in vec3 v_b; out vec4 o;
+uniform int u_mode; uniform vec3 u_col; uniform vec3 u_L;
+void main(){
+  vec3 n=normalize(v_n), V=normalize(-v_vp);
+  if(!gl_FrontFacing) n=-n;
+  float d=max(dot(n,u_L),0.);
+  vec3 c;
+  if(u_mode==1){ float rim=pow(1.-abs(dot(n,V)),2.); c=u_col*(.05+rim)*.55; }                  // x-ray: additive rims
+  else if(u_mode==2){ c=n*.5+.5; }                                                            // normals
+  else if(u_mode==3){ float z=clamp((-v_vp.z-2.)/2.2,0.,1.); c=u_col*pow(1.-z,1.4); }          // depth
+  else if(u_mode==4){ vec3 w=fwidth(v_b); vec3 e=smoothstep(vec3(0.),w*1.4,v_b);             // wireframe
+    c=u_col*(1.-min(min(e.x,e.y),e.z)); }
+  else { vec3 H=normalize(u_L+V); float sp=pow(max(dot(n,H),0.),48.), rim=pow(1.-max(dot(n,V),0.),3.);
+    c=u_col*(.12+.88*d)+vec3(sp*.55)+u_col*rim*.3; }                                           // studio
+  o=vec4(c,1.);
+}`;
+    function init(){
+      if(gl) return true;
+      gl=cv.getContext("webgl2",{ preserveDrawingBuffer:true, antialias:true, premultipliedAlpha:false });
+      if(!gl) return false;
+      const sh=(t,s)=>{ const x=gl.createShader(t); gl.shaderSource(x,s); gl.compileShader(x); if(!gl.getShaderParameter(x,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+      pr=gl.createProgram(); gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS)); gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));
+      gl.bindAttribLocation(pr,0,"a_p"); gl.bindAttribLocation(pr,1,"a_n"); gl.bindAttribLocation(pr,2,"a_b");
+      gl.linkProgram(pr);
+      ["u_mv","u_p","u_mode","u_col","u_L"].forEach(k=>U[k]=gl.getUniformLocation(pr,k));
+      return true;
+    }
+    // upload a prepared mesh → GPU handle {vao, count}
+    function make(mesh){
+      if(!init()) throw new Error("webgl");
+      const vao=gl.createVertexArray(); gl.bindVertexArray(vao);
+      const bary=new Float32Array(mesh.pos.length);
+      for(let i=0;i<mesh.pos.length/3;i++) bary[i*3+(i%3)]=1;
+      const bufs=[mesh.pos, mesh.nrm, bary].map((a,loc)=>{ const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,a,gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0); return b; });
+      gl.bindVertexArray(null);
+      return { vao, bufs, count:mesh.pos.length/3 };
+    }
+    function free(h){ if(!h||!gl) return; h.bufs.forEach(b=>gl.deleteBuffer(b)); gl.deleteVertexArray(h.vao); }
+    const MODES={ studio:0, xray:1, normals:2, depth:3, wire:4 };
+    // o: { yaw, pitch (rad), zoom, shade, col:[r,g,b] 0..1, bg:[r,g,b], light (rad) }
+    function draw(h, w, hgt, o){
+      if(cv.width!==w||cv.height!==hgt){ cv.width=w; cv.height=hgt; }
+      gl.viewport(0,0,w,hgt);
+      gl.clearColor(o.bg[0],o.bg[1],o.bg[2],1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+      if(!h) return cv;
+      const mode=MODES[o.shade]||0;
+      if(mode===1){ gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE); }
+      else { gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND); }
+      gl.disable(gl.CULL_FACE);
+      gl.useProgram(pr);
+      const mv=mul4(trans(0,0,-3.1/o.zoom), mul4(rotX(o.pitch), rotY(o.yaw)));
+      gl.uniformMatrix4fv(U.u_mv,false,mv);
+      gl.uniformMatrix4fv(U.u_p,false,persp(0.62, w/hgt, 0.05, 50));
+      gl.uniform1i(U.u_mode,mode); gl.uniform3fv(U.u_col,o.col);
+      const el=0.6; gl.uniform3f(U.u_L, Math.sin(o.light)*Math.cos(el), Math.sin(el), Math.cos(o.light)*Math.cos(el));
+      gl.bindVertexArray(h.vao); gl.drawArrays(gl.TRIANGLES,0,h.count); gl.bindVertexArray(null);
+      return cv;
+    }
+    return { cv, make, free, draw };
+  })();
+
+  // ---- the model as the studio source ----
+  let model=null;                               // { mesh, gpu }
+  const M3_ASPECT={ "1:1":[720,720], "4:3":[800,600], "16:9":[960,540], "9:16":[540,960] };
+  let dragYaw=0, dragPitch=0;
+  function m3Opts(phase, yawExtra){
+    const spin = P.m3Spin ? (phase||0)/Math.max(0.5,P.loopSec)*TAU*P.m3Spin : 0;
+    return { yaw:P.m3Yaw*Math.PI/180+dragYaw+spin+(yawExtra||0), pitch:clamp(P.m3Tilt*Math.PI/180+dragPitch,-1.5,1.5), zoom:P.m3Zoom,
+      shade:P.m3Shade, col:hexToRgb(P.m3Col).map(v=>v/255), bg:hexToRgb(P.m3Bg).map(v=>v/255), light:P.m3Light*Math.PI/180 };
+  }
+  function renderModel(phase){
+    const [w,h]=M3_ASPECT[P.m3Aspect]||M3_ASPECT["1:1"];
+    return M3.draw(model&&model.gpu, w, h, m3Opts(phase));
+  }
+  function setModelSource(mesh){
+    const gpu=M3.make(mesh);
+    clearMedia();                               // frees the previous model's buffers
+    model={ mesh, gpu };
+    const [w,h]=M3_ASPECT[P.m3Aspect]||M3_ASPECT["1:1"];
+    masterURL="model:"+mesh.name+":"+mesh.tris; masterFile=null; phase0=0; dragYaw=dragPitch=0;
+    media={ type:"model", w, h };
+    showStage(false); syncModelCard(); updateExportAvail(); render();
+    if(!rafId) rafId=requestAnimationFrame(frameTick);
+  }
+  async function loadModelList(list){
+    try{ setModelSource(await parseModelFiles(list)); }catch(e){ modelError(e); }
+  }
+  function loadDemoModel(key){ try{ setModelSource(DEMO3D[key]()); }catch(e){ modelError(e); } }
+  function syncModelCard(){
+    const has=!!(model&&media&&media.type==="model");
+    $("m3Name").textContent = has ? model.mesh.name : "Модель не завантажена";
+    $("m3Info").textContent = has ? (model.mesh.tris.toLocaleString("uk-UA")+" трикутників") : "GLB · glTF · OBJ · STL · PLY";
+  }
+
+  // ---- a model as a CellMap / PixelSynth clip: frame i = a 360° turn step ----
+  // ramp=true (CellMap): frame i is also darkened to i/(F-1), so source brightness still picks a visible level
+  function bakeModelClip(mesh, frames, ramp){
+    const gpu=M3.make(mesh), out=[], S=BAKE_LONG;
+    for(let i=0;i<frames;i++){
+      const cnv=M3.draw(gpu, S, S, m3Opts(0, i/frames*TAU));
+      const c=document.createElement("canvas"); c.width=S; c.height=S; const x=c.getContext("2d"); x.drawImage(cnv,0,0);
+      if(ramp){ const g=Math.round((frames<2?1:i/(frames-1))*255); x.globalCompositeOperation="multiply"; x.fillStyle="rgb("+g+","+g+","+g+")"; x.fillRect(0,0,S,S); }
+      out.push(c);
+    }
+    M3.free(gpu);
+    if(model && media && media.type==="model") renderModel(livePhase);   // restore the live source frame
+    return { frames:out, w:S, h:S, model:mesh };
+  }
+
   // ---------------- core: build the ascii grid ----------------
   function buildGrid(phase){
     if(!media) return false;
     if(phase===undefined) phase=livePhase;
+    if(media.type==="model"){ const a=M3_ASPECT[P.m3Aspect]||M3_ASPECT["1:1"]; media.w=a[0]; media.h=a[1]; }
     const sw=media.w, sh=media.h;
     if(!sw||!sh) return false;
 
@@ -938,7 +1410,7 @@
       proc.width=cols; proc.height=rows;
     }
 
-    const src = media.type==="video" ? video : imageEl;
+    const src = media.type==="video" ? video : media.type==="model" ? renderModel(phase) : imageEl;
     try{ pctx.drawImage(src,0,0,cols,rows); }catch(e){ return false; }
     const data = pctx.getImageData(0,0,cols,rows).data;
 
@@ -1523,8 +1995,18 @@
     showBake(false,0);
     if(P.mode==="cellmap") render();
   }
-  async function loadCellClipFile(file){ if(!file) return; await loadCellClipURL(URL.createObjectURL(file), file.name||"кліп", file.type.startsWith("image"), "upload"); }
+  async function loadCellClipFile(file){
+    if(!file) return;
+    if(isModelFile(file)){ try{ setCellModelClip(await parseModelFiles([file]), "upload"); }catch(e){ modelError(e); } return; }
+    await loadCellClipURL(URL.createObjectURL(file), file.name||"кліп", file.type.startsWith("image"), "upload");
+  }
+  function setCellModelClip(mesh, kind){
+    const bank=bakeModelClip(mesh, P.tileFrames, true); bank.kind=kind; bank.name=mesh.name;
+    banks.cellmap=bank; applyClipMeta(mesh.name, P.tileFrames+" кадрів · 3D-оберт");
+    if(P.mode==="cellmap") render();
+  }
   function useSourceAsClip(){
+    if(media && media.type==="model" && model){ setCellModelClip(model.mesh, "source"); return; }
     if(!masterURL){ alert("Спершу завантаж фото або відео у студію."); return; }
     loadCellClipURL(masterURL, masterFile?masterFile.name:"Джерело", !!(masterFile&&masterFile.type.startsWith("image")), "source");
   }
@@ -1533,6 +2015,7 @@
   async function rebakeCurrent(){
     const b=banks.cellmap;
     if(!b || b.kind==="demo"){ setDemoClip(); return; }
+    if(b.model){ setCellModelClip(b.model, b.kind); return; }
     await loadCellClipURL(b.url, b.name, b.isImage, b.kind);
   }
 
@@ -1551,7 +2034,13 @@
     else { x.fillStyle=z.color; x.fillRect(0,0,cv.width,cv.height); }
   }
   async function loadZoneClip(idx){
-    const f=await pickFile("image/*,video/*"); if(!f) return;
+    const f=await pickFile("image/*,video/*,.glb,.gltf,.obj,.stl,.ply"); if(!f) return;
+    if(isModelFile(f)){
+      try{ zones[idx].bank=bakeModelClip(await parseModelFiles([f]), ZONE_FRAMES); zones[idx].type="clip"; updateZoneMeta(idx); paintZoneSwatch(idx);
+        if(P.mode==="pixelsynth"){ if(!rafId&&media) rafId=requestAnimationFrame(frameTick); render(); } }
+      catch(e){ modelError(e); }
+      return;
+    }
     const url=URL.createObjectURL(f), isImage=f.type.startsWith("image");
     showBake(false,0);
     try{
@@ -1634,7 +2123,7 @@
     if(renderQueued) return; renderQueued=true;
     requestAnimationFrame(()=>{ renderQueued=false; render(); });
   }
-  function isAnimated(){ return !!media && (media.type==="video" || (P.mode==="cellmap"&&P.drift>0) || (P.mode==="pixelsynth"&&zonesHaveClip()) || asciiAnim() || P.fxGlitch>0 || P.fxSpark>0); }
+  function isAnimated(){ return !!media && (media.type==="video" || (media.type==="model"&&P.m3Spin!==0) || (P.mode==="cellmap"&&P.drift>0) || (P.mode==="pixelsynth"&&zonesHaveClip()) || asciiAnim() || P.fxGlitch>0 || P.fxSpark>0); }
   function frameTick(ts){
     rafId=requestAnimationFrame(frameTick);
     if(exporting || !media) return;             // MP4 export drives rendering itself
@@ -1643,7 +2132,7 @@
     if(!isAnimated()) return;
     if(ts-lastTick < 33) return; lastTick=ts;   // ~30fps cap
     if(media.type==="video"){ if(video.readyState>=2){ buildGrid(); syncScrub(); } else return; }
-    else if(asciiAnim()) buildGrid();           // animated depth / offset re-maps glyphs on a still
+    else if(asciiAnim() || media.type==="model") buildGrid();   // animated glyphs / spinning model re-build the grid
     paint(octx,1,DPR(),P.transBg,livePhase);
   }
 
@@ -1663,6 +2152,8 @@
     playing=false; if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
     try{ video.pause(); video.removeAttribute("src"); video.load(); }catch(e){}
     media=null; imageEl=null; gCols=gRows=0;
+    if(model){ M3.free(model.gpu); model=null; }
+    syncModelCard();
   }
 
   function loadFile(file){
@@ -1737,7 +2228,7 @@
   function updateDims(){
     if(!lastGeom) return;
     const unit = P.mode==="ascii" ? " симв" : P.mode==="dither" ? " px" : " плиток";
-    dimsEl.textContent = (media.type==="video"?"▶ ":"") + gCols+"×"+gRows+unit+" · "+media.w+"×"+media.h+"px";
+    dimsEl.textContent = (media.type==="video"?"▶ ":media.type==="model"?"3D · ":"") + gCols+"×"+gRows+unit+" · "+media.w+"×"+media.h+"px";
   }
   function setPlayIcon(){
     $("playIc").innerHTML = playing ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
@@ -1781,6 +2272,39 @@
       if(key==="transBg"){ $("transBg").checked=$("transBg2").checked=P.transBg; }
       requestRender(); });
   });
+
+  // ---- 3D model source ----
+  $("m3Upload").addEventListener("click",()=>{
+    const inp=document.createElement("input"); inp.type="file"; inp.multiple=true; inp.accept=".glb,.gltf,.obj,.stl,.ply,.bin";
+    inp.onchange=()=>{ if(inp.files.length) loadModelList(inp.files); }; inp.click();
+  });
+  document.querySelectorAll("[data-m3demo]").forEach(b=>b.addEventListener("click",()=>loadDemoModel(b.dataset.m3demo)));
+  [
+    ["m3Spin","m3Spin","vM3Spin",v=>v|0,true],
+    ["m3Tilt","m3Tilt","vM3Tilt",v=>v|0,true],
+    ["m3Yaw","m3Yaw","vM3Yaw",v=>v|0,true],
+    ["m3Zoom","m3Zoom","vM3Zoom",v=>(+v).toFixed(2),false],
+    ["m3Light","m3Light","vM3Light",v=>v|0,true],
+  ].forEach(([id,key,vid,fmt,int])=>{
+    $(id).addEventListener("input",()=>{ P[key]=int?(+$(id).value|0):+$(id).value; $(vid).textContent=fmt($(id).value); requestRender(); });
+  });
+  $("m3Shade").addEventListener("change",e=>{ P.m3Shade=e.target.value; requestRender(); });
+  $("m3Aspect").addEventListener("change",e=>{
+    P.m3Aspect=e.target.value;
+    if(media && media.type==="model"){ const [w,h]=M3_ASPECT[P.m3Aspect]; media.w=w; media.h=h; }
+    requestRender();
+  });
+  bindColor("m3Col","m3Col","m3ColHex"); bindColor("m3Bg","m3Bg","m3BgHex");
+  // orbit by dragging the preview
+  let orbit=null;
+  out.addEventListener("pointerdown",e=>{ if(!media||media.type!=="model") return; orbit={ x:e.clientX, y:e.clientY }; out.setPointerCapture(e.pointerId); out.style.cursor="grabbing"; });
+  out.addEventListener("pointermove",e=>{
+    if(!orbit) return;
+    dragYaw+=(e.clientX-orbit.x)*0.01; dragPitch+=(e.clientY-orbit.y)*0.01; orbit={ x:e.clientX, y:e.clientY };
+    requestRender();
+  });
+  const endOrbit=()=>{ orbit=null; out.style.cursor=""; };
+  out.addEventListener("pointerup",endOrbit); out.addEventListener("pointercancel",endOrbit);
 
   // ---- Script Slayer glyph engine ----
   [
@@ -1989,7 +2513,7 @@
 
   // ---- effect mode + CellMap clip buttons ----
   $("modeSel").addEventListener("click",e=>{ const o=e.target.closest("[data-modebtn]"); if(o) setMode(o.dataset.modebtn); });
-  $("cmUpload").addEventListener("click",async()=>{ const f=await pickFile("image/*,video/*"); if(f) loadCellClipFile(f); });
+  $("cmUpload").addEventListener("click",async()=>{ const f=await pickFile("image/*,video/*,.glb,.gltf,.obj,.stl,.ply"); if(f) loadCellClipFile(f); });
   $("cmDemo").addEventListener("click",setDemoClip);
   $("cmSource").addEventListener("click",useSourceAsClip);
   // color mode + colors
@@ -2032,7 +2556,8 @@
   $("btnDemo").addEventListener("click",loadDemo);
   drop.addEventListener("click",()=>fileInput.click());
   $("playBtn").addEventListener("click",togglePlay);
-  fileInput.addEventListener("change",e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); fileInput.value=""; });
+  fileInput.addEventListener("change",e=>{ loadAny(e.target.files); fileInput.value=""; });
+  function loadAny(list){ if(!list||!list.length) return; if([...list].some(isModelFile)) loadModelList(list); else loadFile(list[0]); }
   $("scrub").addEventListener("input",e=>{
     if(video.duration){ video.currentTime = (+e.target.value/1000)*video.duration; if(!playing) render(); }
   });
@@ -2040,7 +2565,7 @@
   // drag & drop
   ["dragenter","dragover"].forEach(ev=>stage.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
   ["dragleave","drop"].forEach(ev=>stage.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
-  stage.addEventListener("drop",e=>{ const f=e.dataTransfer.files[0]; if(f) loadFile(f); });
+  stage.addEventListener("drop",e=>{ loadAny(e.dataTransfer.files); });
   // paste
   window.addEventListener("paste",e=>{
     const items=e.clipboardData&&e.clipboardData.items; if(!items) return;
@@ -2381,6 +2906,15 @@
     $("transBg").checked=$("transBg2").checked=P.transBg;
     $("exScale").value=P.exScale; $("vScale").textContent=P.exScale+"×";
     $("loopSec").value=P.loopSec;
+    // 3D controls
+    $("m3Spin").value=P.m3Spin; $("vM3Spin").textContent=P.m3Spin;
+    $("m3Tilt").value=P.m3Tilt; $("vM3Tilt").textContent=P.m3Tilt;
+    $("m3Yaw").value=P.m3Yaw; $("vM3Yaw").textContent=P.m3Yaw;
+    $("m3Zoom").value=P.m3Zoom; $("vM3Zoom").textContent=(+P.m3Zoom).toFixed(2);
+    $("m3Light").value=P.m3Light; $("vM3Light").textContent=P.m3Light;
+    $("m3Shade").value=P.m3Shade; $("m3Aspect").value=P.m3Aspect;
+    $("m3Col").value=P.m3Col; $("m3ColHex").textContent=P.m3Col.toUpperCase();
+    $("m3Bg").value=P.m3Bg; $("m3BgHex").textContent=P.m3Bg.toUpperCase();
     $("customChars").value=P.customChars;
     $("customChars").classList.toggle("hide", P.charset!=="custom");
     document.querySelectorAll("#charsets .sscard").forEach(p=>p.classList.toggle("active",p.dataset.cs===P.charset));
@@ -2440,14 +2974,15 @@
   syncFromState();
   updateExportAvail();
 
-  // deep links to the glyph-engine features: ascii-studio.html#ss-library, #ss-anim, #preset-cards …
+  // deep links: ascii-studio.html#ss-library, #ss-anim, #preset-cards … and the 3D tab: #m3-model, #m3-camera, #m3-shade
   function openFromHash(){
     const h=decodeURIComponent(location.hash.slice(1)); if(!h) return;
     const pr=h.startsWith("preset-") ? SS_PRESETS.find(p=>p.id===h.slice(7)) : null;
     const grp=$(pr ? "ss-presets" : h);
-    if(!pr && !(grp && /^ss-/.test(h))) return;
-    if(!media) loadDemo();
-    if(P.mode!=="ascii") setMode("ascii");
+    if(!pr && !(grp && /^(ss|m3)-/.test(h))) return;
+    const is3d=h.startsWith("m3-");
+    if(is3d){ if(!media || media.type!=="model") loadDemoModel("knot"); }
+    else { if(!media) loadDemo(); if(P.mode!=="ascii") setMode("ascii"); }
     if(pr){ applyPreset(pr.p); const b=document.querySelector('[data-ssp="'+pr.id+'"]'); if(b) b.click(); }
     const pane=grp.closest("[data-pane]");
     if(pane && !pane.classList.contains("active")) document.querySelector('.tab[data-tab="'+pane.dataset.pane+'"]').click();

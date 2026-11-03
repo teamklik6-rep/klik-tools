@@ -216,6 +216,30 @@
     "Середньовіччя": ["Medieval", "Средневековье"],
     "Видалити пресет": ["Delete preset", "Удалить пресет"],
     "Назва пресету": ["Preset name", "Название пресета"],
+    /* LumaGrid · 3D models */
+    "3D-модель": ["3D model", "3D-модель"],
+    "Модель не завантажена": ["No model loaded", "Модель не загружена"],
+    "Завантажити 3D-модель": ["Upload 3D model", "Загрузить 3D-модель"],
+    "Тор": ["Torus", "Тор"],
+    "Суперформа": ["Supershape", "Суперформа"],
+    "Модель стає джерелом для будь-якого ефекту — CellMap, PixelSynth, ASCII чи Dither. Її також можна завантажити кліпом у плитки CellMap або в зону PixelSynth: кадри = оберт на 360°. Для .gltf з окремим .bin виділи обидва файли; Draco не підтримується.": [
+      "The model becomes the source for any effect — CellMap, PixelSynth, ASCII or Dither. You can also load it as a CellMap tile clip or a PixelSynth zone clip: frames = a 360° turn. For a .gltf with a separate .bin select both files; Draco isn't supported.",
+      "Модель становится источником для любого эффекта — CellMap, PixelSynth, ASCII или Dither. Её также можно загрузить клипом в плитки CellMap или в зону PixelSynth: кадры = оборот на 360°. Для .gltf с отдельным .bin выделите оба файла; Draco не поддерживается."],
+    "Обертів за цикл": ["Turns per loop", "Оборотов за цикл"],
+    "Нахил (°)": ["Tilt (°)", "Наклон (°)"],
+    "Поворот (°)": ["Yaw (°)", "Поворот (°)"],
+    "Тягни мишею по превʼю, щоб крутити модель. Цикл = «Тривалість циклу» з вкладки «Експорт», тож MP4 замикається без шва.": [
+      "Drag on the preview to orbit the model. One loop = the «Loop length» from the Export tab, so the MP4 loops seamlessly.",
+      "Тяните мышью по превью, чтобы вращать модель. Цикл = «Длительность цикла» из вкладки «Экспорт», поэтому MP4 замыкается без шва."],
+    "Світло та матеріал": ["Light & material", "Свет и материал"],
+    "Студійне світло": ["Studio light", "Студийный свет"],
+    "Рентген (обідок)": ["X-ray (rim)", "Рентген (ободок)"],
+    "Нормалі (веселка)": ["Normals (rainbow)", "Нормали (радуга)"],
+    "Напрям світла (°)": ["Light direction (°)", "Направление света (°)"],
+    "Колір моделі": ["Model colour", "Цвет модели"],
+    "Фон сцени": ["Scene background", "Фон сцены"],
+    "Завантаж фото, відео або 3D-модель": ["Upload a photo, video or 3D model", "Загрузите фото, видео или 3D-модель"],
+    "PNG · JPG · WEBP · GIF · MP4 · WEBM · MOV · 3D: GLB · glTF · OBJ · STL · PLY — нічого не вивантажується в мережу": ["PNG · JPG · WEBP · GIF · MP4 · WEBM · MOV · 3D: GLB · glTF · OBJ · STL · PLY — nothing leaves your device", "PNG · JPG · WEBP · GIF · MP4 · WEBM · MOV · 3D: GLB · glTF · OBJ · STL · PLY — ничего не загружается в сеть"],
 
     /* === Sphere Studio === */
     "Sphere Studio · 3D генератор сфер": ["Sphere Studio · 3D sphere generator", "Sphere Studio · 3D генератор сфер"],
