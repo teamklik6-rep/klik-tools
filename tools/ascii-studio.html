@@ -230,6 +230,8 @@
   .uchip .x{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;color:hsl(var(--muted-foreground))}
   .uchip .x:hover{background:hsl(var(--muted));color:hsl(var(--foreground))}
   .uchip .x svg{width:11px;height:11px}
+  .group.flash{animation:flash 1.8s ease}
+  @keyframes flash{0%,40%{box-shadow:0 0 0 2px hsl(var(--foreground)/.55);border-radius:10px}100%{box-shadow:0 0 0 2px transparent}}
 </style>
 </head>
 <body>
@@ -347,7 +349,7 @@
               <div class="preset" data-theme="ice">Ice</div>
             </div>
           </div>
-          <div class="group">
+          <div class="group" id="ss-presets">
             <h2>Пресети Script Slayer</h2>
             <div class="presets c3" id="ssPresets"></div>
             <div class="userp" id="ssUser"></div>
@@ -355,7 +357,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
               Зберегти пресет</button>
           </div>
-          <div class="group">
+          <div class="group" id="ss-library">
             <h2>Бібліотека символів</h2>
             <div class="ss-pick">
               <select id="ssCat"></select>
@@ -367,7 +369,7 @@
             <div class="row mt"><label class="lbl">Активна шкала</label><span class="val" id="vRampN">10</span></div>
             <div class="ramp" id="rampView"></div>
           </div>
-          <div class="group">
+          <div class="group" id="ss-depth">
             <h2>Глибина та зсув</h2>
             <div class="row"><label class="lbl">Глибина (рівнів)</label><span class="val" id="vSsDepth">10/10</span></div>
             <input type="range" id="ssDepth" min="2" max="64" step="1" value="64">
@@ -381,7 +383,7 @@
             </div>
             <div class="note">Глибина — скільки гліфів набору бере шкала яскравості. Зсув циклічно зміщує відповідність «яскравість → гліф». Вставлені символи стають у шкалу за власною щільністю чорнила.</div>
           </div>
-          <div class="group">
+          <div class="group" id="ss-anim">
             <h2>Анімація символів</h2>
             <div class="switch-row" style="margin-top:0">
               <span class="lbl">Анімувати глибину</span>
@@ -397,7 +399,7 @@
             <input type="range" id="ssOffSpeed" min="1" max="30" step="1" value="6">
             <div class="note">Працює і на фото: MP4 тоді рендерить цикл заданої тривалості (вкладка «Експорт»).</div>
           </div>
-          <div class="group">
+          <div class="group" id="ss-color">
             <h2>Колір</h2>
             <select id="colorMode">
               <option value="mono">Монохром (текст/фон)</option>
@@ -430,7 +432,7 @@
               <label class="switch"><input type="checkbox" id="dither"><span class="track"></span></label>
             </div>
           </div>
-          <div class="group">
+          <div class="group" id="ss-type">
             <h2>Типографіка</h2>
             <div class="colors">
               <select id="fontFam">
@@ -616,7 +618,7 @@
             Зберегти .svg</button>
           <div class="note">SVG-вектор: ASCII → текст; CellMap/PixelSynth → мозаїка з &lt;rect&gt; за середнім кольором плитки. Нескінченне масштабування, малий розмір.</div>
         </div>
-        <div class="group">
+        <div class="group" id="ss-mp4">
           <h2>Відео → MP4</h2>
           <div class="row"><label class="lbl">Кадрів за секунду</label></div>
           <select id="mp4fps">
@@ -2437,6 +2439,22 @@
   renderZones();        // build the PixelSynth zone rows
   syncFromState();
   updateExportAvail();
+
+  // deep links to the glyph-engine features: ascii-studio.html#ss-library, #ss-anim, #preset-cards …
+  function openFromHash(){
+    const h=decodeURIComponent(location.hash.slice(1)); if(!h) return;
+    const pr=h.startsWith("preset-") ? SS_PRESETS.find(p=>p.id===h.slice(7)) : null;
+    const grp=$(pr ? "ss-presets" : h);
+    if(!pr && !(grp && /^ss-/.test(h))) return;
+    if(!media) loadDemo();
+    if(P.mode!=="ascii") setMode("ascii");
+    if(pr){ applyPreset(pr.p); const b=document.querySelector('[data-ssp="'+pr.id+'"]'); if(b) b.click(); }
+    const pane=grp.closest("[data-pane]");
+    if(pane && !pane.classList.contains("active")) document.querySelector('.tab[data-tab="'+pane.dataset.pane+'"]').click();
+    setTimeout(()=>{ grp.scrollIntoView({ block:"start", behavior:"smooth" }); grp.classList.remove("flash"); void grp.offsetWidth; grp.classList.add("flash"); },120);
+  }
+  window.addEventListener("hashchange",openFromHash);
+  openFromHash();
 })();
 </script>
 <script src="postfx.js"></script>
