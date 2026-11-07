@@ -147,14 +147,16 @@
   .prev-thermo .t3{color:#ff9d2e;filter:blur(3px);transform:rotate(-2deg)}
   .prev-thermo .t4{color:transparent;-webkit-text-stroke:1.5px #fff}
   /* preview art: flux */
-  .prev-flux{position:absolute;inset:-30px;filter:blur(22px) saturate(1.3);
+  .prev-flux{position:absolute;inset:0;overflow:hidden;background:#fff}
+  .prev-flux::before{content:"";position:absolute;inset:-40px;filter:blur(16px);
     background:
-      radial-gradient(circle at 25% 35%,#ff6a00cc 0%,transparent 45%),
-      radial-gradient(circle at 70% 30%,#a02bffcc 0%,transparent 50%),
-      radial-gradient(circle at 55% 75%,#2d4bffcc 0%,transparent 48%),
-      radial-gradient(circle at 85% 70%,#ff2d9acc 0%,transparent 40%),
-      #0a0a12;
+      radial-gradient(55% 32% at 28% 22%,#648bb4 0%,transparent 72%),
+      radial-gradient(50% 28% at 72% 34%,#7aa3ce 0%,transparent 72%),
+      radial-gradient(70% 26% at 50% 8%,#9fbcdb 0%,transparent 75%),
+      linear-gradient(#cee4ee 0%,#ffffff 72%);
     animation:fluxdrift 9s ease-in-out infinite alternate}
+  .prev-flux::after{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,0) 0 13px,rgba(255,255,255,.45) 17px,rgba(30,50,90,.12) 19px,rgba(255,255,255,0) 21px)}
   @keyframes fluxdrift{to{transform:translate(-18px,10px) scale(1.12) rotate(4deg)}}
   /* preview art: flare */
   .prev-flare{position:absolute;inset:0;background:#000308;overflow:hidden}
@@ -652,7 +654,7 @@
       </div>
       <div class="body">
         <h3><span class="idx">05</span> Flux Studio</h3>
-        <p data-i18n="fluxDesc">Liquid gradient backgrounds: color blobs and stripes, wave-warp distortion, mirror symmetry and Colorama remap. Aura posters and seamless loops, 12 presets, PNG / SVG / MP4 / WebM export.</p>
+        <p data-i18n="fluxDesc">Gradient backgrounds, no text: a live port of the mosta.io noise shader, fluted glass, lightbox panels and stepped slices, pixel streaks, a chromatic lens orb and a halftone screen — plus the classic silk and wave-warp engines. 23 presets with live thumbnails, a generator, seamless loops, PNG / JPG / WEBP up to 4K, MP4 / WebM.</p>
         <span class="open"><span data-i18n="open">Open studio</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
     </div>
@@ -970,7 +972,7 @@
       glitchDesc: "A glitch machine: glowing chromatic aberration, CRT bending, wave displacement, slice shifts and block corruption, Bayer dithering, glowing text layer. 10 presets.",
       displaceDesc: "Animated B&W error maps (data-mosh, data-bend, pixel-sort, slit-scan…) that displace your image. Export the glitched result — or the map itself as an MP4 asset.",
       particlesDesc: "Glowing rain and snow generator: 6 particle types, 3 auto-flicker modes, mirror and background layers, star glow, rave mode and god rays. 14 presets, seamless loops, alpha WebM.",
-      fluxDesc: "Liquid gradient backgrounds: color blobs and stripes, wave-warp distortion, mirror symmetry and Colorama remap. Aura posters and seamless loops, 12 presets, PNG / SVG / MP4 / WebM export.",
+      fluxDesc: "Gradient backgrounds, no text: a live port of the mosta.io noise shader, fluted glass, lightbox panels and stepped slices, pixel streaks, a chromatic lens orb and a halftone screen — plus the classic silk and wave-warp engines. 23 presets with live thumbnails, a generator, seamless loops, PNG / JPG / WEBP up to 4K, MP4 / WebM.",
       cascadeDesc: "Gradient cascades and waves: strips sampling a looping gradient with quantized terrace offsets — cascade, wave, stairs, arc patterns, row blocks, drift and breathing. 12 presets, seamless MP4 loops.",
       dotmatrixDesc: "The Milk & Peppers pixel-silhouette effect: Mosaic 72×128 → Threshold → 15×15 PIXEL matte. Eagle, butterfly, whale, rocket, any text or your own mask — over a flat sky with clouds, grid lines, a vertical caption and a 24 fps timecode.",
       orbitDesc: "Photo cards in 3D layouts: a growing spiral, a petal ring, a 3D globe, a carousel, a scatter field and flipping cards — with seamless animated loops: spin, shuffle, fly-through, flip. 1 to 200 cards, transparent background, PNG / SVG / JPG / WebP / MP4 export.",
@@ -1014,7 +1016,7 @@
       glitchDesc: "Глитч-машина: сияющая хроматическая аберрация, CRT-изгиб, волновая дисторсия, сдвиги слайсов и блочная коррупция, Bayer-дизеринг, светящийся текст. 10 пресетов.",
       displaceDesc: "Анимированные Ч/Б error-карты (data-mosh, data-bend, pixel-sort, slit-scan…), смещающие изображение. Экспорт результата — или самой карты как MP4-ассета.",
       particlesDesc: "Генератор светящегося дождя и снега: 6 типов частиц, 3 авто-фликера, зеркальный и фоновый слои, star glow, rave mode и god rays. 14 пресетов, бесшовные лупы, alpha WebM.",
-      fluxDesc: "Жидкие градиентные фоны: цветовые пятна и полосы, wave-warp искажение, зеркальная симметрия и Colorama. Aura-постеры и бесшовные лупы, 12 пресетов, экспорт PNG / SVG / MP4 / WebM.",
+      fluxDesc: "Градиентные фоны без текста: живой порт noise-шейдера mosta.io, рифлёное стекло, лайтбокс-панели и срезы-ступеньки, растяжение пикселей, хроматическая линза и растр — плюс классические шёлк и wave-warp. 23 пресета с живыми миниатюрами, генератор, бесшовные лупы, PNG / JPG / WEBP до 4K, MP4 / WebM.",
       cascadeDesc: "Градиентные каскады и волны: полосы сэмплируют цикличный градиент с квантованными сдвигами-террасами — каскад, волна, лестница, арка, блоки-ряды, дрейф и дыхание. 12 пресетов, бесшовные MP4-лупы.",
       dotmatrixDesc: "Эффект пиксельного силуэта Milk & Peppers: Mosaic 72×128 → Threshold → PIXEL-матте 15×15. Орёл, бабочка, кит, ракета, любой текст или своя маска — на ровном небе с облаками, сеткой линий, вертикальной подписью и таймкодом 24 fps.",
       orbitDesc: "Фотокарточки в 3D-раскладках: растущая спираль, кольцо-лепестки, 3D-глобус, карусель, разлёт в пространстве и флип-карточки — с бесшовными анимационными лупами: вращение, тасовка, пролёт камеры, флип. От 1 до 200 карточек, прозрачный фон, экспорт PNG / SVG / JPG / WebP / MP4.",
@@ -1058,7 +1060,7 @@
       glitchDesc: "Глітч-машина: сяюча хроматична аберація, CRT-вигин, хвильова дисторсія, зсуви слайсів і блокова корупція, Bayer-дизеринг, сяючий текст. 10 пресетів.",
       displaceDesc: "Анімовані Ч/Б error-мапи (data-mosh, data-bend, pixel-sort, slit-scan…), що зміщують зображення. Експорт результату — або самої мапи як MP4-асета.",
       particlesDesc: "Генератор сяючого дощу і снігу: 6 типів частинок, 3 авто-флікери, дзеркальний і фоновий шари, star glow, rave mode і god rays. 14 пресетів, безшовні лупи, alpha WebM.",
-      fluxDesc: "Рідкі градієнтні фони: кольорові плями та смуги, wave-warp викривлення, дзеркальна симетрія та Colorama. Aura-постери й безшовні лупи, 12 пресетів, експорт PNG / SVG / MP4 / WebM.",
+      fluxDesc: "Градієнтні фони без тексту: живий порт noise-шейдера mosta.io, рифлене скло, лайтбокс-панелі та зрізи-сходинки, розтяг пікселів, хроматична лінза й растр — плюс класичні шовк і wave-warp. 23 пресети з живими мініатюрами, генератор, безшовні лупи, PNG / JPG / WEBP до 4K, MP4 / WebM.",
       cascadeDesc: "Градієнтні каскади та хвилі: смуги семплять циклічний градієнт із квантованими зсувами-терасами — каскад, хвиля, сходи, арка, блоки-ряди, дрейф і дихання. 12 пресетів, безшовні MP4-лупи.",
       dotmatrixDesc: "Ефект піксельного силуету Milk & Peppers: Mosaic 72×128 → Threshold → PIXEL-матте 15×15. Орел, метелик, кит, ракета, будь-який текст чи своя маска — на рівному небі з хмарами, сіткою ліній, вертикальним підписом і таймкодом 24 fps.",
       orbitDesc: "Фото-картки у 3D-розкладках: наростаюча спіраль, кільце-пелюстки, 3D-глобус, карусель, розліт у просторі та фліп-картки — з безшовними анімаційними лупами: обертання, тасування, проліт камери, фліп. Від 1 до 200 карток, прозорий фон, експорт PNG / SVG / JPG / WebP / MP4.",
