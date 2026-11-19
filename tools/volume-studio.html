@@ -106,6 +106,118 @@
   body.embed main.vs{display:block;padding:0}
   body.embed .stage{min-height:100vh;height:100vh;padding:0;border-radius:0;background:none}
   body.embed #out{max-height:100vh;max-width:100vw;border-radius:0;box-shadow:none}
+  /* ================= floating interface (default) ================= */
+  .fui{display:none}
+  body.ui-float .fui{display:block}
+  body.ui-float header,body.ui-float footer,body.ui-float main.vs>.left,body.ui-float main.vs>.right,body.ui-float .stage-bar,body.ui-float #hint{display:none!important}
+  body.ui-float main.vs{display:block;padding:0}
+  body.ui-float .stage{position:fixed;inset:0;min-height:0;border-radius:0;padding:0;background:#1c1c1f}
+  body.ui-float .stage.transp{background:
+      linear-gradient(45deg,#232327 25%,transparent 25%),linear-gradient(-45deg,#232327 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#232327 75%),linear-gradient(-45deg,transparent 75%,#232327 75%);
+    background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;background-color:#1c1c1f}
+  body.ui-float #out{max-height:none;border-radius:14px;box-shadow:0 20px 70px rgba(0,0,0,.45)}
+  body.ui-float .err{bottom:110px}
+  .fui .fbar{position:fixed;z-index:30;display:flex;align-items:center;gap:4px;padding:5px;border-radius:14px;
+    background:rgba(24,24,27,.86);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .ftl{top:20px;left:20px}.ftc{top:20px;left:50%;transform:translateX(-50%)}.ftr{top:20px;right:20px}
+  .fbl{bottom:20px;left:20px}.fbc{bottom:20px;left:50%;transform:translateX(-50%)}.fbr{bottom:20px;right:20px}
+  .fbrand{display:flex;align-items:center;gap:8px;padding:0 8px 0 4px;font-weight:650;font-size:13.5px;letter-spacing:-.01em}
+  .fbrand svg{width:20px;height:20px}
+  .fib{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;border:0;background:transparent;color:hsl(var(--foreground));cursor:pointer;position:relative}
+  .fib:hover{background:rgba(255,255,255,.07)}
+  .fib.on{background:rgba(255,255,255,.12)}
+  .fib.accent{background:#3d8bff;color:#fff}
+  .fib.accent:hover{background:#5a9cff}
+  .fib svg{width:17px;height:17px}
+  .fsep{width:1px;height:20px;background:rgba(255,255,255,.1);margin:0 3px}
+  .ftime{font-size:12px;font-variant-numeric:tabular-nums;color:hsl(var(--muted-foreground));padding:0 6px 0 0;min-width:64px}
+  .fchip{height:34px;display:flex;align-items:center;gap:8px;padding:0 10px 0 4px;border-radius:9px;border:0;background:rgba(255,255,255,.05);color:hsl(var(--foreground));
+    cursor:pointer;font:600 12.5px Inter,system-ui,sans-serif;max-width:220px}
+  .fchip:hover,.fchip.on{background:rgba(255,255,255,.12)}
+  .fchip .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fchip .ic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.08);flex:none}
+  .fchip .ic svg{width:14px;height:14px}
+  .fball{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;background:#333}
+  .fball img{width:100%;height:100%;display:block}
+  .fui select{width:auto;padding:6px 26px 6px 9px;font-size:12px;background-position:right 7px center;border-radius:9px;background-color:rgba(255,255,255,.05)}
+  .fhint{position:fixed;z-index:29;bottom:66px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,.42);white-space:nowrap;pointer-events:none}
+  .fpanel{position:fixed;z-index:31;display:none;flex-direction:column;width:300px;max-width:calc(100vw - 40px);
+    background:rgba(22,22,25,.93);border:1px solid rgba(255,255,255,.07);border-radius:14px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .fpanel.open{display:flex;animation:fpin .14s ease}
+  @keyframes fpin{from{opacity:0;transform:translateY(4px)}}
+  .fp-left{left:20px;top:78px;max-height:calc(100vh - 156px)}
+  .fp-right{right:20px;top:78px;max-height:calc(100vh - 156px);width:320px}
+  .fp-center{left:50%;bottom:78px;transform:translateX(-50%);max-height:calc(100vh - 160px);width:330px}
+  .fp-center.open{animation:none}
+  .fp-top{left:50%;top:78px;transform:translateX(-50%);max-height:calc(100vh - 156px);width:330px}
+  .fp-top.open{animation:none}
+  #fp-matlib{width:236px}
+  #fp-matprops{left:266px;width:280px}
+  .fph{display:flex;align-items:center;justify-content:space-between;padding:10px 10px 6px 14px;font-size:12.5px;font-weight:650;flex:none}
+  .fph button{width:26px;height:26px;border-radius:7px;border:0;background:transparent;color:hsl(var(--muted-foreground));cursor:pointer;font-size:17px;line-height:1}
+  .fph button:hover{background:rgba(255,255,255,.08);color:#fff}
+  .fpb{padding:2px 12px 14px;overflow-y:auto;flex:1;min-height:0}
+  .fpb::-webkit-scrollbar{width:8px}.fpb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+  .fpb>[data-pane]{display:block!important;animation:none!important}
+  .fpb .group{margin-bottom:14px}
+  .fpb .group h2{font-size:10px;margin:6px 0 8px;letter-spacing:.09em}
+  .fmenu{position:fixed;z-index:40;display:none;flex-direction:column;gap:2px;padding:5px;min-width:190px;border-radius:12px;
+    background:rgba(24,24,27,.96);border:1px solid rgba(255,255,255,.08);box-shadow:0 16px 40px rgba(0,0,0,.5)}
+  .fmenu.open{display:flex}
+  .fmenu button{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;border:0;background:transparent;color:hsl(var(--foreground));font:500 13px Inter,system-ui,sans-serif;cursor:pointer;text-align:left}
+  .fmenu button:hover{background:rgba(255,255,255,.08)}
+  .fmenu button b{width:18px;text-align:center;color:hsl(var(--muted-foreground))}
+  /* slider bars (label inside, fill = value) */
+  body.ui-float .fpb .prm.rng{position:relative;margin-top:6px}
+  body.ui-float .fpb .prm.rng .row{position:absolute;left:11px;right:11px;top:0;height:34px;margin:0;pointer-events:none;z-index:1}
+  body.ui-float .fpb .prm.rng .lbl{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.ui-float .fpb .prm.rng .val{background:none;padding:0;min-width:0;color:rgba(255,255,255,.5);font-size:11.5px}
+  body.ui-float .fpb .prm.rng input[type=range]{height:34px;margin:0;border-radius:9px;display:block;
+    background:linear-gradient(90deg,rgba(255,255,255,.17) 0,rgba(255,255,255,.17) var(--p,50%),rgba(255,255,255,.05) var(--p,50%))}
+  body.ui-float .fpb .prm.rng input[type=range]::-webkit-slider-thumb{width:1px;height:34px;border-radius:0;background:transparent;border:0;box-shadow:none}
+  body.ui-float .fpb .prm.rng input[type=range]::-moz-range-thumb{width:1px;height:34px;border-radius:0;background:transparent;border:0}
+  #fp-matlib .group>h2,#fp-matprops .group>h2,#fp-layers .group>h2,#fp-templates .group>h2{display:none}
+  body.ui-float .fpb .prm.rng input[type=range]:hover{background:linear-gradient(90deg,rgba(255,255,255,.22) 0,rgba(255,255,255,.22) var(--p,50%),rgba(255,255,255,.08) var(--p,50%))}
+  body.ui-float .fpb .two{grid-template-columns:1fr;gap:0}
+  body.ui-float .fpb .three .prm.rng .lbl{font-size:11px}
+  body.ui-float .fpb .three{gap:4px 6px}
+  body.ui-float .fpb .preset{background:rgba(255,255,255,.05);border-color:transparent}
+  body.ui-float .fpb .preset.active{background:rgba(255,255,255,.16);border-color:transparent}
+  body.ui-float .fpb .presets{gap:5px}
+  body.ui-float .fpb .seg-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:hsl(var(--muted-foreground));margin:12px 0 6px;font-weight:600}
+  body.ui-float .fpb .mats{grid-template-columns:repeat(3,1fr);gap:4px}
+  body.ui-float .fpb .mat{font-size:0;padding:4px}
+  body.ui-float .fpb .mat .ball{margin:0}
+  body.ui-float .fpb .mat.active{border-color:rgba(255,255,255,.7)}
+  .grip{font-style:normal;color:rgba(255,255,255,.35);margin-right:7px;cursor:grab}
+  .fph{cursor:grab;user-select:none}
+  .fph.dragging{cursor:grabbing}
+  .fpanel.moved{transform:none!important;animation:none!important}
+  #fp-shapes{width:300px}
+  .shp-search{display:flex;gap:6px;margin:2px 0 8px}
+  .shp-search .txt{flex:1;min-width:0}
+  .shp-search .btn{padding:7px 9px;font-size:11.5px;background:#f4f4f5;color:#111;border-color:#f4f4f5}
+  .shp-tabs{margin-bottom:8px}
+  .shp-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+  .shp-chips span{font-size:11px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.06);cursor:pointer;color:hsl(var(--muted-foreground))}
+  .shp-chips span:hover{color:#fff;background:rgba(255,255,255,.12)}
+  .shp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;min-height:60px}
+  .shp-grid .it{aspect-ratio:1/1;border-radius:9px;background:rgba(255,255,255,.05);display:grid;place-items:center;cursor:pointer;border:1px solid transparent;position:relative}
+  .shp-grid .it:hover{background:rgba(255,255,255,.1)}
+  .shp-grid .it.on{border-color:rgba(255,255,255,.7)}
+  .shp-grid .it img{width:62%;height:62%;object-fit:contain;filter:invert(1) brightness(.92)}
+  .shp-grid .it.raw img{filter:none}
+  .shp-grid .it .x{position:absolute;top:2px;right:3px;font-size:11px;color:rgba(255,255,255,.4);display:none}
+  .shp-grid .it:hover .x{display:block}
+  .shp-grid .msg{grid-column:1/-1;font-size:11.5px;color:hsl(var(--muted-foreground));padding:10px 2px}
+  .mat-cat{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}
+  .mat-cat::after{content:"▾";font-size:10px;opacity:.6}
+  .mat-cat.collapsed::after{content:"▸"}
+  .mats.collapsed{display:none}
+  body.ui-float .fpb .thumbs{grid-template-columns:1fr 1fr}
+  @media (max-width:760px){ .fhint{display:none} .fp-left,.fp-right,#fp-matprops{left:10px;right:10px;width:auto;top:70px;max-height:calc(100vh - 150px)} #fp-matprops{top:auto;bottom:74px;max-height:40vh} .ftc{top:auto;bottom:70px} }
 </style>
 </head>
 <body>
@@ -125,6 +237,7 @@
       <button class="btn" id="openBtn">Відкрити</button>
       <button class="btn" id="saveBtn">Зберегти</button>
       <button class="btn" id="shareBtn">Поділитись</button>
+      <button class="btn" id="layoutFloat" title="Плаваючий інтерфейс"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><rect x="6" y="13" width="5" height="4" rx="1"/><rect x="13" y="7" width="5" height="4" rx="1"/></svg></button>
       <button class="btn primary" id="pngBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>PNG</button>
     </div>
   </header>
@@ -188,6 +301,80 @@
   <footer>один файл · WebGL2 raymarching · SDF-екструзія тексту й SVG · PBR-матеріали, скло з дисперсією, HDR-оточення · клонер · рух · 27 ефектів · PNG / MP4 / GLB · все локально</footer>
 </div>
 
+
+<div class="fui" id="fui">
+  <div class="fbar ftl">
+    <div class="fbrand"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2"/></svg>Volume</div>
+    <button class="fib" data-fp="shapes" title="Фігури: бібліотека й пошук"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/></svg></button>
+    <button class="fib" data-quick="addText" title="Текст"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M12 6v13"/></svg></button>
+    <button class="fib" data-quick="addPrim" title="3D-фігура"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2"/></svg></button>
+    <button class="fib" data-quick="addImage" title="Своє SVG / фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></button>
+    <span class="fsep"></span>
+    <button class="fib" data-fp="templates" title="Шаблони"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+    <button class="fib" data-menu="add" title="Додати шар"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>
+  <div class="fbar ftc">
+    <button class="fib" data-proxy="undoBtn" title="Скасувати (⌘Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="fib" data-proxy="redoBtn" title="Повторити (⇧⌘Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+    <span class="fsep"></span>
+    <button class="fib" id="fDup" title="Дублювати шар (⌘D)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg></button>
+    <button class="fib" data-proxy="openBtn" title="Відкрити .json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1H3z"/><path d="M3 10h18l-2 9H5z"/></svg></button>
+    <button class="fib" data-proxy="saveBtn" title="Зберегти .json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 10a4 4 0 0 1 0 8"/><path d="M12 12v9M8.5 15.5 12 12l3.5 3.5"/></svg></button>
+    <button class="fib" data-proxy="shareBtn" title="Посилання / embed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-5 4 5 4M16 8l5 4-5 4"/></svg></button>
+    <span class="fsep"></span>
+    <button class="fib" data-proxy="playBtn" id="fPlay" title="Відтворення (пробіл)"><svg id="fPlayIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+    <span class="ftime" id="fTime">0.0 / 6.0 с</span>
+    <button class="fib" data-fp="export" title="Експорт"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></button>
+  </div>
+  <div class="fbar ftr">
+    <select id="fQuality" title="Якість превʼю"><option value="0">Чернетка</option><option value="1">Норм</option><option value="2">Висока</option></select>
+    <button class="fib" data-proxy="previewBtn" id="fPreview" title="Перегляд з інтерактивом (як у embed)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    <button class="fib" id="layoutClassic" title="Класичний інтерфейс з панелями"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+  </div>
+  <div class="fbar fbl">
+    <button class="fchip" data-fp="mat" title="Матеріал"><span class="fball" id="fMatBall"></span><span class="nm" id="fMatName">Матеріал</span></button>
+    <button class="fib" data-fp="fx" title="Ефекти"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.7 1.8 1.8.7-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7z"/></svg></button>
+  </div>
+  <div class="fbar fbc">
+    <button class="fchip" data-fp="layers" id="fLayerChip" title="Шари"><span class="ic" id="fLayerIco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><span class="nm" id="fLayerName">Шари</span></button>
+    <button class="fib" data-menu="add" title="Додати шар"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <span class="fsep"></span>
+    <button class="fib" data-fp="obj" title="Обʼєкт: форма, обʼєм, деформація, клонер"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2"/></svg></button>
+    <button class="fib" data-fp="motion" title="Рух"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></button>
+    <span class="fsep"></span>
+    <button class="fib accent" data-proxy="toolOrbit" id="fOrbit" title="Камера: обертати"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
+    <button class="fib" data-proxy="toolMove" id="fMove" title="Рухати шар (колесо — масштаб)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></svg></button>
+    <button class="fib" data-proxy="viewReset" title="Скинути камеру"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+  </div>
+  <div class="fbar fbr">
+    <button class="fchip" data-fp="scene" title="Сцена: фон, оточення, світло, підлога, камера"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="nm">Сцена</span></button>
+  </div>
+  <div class="fhint">колесо — зум · тягни — обертати · ⇧ тягни — панорама · клік — вибрати шар · ⌘V — вставити SVG</div>
+  <div class="fpanel fp-left" id="fp-shapes"><div class="fph"><span><i class="grip">⠿</i>Фігури</span><button data-close>×</button></div><div class="fpb">
+    <div class="shp-search"><input class="txt" id="shpQ" placeholder="Пошук: star, heart, sparkle…"><button class="btn" id="shpSave" title="Зберегти SVG поточного шару в «Мою бібліотеку»">Зберегти в бібліотеку</button></div>
+    <div class="presets c3 shp-tabs" id="shpTabs"><div class="preset sm active" data-t="base">Базові</div><div class="preset sm" data-t="web">Пошук</div><div class="preset sm" data-t="mine">Моя бібліотека</div></div>
+    <div class="shp-chips" id="shpChips"></div>
+    <div class="shp-grid" id="shpGrid"></div>
+    <div class="switch-row"><span class="lbl">Замінювати поточний шар</span><label class="switch"><input type="checkbox" id="shpReplace"><span class="track"></span></label></div>
+    <div class="note" id="shpNote">Клік — нова форма з обʼємом і поточним матеріалом. Пошук іде по відкритих наборах іконок Iconify (ліцензії наборів — на iconify.design).</div>
+  </div></div>
+  <div class="fpanel fp-left" id="fp-templates"><div class="fph"><span>Шаблони</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-left" id="fp-matlib"><div class="fph"><span>Матеріали</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-left" id="fp-matprops"><div class="fph"><span>Властивості матеріалу</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-left" id="fp-fx"><div class="fph"><span>Ефекти</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-right" id="fp-obj"><div class="fph"><span>Обʼєкт</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-right" id="fp-motion"><div class="fph"><span>Рух</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-right" id="fp-scene"><div class="fph"><span>Сцена</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-center" id="fp-layers"><div class="fph"><span>Шари</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fpanel fp-top" id="fp-export"><div class="fph"><span>Експорт</span><button data-close>×</button></div><div class="fpb"></div></div>
+  <div class="fmenu" id="fAddMenu">
+    <button data-add="text"><b>T</b>Текст</button>
+    <button data-add="shape"><b>★</b>Форма 2D</button>
+    <button data-add="prim"><b>◆</b>3D-фігура</button>
+    <button data-add="image"><b>⬒</b>Лого / фото / SVG-файл</button>
+    <button data-add="svg"><b>&lt;/&gt;</b>Вставити SVG-код</button>
+  </div>
+</div>
 <div class="modal" id="shareModal">
   <div class="box">
     <h3>Поділитись сценою</h3>
@@ -1987,7 +2174,8 @@ function resize(){
 }
 function fitCanvas(){
   const st = $("stage"); const r = st.getBoundingClientRect();
-  const aw = r.width - (isEmbed ? 0 : 36), ah = (isEmbed ? window.innerHeight : r.height - 82);
+  let aw = r.width - (isEmbed ? 0 : 36), ah = (isEmbed ? window.innerHeight : r.height - 82);
+  if(layout === "float" && !isEmbed){ aw = window.innerWidth - 48; ah = window.innerHeight - (window.innerWidth < 760 ? 200 : 176); }
   const a = out.width/out.height; let w = aw, h = aw/a; if(h > ah){ h = ah; w = ah*a; }
   out.style.width = Math.floor(w) + "px"; out.style.height = Math.floor(h) + "px";
 }
@@ -2042,12 +2230,13 @@ function setK(k, v){ const ps = k.split("."); let o = rootOf(ps[0]); if(!o) retu
 function decOf(step){ return step >= 1 ? 0 : step >= .1 ? 1 : step >= .01 ? 2 : 3; }
 function reg(c){ CTL.push(c); return c; }
 function cRange(k, l, mn, mx, st, o = {}){
-  const w = el("div", "prm"); w.innerHTML = `<div class="row"><label class="lbl">${l}</label><span class="val"></span></div><input type="range" min="${mn}" max="${mx}" step="${st}">`;
+  const w = el("div", "prm rng"); w.innerHTML = `<div class="row"><label class="lbl">${l}</label><span class="val"></span></div><input type="range" min="${mn}" max="${mx}" step="${st}">`;
   const inp = w.querySelector("input"), val = w.querySelector(".val"); const dc = decOf(st);
   const fmt = o.fmt || (v => (+v).toFixed(dc));
-  inp.addEventListener("input", () => { setK(k, parseFloat(inp.value)); val.textContent = fmt(getK(k)); });
-  inp.addEventListener("dblclick", () => { if(o.def != null){ setK(k, o.def); inp.value = o.def; val.textContent = fmt(o.def); } });
-  reg({ el:w, show:o.show, sync(){ const v = getK(k); if(v == null) return; inp.value = v; val.textContent = fmt(v); } });
+  const fill = () => inp.style.setProperty("--p", clamp((+inp.value - mn)/(mx - mn)*100, 0, 100).toFixed(1) + "%");
+  inp.addEventListener("input", () => { setK(k, parseFloat(inp.value)); val.textContent = fmt(getK(k)); fill(); });
+  inp.addEventListener("dblclick", () => { if(o.def != null){ setK(k, o.def); inp.value = o.def; val.textContent = fmt(o.def); fill(); } });
+  reg({ el:w, show:o.show, sync(){ const v = getK(k); if(v == null) return; inp.value = v; val.textContent = fmt(v); fill(); } });
   return w;
 }
 function cSeg(k, l, opts, cols, o = {}){
@@ -2113,6 +2302,7 @@ function onChange(k){
   if(/^s\.(env|key\.az|key\.el)/.test(k)) envDirty = true;
   if(k === "s.aspect"){ resize(); }
   if(k === "s.bg.mode" && P.scene.bg.mode === 4 && !bgTex) $("fileBg").click();
+  $("stage").classList.toggle("transp", P.scene.bg.mode === 5);
   if(k === "o.text" || k === "o.prim" || k === "o.shape") renderLayers();
   if(k.startsWith("o.mat.")) markMat();
   if(k.startsWith("o.clone") || k.startsWith("o.motion") || k.startsWith("o.def")) {}
@@ -2192,8 +2382,8 @@ function buildPanes(){
   const matBox = el("div"); let lastCat = "";
   let grid = null;
   MATS.forEach(([k, l, cat]) => {
-    if(cat !== lastCat){ matBox.appendChild(el("div", "mat-cat", cat)); grid = el("div", "mats"); matBox.appendChild(grid); lastCat = cat; }
-    const m = el("div", "mat"); m.dataset.k = k; m.innerHTML = `<div class="ball"></div>${l}`;
+    if(cat !== lastCat){ const h = el("div", "mat-cat", cat); grid = el("div", "mats"); const g = grid; h.addEventListener("click", () => { h.classList.toggle("collapsed"); g.classList.toggle("collapsed"); }); matBox.appendChild(h); matBox.appendChild(grid); lastCat = cat; }
+    const m = el("div", "mat"); m.dataset.k = k; m.title = l; m.innerHTML = `<div class="ball"></div>${l}`;
     m.addEventListener("click", () => { const o = curObj(); if(!o) return; const img = o.mat.img; o.mat = matPreset(k); o.mat.img = img; onChange("o.mat.preset"); syncAll(); });
     grid.appendChild(m);
   });
@@ -2308,7 +2498,14 @@ function buildPanes(){
   $("gfName").addEventListener("keydown", e => { if(e.key === "Enter") $("gfGo").click(); });
   $("gfUp").addEventListener("click", () => $("fileFont").click());
 }
-function markMat(){ const o = curObj(); document.querySelectorAll(".mat").forEach(m => m.classList.toggle("active", !!o && m.dataset.k === o.mat.preset)); }
+function markMat(){
+  const o = curObj(); document.querySelectorAll(".mat").forEach(m => m.classList.toggle("active", !!o && m.dataset.k === o.mat.preset));
+  const fb = $("fMatBall"); if(!fb) return;
+  const cur = o && document.querySelector(`.mat[data-k="${o.mat.preset}"]`);
+  const img = cur && cur.querySelector("img");
+  fb.innerHTML = img ? `<img src="${img.src}" alt="">` : "";
+  $("fMatName").textContent = cur ? cur.title : "Матеріал";
+}
 
 /* ---------- fx stack UI ---------- */
 const ICO = {
@@ -2350,11 +2547,12 @@ function renderFx(){
       } else if(mn === 0 && mx === 1 && st === 1){
         const sw = cSwitchRaw(l, !!f.v[k], v => { f.v[k] = v ? 1 : 0; dirty = true; scheduleHist(); scheduleSave(); }); b.appendChild(sw); return;
       } else {
-        const dc = decOf(st);
+        const dc = decOf(st); w.classList.add("rng");
         w.innerHTML = `<div class="row"><label class="lbl">${l}</label><span class="val">${(+f.v[k]).toFixed(dc)}</span></div><input type="range" min="${mn}" max="${mx}" step="${st}" value="${f.v[k]}">`;
         const inp = w.querySelector("input"), val = w.querySelector(".val");
-        inp.addEventListener("input", () => { f.v[k] = parseFloat(inp.value); val.textContent = f.v[k].toFixed(dc); dirty = true; scheduleHist(); scheduleSave(); });
-        inp.addEventListener("dblclick", () => { f.v[k] = df; inp.value = df; val.textContent = (+df).toFixed(dc); dirty = true; });
+        const fill = () => inp.style.setProperty("--p", clamp((+inp.value - mn)/(mx - mn)*100, 0, 100).toFixed(1) + "%"); fill();
+        inp.addEventListener("input", () => { f.v[k] = parseFloat(inp.value); val.textContent = f.v[k].toFixed(dc); fill(); dirty = true; scheduleHist(); scheduleSave(); });
+        inp.addEventListener("dblclick", () => { f.v[k] = df; inp.value = df; val.textContent = (+df).toFixed(dc); fill(); dirty = true; });
       }
       b.appendChild(w);
     });
@@ -2399,8 +2597,10 @@ function renderLayers(){
     box.appendChild(r);
   });
   ["addText", "addShape", "addPrim", "addImage"].forEach(id => $(id).disabled = P.objects.length >= MAXO);
+  const o = curObj();
+  if($("fLayerName")){ $("fLayerName").textContent = o ? objLabel(o) : "Шари"; $("fLayerIco").innerHTML = o ? ICO[o.kind] : ICO.layers || ""; }
 }
-function select(i){ P.sel = clamp(i, 0, Math.max(0, P.objects.length - 1)); selFlash = performance.now(); renderLayers(); syncAll(); dirty = true; }
+function select(i){ P.sel = clamp(i, 0, Math.max(0, P.objects.length - 1)); selFlash = performance.now(); renderLayers(); syncAll(); dirty = true; if(SHP.tab === "base") renderShapes(); }
 function addLayer(o){
   if(P.objects.length >= MAXO){ alert("Максимум 6 шарів у сцені."); return; }
   const n = P.objects.length; if(n) o.pos = [clamp((n % 2 ? 1 : -1)*Math.ceil(n/2)*.35, -2, 2), 0, 0];
@@ -2447,6 +2647,7 @@ async function makeThumbs(){
     const st = { scene:(MAT[k][3].trans || 0) > .3 ? glassScene : matScene, motion:DEF_MOTION, fx:[], t:0, frame:0, objects:[newObj("prim", { prim:"sphere", pa:[.95, 0, 0], scale:1, mat:k })] };
     const url = await thumbRender(st, 96, 96, 1);
     const b = document.querySelector(`.mat[data-k="${k}"] .ball`); if(b) b.innerHTML = `<img src="${url}" alt="">`;
+    const o = curObj(); if(o && o.mat.preset === k) markMat();
     await new Promise(r => setTimeout(r, 0));
   }
   for(let i = 0; i < TPLS.length; i++){
@@ -2481,7 +2682,8 @@ function tick(){
   if(performance.now() - selFlash < 1500) dirty = true;
   if(dirty && !busy){ dirty = false; try{ renderMain(); }catch(e){ showErr(String(e.stack || e)); busy = true; } }
   if(now - fpsT > 1000){ $("fpsBadge").textContent = Math.round(fpsN*1000/(now - fpsT)) + " fps"; fpsN = 0; fpsT = now; }
-  $("timeBadge").textContent = curT.toFixed(1) + " / " + (+P.motion.loop).toFixed(1) + " с";
+  const tt = curT.toFixed(1) + " / " + (+P.motion.loop).toFixed(1) + " с";
+  $("timeBadge").textContent = tt; if(layout === "float") $("fTime").textContent = tt;
 }
 let rafOK = false;
 function loopRaf(){ rafOK = true; tick(); requestAnimationFrame(loopRaf); }
@@ -2491,14 +2693,14 @@ setInterval(() => { if(!rafOK || document.hidden) tick(); rafOK = false; }, 120)
 function setPlaying(p){
   playing = p;
   if(p) t0 = performance.now() - curT*1000;
-  $("playIco").innerHTML = p ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M7 4.5v15l12-7.5z"/>';
+  $("playIco").innerHTML = $("fPlayIco").innerHTML = p ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M7 4.5v15l12-7.5z"/>';
   dirty = true;
 }
 
 /* ================= interaction ================= */
 const drag = { mode:null, x:0, y:0, sx:0, sy:0, moved:false, btn:0 };
 let tool = "orbit";
-function setTool(t){ tool = t; $("toolOrbit").classList.toggle("on", t === "orbit"); $("toolMove").classList.toggle("on", t === "move"); $("stage").classList.toggle("tool-move", t === "move"); }
+function setTool(t){ tool = t; $("toolOrbit").classList.toggle("on", t === "orbit"); $("toolMove").classList.toggle("on", t === "move"); $("fOrbit").classList.toggle("accent", t === "orbit"); $("fMove").classList.toggle("accent", t === "move"); $("stage").classList.toggle("tool-move", t === "move"); }
 function pick(cx, cy){
   const r = out.getBoundingClientRect();
   const x = Math.floor((cx - r.left)/r.width*T.w), y = Math.floor((1 - (cy - r.top)/r.height)*T.h);
@@ -2597,7 +2799,7 @@ async function hasAlpha(src){
   const im = await loadImg(src); const c = document.createElement("canvas"); c.width = 64; c.height = 64; const x = c.getContext("2d");
   x.drawImage(im, 0, 0, 64, 64); const d = x.getImageData(0, 0, 64, 64).data; for(let i = 3; i < d.length; i += 4) if(d[i] < 250) return true; return false;
 }
-async function handleFile(f){
+async function handleFile(f, opts = {}){
   try{
     if(/\.json$/i.test(f.name)){ loadProject(await readAs(f, "readAsText")); return; }
     if(/\.hdr$/i.test(f.name)){ await loadEnvFile(f); return; }
@@ -2615,7 +2817,11 @@ async function handleFile(f){
         if(wasPrim){ tg.scale = mode === "revolve" ? 1.5 : 1.4; tg.depth = .16; tg.bevel = .035; }
         scheduleMasks(0); renderLayers(); syncAll(); scheduleHist(); scheduleSave();
       }
-      else addLayer(newObj("image", { src:id, srcName:f.name, maskMode:0, depth:alpha ? (svgLike ? .16 : .12) : .05, bevel:alpha ? (svgLike ? .035 : .025) : .012 }));
+      else {
+        const no = newObj("image", { src:id, srcName:f.name, maskMode:0, depth:alpha ? (svgLike ? .16 : .12) : .05, bevel:alpha ? (svgLike ? .035 : .025) : .012 });
+        if(opts.shape){ const c = curObj(); no.mat = c ? JSON.parse(JSON.stringify(c.mat)) : matPreset("chrome"); no.mat.img = false; no.scale = 1.4; }
+        addLayer(no);
+      }
       status("");
     }
   }catch(e){ alert("Не вдалося відкрити файл: " + (e.message || e)); status(""); }
@@ -2905,6 +3111,181 @@ async function openShare(){
   status(code.length > 60000 ? "Довге посилання: " + Math.round(code.length/1024) + " КБ" : "");
 }
 
+/* ================= floating layout ================= */
+let layout = "classic";
+const FP = { shapes:["fp-shapes"], templates:["fp-templates"], mat:["fp-matlib", "fp-matprops"], fx:["fp-fx"], obj:["fp-obj"], motion:["fp-motion"], scene:["fp-scene"], layers:["fp-layers"], export:["fp-export"] };
+const FP_SIDE = { shapes:"L", templates:"L", mat:"L", fx:"L", obj:"R", motion:"R", scene:"R", layers:"C", export:"T" };
+const MOVED = [];
+function moveInto(node, host){ if(!node) return; MOVED.push({ node, parent:node.parentNode, next:node.nextSibling }); host.appendChild(node); }
+function fpBody(id){ return $(id).querySelector(".fpb"); }
+function openFP(k){
+  const was = FP[k].every(id => $(id).classList.contains("open"));
+  Object.keys(FP).forEach(o => { if(FP_SIDE[o] === FP_SIDE[k] || (FP_SIDE[k] !== "R" && FP_SIDE[o] !== "R" && FP_SIDE[o] !== FP_SIDE[k] && window.innerWidth < 760)) FP[o].forEach(id => $(id).classList.remove("open")); });
+  if(!was) FP[k].forEach(id => $(id).classList.add("open"));
+  if(FP_SIDE[k] === "C") FP.export.forEach(id => $(id).classList.remove("open"));
+  if(FP_SIDE[k] === "T") FP.layers.forEach(id => $(id).classList.remove("open"));
+  markFP();
+}
+function markFP(){ document.querySelectorAll("#fui [data-fp]").forEach(b => b.classList.toggle("on", FP[b.dataset.fp].every(id => $(id).classList.contains("open")))); }
+function setLayout(m){
+  if(isEmbed) m = "classic";
+  if(m === layout){ fitCanvas(); return; }
+  if(m === "float"){
+    const left = document.querySelector("main.vs > .left");
+    const groups = left.querySelectorAll(":scope > .group");
+    moveInto(groups[0], fpBody("fp-layers")); moveInto(groups[1], fpBody("fp-templates"));
+    const mg = [...PANES.mat.children]; moveInto(mg[0], fpBody("fp-matlib")); moveInto(mg[1], fpBody("fp-matprops"));
+    ["obj", "motion", "scene", "fx", "export"].forEach(k => moveInto(PANES[k], fpBody("fp-" + k)));
+    document.body.classList.add("ui-float");
+  } else {
+    while(MOVED.length){ const r = MOVED.pop(); r.parent.insertBefore(r.node, r.next); }
+    document.body.classList.remove("ui-float");
+    document.querySelectorAll(".fpanel.open").forEach(p => p.classList.remove("open"));
+    const t = document.querySelector("#tabs .tab.active"); Object.entries(PANES).forEach(([k, p]) => p.classList.toggle("active", t && k === t.dataset.tab));
+  }
+  layout = m; try{ localStorage.setItem("volumeLayout", m); }catch(e){}
+  $("fQuality").value = String(quality);
+  markFP(); syncAll(); fitCanvas(); dirty = true;
+}
+/* ---------- shapes library (built-in, Iconify search, my library) ---------- */
+const SHP = { tab:"base", q:"", web:[], busy:false };
+const SHP_CHIPS = ["sparkle", "star", "heart", "flower", "y2k", "arrow", "cloud", "smile", "lightning", "crown", "butterfly", "skull", "planet", "diamond", "fire"];
+const SHP_SETS = "game-icons,mdi,fa6-solid,ph,ri,material-symbols,fluent,bxs,ic,healthicons,emojione-monotone,arcticons";
+let shapeIcons = null;
+function builtinIcons(){
+  if(shapeIcons) return shapeIcons;
+  const c = document.createElement("canvas"); c.width = c.height = 96; const x = c.getContext("2d");
+  shapeIcons = SHAPES.map(([k, l]) => { x.clearRect(0, 0, 96, 96); x.save(); x.translate(48, 48); x.scale(38, 38); x.fillStyle = "#000"; shapePath(x, { shape:k, points:5, inner:.45 }); x.fill("evenodd"); x.restore(); return { k, l, src:c.toDataURL() }; });
+  return shapeIcons;
+}
+function myLib(){ try{ return JSON.parse(localStorage.getItem("volumeShapeLib") || "[]"); }catch(e){ return []; } }
+function setMyLib(a){ try{ localStorage.setItem("volumeShapeLib", JSON.stringify(a.slice(0, 120))); }catch(e){ alert("Бібліотека переповнена — видали кілька фігур."); } }
+function cleanIconList(list){
+  const seen = new Set(), out = [];
+  for(const n of list){
+    const [pre, nm] = n.split(":");
+    if(/(^|-)(regular|outline|outlined|light|thin|bold|duotone|line|linear|twotone|sharp-outline)$/.test(nm) || /-outline(-|$)/.test(nm)) continue;
+    if((pre === "ph" || pre === "ri") && !/-fill$/.test(nm)) continue;
+    if(pre === "fluent" && !/-filled$/.test(nm)) continue;
+    const base = pre + ":" + nm.replace(/-(\d+)-filled$/, "-filled").replace(/-(fill|filled|solid|rounded)$/, "");
+    if(seen.has(base)) continue; seen.add(base); out.push(n);
+  }
+  return out;
+}
+async function searchIcons(q){
+  SHP.q = q; SHP.tab = "web"; SHP.busy = true; renderShapes();
+  try{
+    const url = (p, n) => "https://api.iconify.design/search?limit=" + n + "&prefixes=" + p + "&query=" + encodeURIComponent(q);
+    const [g, j] = await Promise.all([fetch(url("game-icons", 60)).then(r => r.json()).catch(() => ({ icons:[] })), fetch(url(SHP_SETS, 300)).then(r => r.json())]);
+    if(SHP.q !== q) return;
+    SHP.web = cleanIconList([...(g.icons || []), ...(j.icons || [])]).slice(0, 90);
+  }catch(e){ SHP.web = null; }
+  SHP.busy = false; renderShapes();
+}
+function renderShapes(){
+  const g = $("shpGrid"); if(!g) return; g.innerHTML = "";
+  document.querySelectorAll("#shpTabs .preset").forEach(b => b.classList.toggle("active", b.dataset.t === SHP.tab));
+  $("shpChips").style.display = SHP.tab === "web" ? "flex" : "none";
+  const cur = curObj();
+  const tile = (src, title, onClick, cls, onDel) => {
+    const it = el("div", "it" + (cls ? " " + cls : "")); it.title = title; it.innerHTML = `<img src="${src}" alt="" loading="lazy">`;
+    it.addEventListener("click", onClick);
+    if(onDel){ const x = el("span", "x", "×"); x.addEventListener("click", e => { e.stopPropagation(); onDel(); }); it.appendChild(x); }
+    g.appendChild(it); return it;
+  };
+  if(SHP.tab === "base"){
+    builtinIcons().forEach(s => { const it = tile(s.src, s.l, () => pickBuiltin(s.k)); if(cur && cur.kind === "shape" && cur.shape === s.k) it.classList.add("on"); });
+    return;
+  }
+  if(SHP.tab === "mine"){
+    const lib = myLib();
+    if(!lib.length){ g.appendChild(el("div", "msg", "Тут будуть твої фігури: вибери шар зі своїм SVG і натисни «Зберегти в бібліотеку».")); return; }
+    lib.forEach((s, i) => tile(s.svg, s.name, () => pickSvg(s.svg, s.name), "raw", () => { const a = myLib(); a.splice(i, 1); setMyLib(a); renderShapes(); }));
+    return;
+  }
+  if(SHP.busy){ g.appendChild(el("div", "msg", "Шукаю…")); return; }
+  if(SHP.web === null){ g.appendChild(el("div", "msg", "Пошук недоступний офлайн — спробуй «Базові» або встав свій SVG.")); return; }
+  if(!SHP.q){ g.appendChild(el("div", "msg", "Введи слово англійською або вибери підказку вище.")); return; }
+  if(!SHP.web.length){ g.appendChild(el("div", "msg", "Нічого не знайдено — спробуй інше слово.")); return; }
+  SHP.web.forEach(n => { const [pre, nm] = n.split(":"); tile(`https://api.iconify.design/${pre}/${nm}.svg?height=96`, n, async () => {
+    try{ status("Фігура…", true); const t = await (await fetch(`https://api.iconify.design/${pre}/${nm}.svg`)).text(); await pickSvg("data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(t))), nm); }
+    catch(e){ alert("Не вдалося завантажити фігуру."); } status("");
+  }); });
+}
+function pickBuiltin(k){
+  const cur = curObj();
+  if($("shpReplace").checked && cur && cur.kind === "shape"){ setK("o.shape", k); syncAll(); renderShapes(); return; }
+  const o = newObj("shape", { shape:k }); if(cur){ o.mat = JSON.parse(JSON.stringify(cur.mat)); o.mat.img = false; }
+  addLayer(o); renderShapes();
+}
+async function pickSvg(dataUrl, name){
+  const txt = decodeURIComponent(escape(atob(dataUrl.split(",")[1] || "")));
+  const f = new File([txt], (name || "shape") + ".svg", { type:"image/svg+xml" });
+  const cur = curObj();
+  if($("shpReplace").checked && cur){ fileMode = "shape"; replaceTarget = cur; await handleFile(f); }
+  else { fileMode = "add"; replaceTarget = null; await handleFile(f, { shape:true }); }
+  renderShapes();
+}
+function saveToLib(){
+  const o = curObj();
+  if(!o || o.kind !== "image" || !o.src || !/^data:image\/svg/.test(BLOBS[o.src] || "")){ alert("Спочатку вибери шар зі своїм SVG (з файлу, вставленого коду або пошуку)."); return; }
+  const a = myLib(); if(!a.some(s => s.svg === BLOBS[o.src])) a.unshift({ name:(o.srcName || "shape").replace(/\.svg$/i, ""), svg:BLOBS[o.src] });
+  setMyLib(a); SHP.tab = "mine"; renderShapes(); status("Збережено в бібліотеку"); setTimeout(() => status(""), 1400);
+}
+function bindShapes(){
+  $("shpChips").innerHTML = SHP_CHIPS.map(c => `<span>${c}</span>`).join("");
+  $("shpChips").querySelectorAll("span").forEach(s => s.addEventListener("click", () => { $("shpQ").value = s.textContent; searchIcons(s.textContent); }));
+  document.querySelectorAll("#shpTabs .preset").forEach(b => b.addEventListener("click", () => { SHP.tab = b.dataset.t; renderShapes(); if(SHP.tab === "web") $("shpQ").focus(); }));
+  let tq = 0;
+  $("shpQ").addEventListener("input", e => { clearTimeout(tq); const v = e.target.value.trim(); tq = setTimeout(() => { if(v) searchIcons(v); else { SHP.q = ""; renderShapes(); } }, 380); });
+  $("shpQ").addEventListener("keydown", e => { if(e.key === "Enter"){ clearTimeout(tq); const v = e.target.value.trim(); if(v) searchIcons(v); } e.stopPropagation(); });
+  $("shpSave").addEventListener("click", saveToLib);
+  renderShapes();
+}
+/* drag floating cards by their header */
+function bindPanelDrag(){
+  document.querySelectorAll("#fui .fpanel .fph").forEach(h => {
+    h.addEventListener("pointerdown", e => {
+      if(e.target.closest("button")) return;
+      const p = h.closest(".fpanel"), r = p.getBoundingClientRect();
+      const ox = e.clientX - r.left, oy = e.clientY - r.top;
+      h.setPointerCapture(e.pointerId); h.classList.add("dragging");
+      p.classList.add("moved"); p.style.left = r.left + "px"; p.style.top = r.top + "px"; p.style.right = "auto"; p.style.bottom = "auto"; p.style.maxHeight = (window.innerHeight - r.top - 16) + "px";
+      const mv = ev => { const L = clamp(ev.clientX - ox, 4, window.innerWidth - 60), T = clamp(ev.clientY - oy, 4, window.innerHeight - 40); p.style.left = L + "px"; p.style.top = T + "px"; p.style.maxHeight = (window.innerHeight - T - 16) + "px"; };
+      const upf = () => { h.classList.remove("dragging"); h.removeEventListener("pointermove", mv); h.removeEventListener("pointerup", upf); };
+      h.addEventListener("pointermove", mv); h.addEventListener("pointerup", upf);
+    });
+    h.addEventListener("dblclick", () => { const p = h.closest(".fpanel"); p.classList.remove("moved"); ["left", "top", "right", "bottom", "maxHeight"].forEach(k => p.style[k] = ""); });
+  });
+}
+function bindFloat(){
+  bindShapes(); bindPanelDrag();
+  document.querySelectorAll("#fui [data-quick]").forEach(b => b.addEventListener("click", () => { $(b.dataset.quick).click(); if(b.dataset.quick !== "addImage") setTimeout(() => { if(!$("fp-obj").classList.contains("open")) openFP("obj"); }, 0); }));
+  document.querySelectorAll("#fui [data-fp]").forEach(b => b.addEventListener("click", () => openFP(b.dataset.fp)));
+  document.querySelectorAll("#fui [data-close]").forEach(b => b.addEventListener("click", () => { b.closest(".fpanel").classList.remove("open"); if(b.closest("#fp-matlib, #fp-matprops")) FP.mat.forEach(id => $(id).classList.remove("open")); markFP(); }));
+  document.querySelectorAll("#fui [data-proxy]").forEach(b => b.addEventListener("click", () => { $(b.dataset.proxy).click(); setTimeout(() => { $("fPreview").classList.toggle("on", preview); }, 0); }));
+  $("fDup").addEventListener("click", () => { if(curObj()){ dupLayer(P.sel); renderLayers(); syncAll(); dirty = true; scheduleHist(); scheduleSave(); } });
+  $("fQuality").addEventListener("change", e => { $("qualitySel").value = e.target.value; $("qualitySel").dispatchEvent(new Event("change")); });
+  $("layoutClassic").addEventListener("click", () => setLayout("classic"));
+  $("layoutFloat").addEventListener("click", () => setLayout("float"));
+  const menu = $("fAddMenu");
+  document.querySelectorAll("#fui [data-menu]").forEach(b => b.addEventListener("click", e => {
+    e.stopPropagation();
+    if(menu.classList.contains("open") && menu._from === b){ menu.classList.remove("open"); return; }
+    const r = b.getBoundingClientRect(); menu._from = b; menu.classList.add("open");
+    const mh = menu.offsetHeight, mw = menu.offsetWidth;
+    menu.style.left = clamp(r.left + r.width/2 - mw/2, 8, window.innerWidth - mw - 8) + "px";
+    menu.style.top = (r.top > window.innerHeight/2 ? r.top - mh - 8 : r.bottom + 8) + "px";
+  }));
+  menu.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => {
+    menu.classList.remove("open"); const k = b.dataset.add;
+    ({ text:"addText", shape:"addShape", prim:"addPrim", image:"addImage", svg:"addSvgCode" })[k] && $(({ text:"addText", shape:"addShape", prim:"addPrim", image:"addImage", svg:"addSvgCode" })[k]).click();
+    if(k !== "image" && k !== "svg") setTimeout(() => { if(!$("fp-obj").classList.contains("open")) openFP("obj"); }, 0);
+  }));
+  document.addEventListener("pointerdown", e => { if(!e.target.closest("#fAddMenu") && !e.target.closest("[data-menu]")) menu.classList.remove("open"); });
+  window.addEventListener("keydown", e => { if(e.key === "Escape"){ menu.classList.remove("open"); if(layout === "float"){ document.querySelectorAll(".fpanel.open").forEach(p => p.classList.remove("open")); markFP(); } } });
+}
+
 /* ================= boot ================= */
 function bindUi(){
   document.querySelectorAll("#tabs .tab").forEach(t => t.addEventListener("click", () => {
@@ -2949,7 +3330,7 @@ async function boot(){
   const hash = new URLSearchParams(location.hash.slice(1));
   isEmbed = hash.get("embed") === "1";
   if(isEmbed) document.body.classList.add("embed");
-  buildPanes(); renderTemplates(); bindUi(); bindStage(); bindFiles();
+  buildPanes(); renderTemplates(); bindUi(); bindStage(); bindFiles(); bindFloat();
   let loaded = false;
   if(hash.get("s")){
     try{ const d = await unpackScene(hash.get("s")); Object.assign(BLOBS, d.b || {}); restore(JSON.stringify(d.s)); loaded = true; }
@@ -2960,6 +3341,8 @@ async function boot(){
   }
   if(!loaded) applyTemplate(0);
   if(isEmbed){ quality = 1; preview = true; }
+  let lay = "float"; try{ lay = localStorage.getItem("volumeLayout") || "float"; }catch(e){}
+  setLayout(isEmbed ? "classic" : lay);
   resize(); fitCanvas(); syncAll(); renderLayers(); renderFx(); pushHist();
   setPlaying(true);
   if(!isEmbed) setTimeout(() => makeThumbs().catch(e => console.warn(e)), 400);
