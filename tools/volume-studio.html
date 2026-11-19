@@ -1,0 +1,2861 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Volume Studio — 3D-типографіка, логотипи й форми з матеріалами та ефектами</title>
+<link rel="stylesheet" href="studio.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  main.vs{grid-template-columns:268px minmax(0,1fr) 340px;gap:14px;padding:14px 16px}
+  @media (max-width:1240px){ main.vs{grid-template-columns:minmax(0,1fr) 330px} main.vs .left{grid-column:1/-1;order:3;position:static;max-height:none} }
+  @media (max-width:920px){ main.vs{grid-template-columns:1fr} main.vs .right{position:static;max-height:none} }
+  .panel{top:72px;max-height:calc(100vh - 88px)}
+  .stage{min-height:calc(100vh - 150px);padding:18px 18px 64px;cursor:grab;touch-action:none}
+  .stage.grabbing{cursor:grabbing}
+  .stage.tool-move{cursor:move}
+  .stage.dragging{outline:2px dashed hsl(var(--primary));outline-offset:-8px}
+  #out{max-height:calc(100vh - 230px);max-width:100%;display:block}
+  .tabs.t6{grid-template-columns:repeat(3,1fr)}
+  .presets.c5{grid-template-columns:repeat(5,1fr)}
+  .presets.c6{grid-template-columns:repeat(6,1fr)}
+  .presets.c6 .preset{padding:7px 2px;font-size:11px}
+  .sub-h{font-size:11px;color:hsl(var(--muted-foreground));margin:14px 0 7px;font-weight:600;letter-spacing:.02em}
+  .seg-lbl{font-size:13px;font-weight:500;margin:12px 0 7px}
+  .prm{margin-top:10px}
+  .prm:first-child{margin-top:0}
+  .prm .row{margin-bottom:3px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 8px}
+  .two .prm,.three .prm{margin-top:6px}
+  .three .lbl{font-size:12px}
+  textarea.txt{width:100%;min-height:56px;resize:vertical;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+    border-radius:8px;padding:9px 10px;font-size:16px;font-weight:700;font-family:inherit;outline:none;text-align:center;line-height:1.25}
+  input.txt{width:100%;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none}
+  .inl{display:flex;gap:6px;align-items:center}
+  .inl .btn{padding:7px 10px}
+  .preset.sm{font-size:11.5px;padding:7px 4px}
+
+  /* layers */
+  .layers{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+  .layer{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer;
+    background:hsl(var(--card-2));font-size:12.5px;user-select:none}
+  .layer:hover{border-color:hsl(240 4% 22%)}
+  .layer.active{border-color:hsl(0 0% 98%/.55);background:hsl(0 0% 98%/.07)}
+  .layer.off .nm{opacity:.45}
+  .layer .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:hsl(var(--muted));flex:none}
+  .layer .ic svg{width:13px;height:13px}
+  .layer .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .layer .lb{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:hsl(var(--muted-foreground));flex:none}
+  .layer .lb:hover{background:hsl(var(--muted));color:hsl(var(--foreground))}
+  .layer .lb svg{width:13px;height:13px}
+  .addgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .addgrid .btn{font-size:12px;padding:7px 8px;justify-content:flex-start}
+
+  /* thumbnails */
+  .thumbs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .thumb{position:relative;border-radius:9px;overflow:hidden;border:1px solid hsl(var(--border));cursor:pointer;background:hsl(var(--card-2));aspect-ratio:1/1}
+  .thumb:hover{border-color:hsl(240 4% 30%)}
+  .thumb.active{border-color:hsl(0 0% 98%/.7)}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb span{position:absolute;left:6px;bottom:5px;font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+  .thumb .ph{position:absolute;inset:0;background:linear-gradient(110deg,hsl(240 4% 10%) 30%,hsl(240 4% 15%) 50%,hsl(240 4% 10%) 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+  @keyframes shim{to{background-position:-200% 0}}
+  .mats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .mat{cursor:pointer;text-align:center;font-size:10.5px;color:hsl(var(--muted-foreground));border-radius:8px;padding:4px 2px 5px;border:1px solid transparent}
+  .mat:hover{color:hsl(var(--foreground));background:hsl(var(--card-2))}
+  .mat.active{border-color:hsl(0 0% 98%/.55);color:hsl(var(--foreground))}
+  .mat .ball{width:100%;aspect-ratio:1/1;border-radius:50%;overflow:hidden;background:hsl(var(--card-2));margin-bottom:3px}
+  .mat .ball img{width:100%;height:100%;display:block}
+  .mat-cat{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:hsl(var(--muted-foreground));margin:12px 0 6px;font-weight:600}
+
+  /* fx stack */
+  .fxlist{display:flex;flex-direction:column;gap:6px}
+  .fx{border:1px solid hsl(var(--border));border-radius:9px;background:hsl(var(--card-2))}
+  .fx.off{opacity:.6}
+  .fx-h{display:flex;align-items:center;gap:6px;padding:7px 8px;cursor:pointer;user-select:none}
+  .fx-h .nm{flex:1;font-size:12.5px;font-weight:600}
+  .fx-h .lb{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:hsl(var(--muted-foreground))}
+  .fx-h .lb:hover{background:hsl(var(--muted));color:hsl(var(--foreground))}
+  .fx-h .lb svg{width:13px;height:13px}
+  .fx-b{padding:2px 10px 10px;display:none}
+  .fx.open .fx-b{display:block}
+  .fx .switch{transform:scale(.85)}
+  .fxadd{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+  .fxadd .preset{font-size:11px;padding:7px 3px}
+
+  .stage-bar .iconbtn.on{background:hsl(var(--primary));color:hsl(var(--primary-foreground));border-color:hsl(var(--primary))}
+  .stage-bar select{width:auto;padding:5px 26px 5px 8px;font-size:12px;background-position:right 7px center}
+  .hint{position:absolute;top:12px;left:14px;font-size:11px;color:hsl(var(--muted-foreground));pointer-events:none;
+    background:hsl(var(--background)/.6);padding:4px 8px;border-radius:6px;backdrop-filter:blur(6px)}
+  .err{position:absolute;inset:auto 16px 60px 16px;background:hsl(0 60% 18%);border:1px solid hsl(0 60% 35%);color:#fff;font:12px/1.4 ui-monospace,monospace;
+    padding:10px;border-radius:8px;white-space:pre-wrap;max-height:40vh;overflow:auto;display:none;z-index:5}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;z-index:50}
+  .modal.open{display:grid}
+  .modal .box{width:min(560px,92vw);background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:12px;padding:18px}
+  .modal h3{margin:0 0 10px;font-size:15px}
+  .modal textarea{width:100%;height:84px;background:hsl(var(--input));border:1px solid hsl(var(--border));color:hsl(var(--foreground));border-radius:8px;
+    padding:8px;font:11.5px/1.4 ui-monospace,monospace;resize:none;outline:none;margin-bottom:8px}
+  .kbd{font-size:10.5px;color:hsl(var(--muted-foreground));line-height:1.7}
+  .kbd b{display:inline-block;min-width:18px;text-align:center;padding:0 5px;border-radius:4px;background:hsl(var(--muted));color:hsl(var(--foreground));font-weight:600}
+
+  /* embed mode: canvas only */
+  body.embed header,body.embed footer,body.embed .left,body.embed .right,body.embed .stage-bar,body.embed .hint{display:none!important}
+  body.embed main.vs{display:block;padding:0}
+  body.embed .stage{min-height:100vh;height:100vh;padding:0;border-radius:0;background:none}
+  body.embed #out{max-height:100vh;max-width:100vw;border-radius:0;box-shadow:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7">
+          <path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2"/>
+        </svg>
+      </div>
+      <div><h1>Volume Studio</h1><p>текст · лого · форми → 3D · матеріали · світло · рух · ефекти</p></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="undoBtn" title="Скасувати (⌘Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+      <button class="btn" id="redoBtn" title="Повторити (⇧⌘Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+      <button class="btn" id="openBtn">Відкрити</button>
+      <button class="btn" id="saveBtn">Зберегти</button>
+      <button class="btn" id="shareBtn">Поділитись</button>
+      <button class="btn primary" id="pngBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>PNG</button>
+    </div>
+  </header>
+
+  <main class="vs">
+    <aside class="card panel left">
+      <div class="group">
+        <h2>Шари</h2>
+        <div class="layers" id="layers"></div>
+        <div class="addgrid">
+          <button class="btn" id="addText"><b>T</b>&nbsp;Текст</button>
+          <button class="btn" id="addShape">★&nbsp;Форма 2D</button>
+          <button class="btn" id="addPrim">◆&nbsp;3D-фігура</button>
+          <button class="btn" id="addImage">⬒&nbsp;Лого / фото</button>
+        </div>
+        <div class="note">SVG, PNG з прозорістю або фото — перетягни файл на превʼю. Максимум 6 шарів.</div>
+      </div>
+      <div class="group">
+        <h2>Шаблони</h2>
+        <div class="thumbs" id="templates"></div>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="stage" id="stage">
+        <canvas id="out" width="1080" height="1080"></canvas>
+        <div class="hint" id="hint">тягни — обертати · колесо — зум · ⇧ тягни — панорама · клік — вибрати шар</div>
+        <div class="err" id="err"></div>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Відтворення (пробіл)"><svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></div>
+          <span class="badge" id="timeBadge">0.0 / 6.0 с</span>
+          <div class="iconbtn on" id="toolOrbit" title="Камера: обертати"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
+          <div class="iconbtn" id="toolMove" title="Рухати шар (колесо — масштаб)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></svg></div>
+          <div class="iconbtn" id="viewReset" title="Скинути камеру"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div>
+          <div class="iconbtn" id="previewBtn" title="Перегляд з інтерактивом (як у embed)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <span class="spacer"></span>
+          <select id="qualitySel" title="Якість превʼю">
+            <option value="0">Чернетка</option>
+            <option value="1" selected>Норм</option>
+            <option value="2">Висока</option>
+          </select>
+          <span class="badge"><span class="dot" id="dot"></span><span id="status">Готово</span></span>
+          <span class="badge" id="fpsBadge">— fps</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card panel right">
+      <div class="tabs t6" id="tabs">
+        <div class="tab active" data-tab="obj">Обʼєкт</div>
+        <div class="tab" data-tab="mat">Матеріал</div>
+        <div class="tab" data-tab="motion">Рух</div>
+        <div class="tab" data-tab="scene">Сцена</div>
+        <div class="tab" data-tab="fx">Ефекти</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+      <div id="panes"></div>
+    </aside>
+  </main>
+  <footer>один файл · WebGL2 raymarching · SDF-екструзія тексту й SVG · PBR-матеріали, скло з дисперсією, HDR-оточення · клонер · рух · 27 ефектів · PNG / MP4 / GLB · все локально</footer>
+</div>
+
+<div class="modal" id="shareModal">
+  <div class="box">
+    <h3>Поділитись сценою</h3>
+    <div class="note" style="margin:0 0 10px">Уся сцена закодована в посиланні — сервер не потрібен. Великі фото роблять посилання довгим.</div>
+    <div class="sub-h">Посилання на редактор</div>
+    <textarea id="shareLink" readonly></textarea>
+    <div class="sub-h">Embed для сайту (лише канвас, тягни — обертати)</div>
+    <textarea id="shareEmbed" readonly></textarea>
+    <div class="btns-grid c3">
+      <button class="btn" id="copyLink">Копіювати посилання</button>
+      <button class="btn" id="copyEmbed">Копіювати iframe</button>
+      <button class="btn primary" id="shareClose">Закрити</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileImg" accept="image/*,.svg" hidden>
+<input type="file" id="fileEnv" accept=".hdr,image/*" hidden>
+<input type="file" id="fileBg" accept="image/*" hidden>
+<input type="file" id="fileFont" accept=".ttf,.otf,.woff,.woff2" hidden>
+<input type="file" id="fileJson" accept=".json,application/json" hidden>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+"use strict";
+/* ================= shaders ================= */
+const SH_VS = `#version 300 es
+out vec2 vUv;
+void main(){ vec2 p = vec2(float((gl_VertexID<<1)&2), float(gl_VertexID&2)); vUv = p; gl_Position = vec4(p*2.-1., 0., 1.); }`;
+
+const GLSL_COMMON = `
+#define PI 3.14159265
+#define TAU 6.28318531
+mat2 rot(float a){ float c=cos(a), s=sin(a); return mat2(c,-s,s,c); }
+float hash13(vec3 p){ p = fract(p*.1031); p += dot(p, p.zyx+31.32); return fract((p.x+p.y)*p.z); }
+float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*.1031); p3 += dot(p3, p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+float noise(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.-2.*f);
+  return mix(mix(mix(hash13(i),hash13(i+vec3(1,0,0)),f.x),mix(hash13(i+vec3(0,1,0)),hash13(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(hash13(i+vec3(0,0,1)),hash13(i+vec3(1,0,1)),f.x),mix(hash13(i+vec3(0,1,1)),hash13(i+vec3(1,1,1)),f.x),f.y),f.z)*2.-1.; }
+float fbm(vec3 p){ float a=.5, s=0.; for(int i=0;i<4;i++){ s+=a*noise(p); p=p*2.03+vec3(1.7,9.2,3.1); a*=.5; } return s; }
+`;
+
+const SH_SCENE = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2DArray;
+#define MAXO 6
+layout(location=0) out vec4 oCol;
+layout(location=1) out vec4 oAux;
+uniform vec2 uRes, uOff;
+uniform vec3 uCamPos; uniform mat3 uCamRot; uniform float uTanF;
+uniform int uN;
+uniform mat4 uInv[MAXO];
+uniform vec4 uG0[MAXO]; uniform vec4 uG1[MAXO]; uniform vec4 uG2[MAXO];
+uniform vec4 uD0[MAXO]; uniform vec4 uD1[MAXO];
+uniform vec4 uC0[MAXO]; uniform vec4 uC1[MAXO]; uniform vec4 uI0[MAXO]; uniform vec4 uBnd[MAXO]; uniform vec4 uBox[MAXO];
+uniform vec4 uM0[MAXO]; uniform vec4 uM1[MAXO]; uniform vec4 uM2[MAXO]; uniform vec4 uM3[MAXO];
+uniform vec4 uM4[MAXO]; uniform vec4 uM5[MAXO]; uniform vec4 uM6[MAXO];
+uniform float uK, uStepK, uWave;
+uniform vec3 uFlow;
+uniform sampler2DArray uSdf;
+uniform sampler2DArray uImg;
+uniform sampler2D uEnv;
+uniform float uEnvMax, uEnvInt, uEnvRot;
+uniform vec3 uKeyDir, uKeyCol;
+uniform float uShadowK;
+uniform int uFloorMode;
+uniform float uFloorY, uFloorRefl, uFloorShadow, uFloorFade;
+uniform vec2 uFloorC;
+uniform vec3 uFloorCol;
+uniform int uBgMode;
+uniform vec3 uBg1, uBg2;
+uniform float uBgAng, uBgBlur;
+uniform sampler2D uBgImg;
+uniform vec4 uBgFit;
+uniform float uExpo; uniform int uTone; uniform int uQ; uniform float uTransp; uniform float uRefrEnv; uniform float uSeed;
+${GLSL_COMMON}
+float gBT = .3;
+bool gFB = false;
+float smin(float a, float b, float k){ float h = max(k-abs(a-b),0.)/k; return min(a,b) - h*h*k*.25; }
+
+bool gHQ = false;
+vec2 sdfTex(vec2 uv, float layer){
+  if(!gHQ) return textureLod(uSdf, vec3(uv, layer), 0.).rg;
+  vec2 ts = vec2(textureSize(uSdf, 0).xy);
+  vec2 st = uv*ts - .5; vec2 i = floor(st); vec2 f = st - i;
+  vec2 f2 = f*f, f3 = f2*f;
+  vec2 w0 = (1. - 3.*f + 3.*f2 - f3)/6., w1 = (4. - 6.*f2 + 3.*f3)/6., w2 = (1. + 3.*f + 3.*f2 - 3.*f3)/6., w3 = f3/6.;
+  vec2 g0 = w0 + w1, g1 = w2 + w3;
+  vec2 h0 = (i - .5 + w1/g0)/ts, h1 = (i + 1.5 + w3/g1)/ts;
+  vec2 a = textureLod(uSdf, vec3(h0.x, h0.y, layer), 0.).rg, b = textureLod(uSdf, vec3(h1.x, h0.y, layer), 0.).rg;
+  vec2 c = textureLod(uSdf, vec3(h0.x, h1.y, layer), 0.).rg, d = textureLod(uSdf, vec3(h1.x, h1.y, layer), 0.).rg;
+  return g0.y*(g0.x*a + g1.x*b) + g1.y*(g0.x*c + g1.x*d);
+}
+float gInfl = 0.;
+float sd2(int i, vec2 q){
+  float S = uG1[i].z;
+  vec2 uv = q/(2.*S) + .5; uv.y = 1. - uv.y;
+  vec2 cu = clamp(uv, vec2(0.), vec2(1.));
+  vec2 s = sdfTex(cu, uG0[i].y);
+  float d = s.x*S;
+  gInfl = s.y;
+  float e = length(uv-cu)*2.*S;
+  return e > 0. ? max(e, d - e) : d;
+}
+float sdRoundCone(vec3 p, float r1, float r2, float h){
+  float b = (r1-r2)/h; float a = sqrt(max(1.-b*b, 0.));
+  vec2 q = vec2(length(p.xz), p.y);
+  float k = dot(q, vec2(-b,a));
+  if(k < 0.) return length(q) - r1;
+  if(k > a*h) return length(q-vec2(0.,h)) - r2;
+  return dot(q, vec2(a,b)) - r1;
+}
+float sdOcta(vec3 p, float s){
+  p = abs(p); float m = p.x+p.y+p.z-s; vec3 q;
+  if(3.*p.x < m) q = p.xyz; else if(3.*p.y < m) q = p.yzx; else if(3.*p.z < m) q = p.zxy; else return m*.57735027;
+  float k = clamp(.5*(q.z-q.y+s), 0., s); return length(vec3(q.x, q.y-s+k, q.z-k));
+}
+float sdBase(int i, vec3 p){
+  int k = int(uG0[i].x + .5);
+  vec4 g = uG2[i];
+  float r = uG0[i].w;
+  if(k == 0){
+    float h = uG0[i].z;
+    float d2 = sd2(i, p.xy);
+    float hz = h;
+    float inf = uG1[i].x;
+    if(inf > 0.){ float t = clamp(gInfl/max(g.x, 1e-3), 0., 1.); float s = 1. - (1. - t)*(1. - t); hz = h*mix(1., s, inf); hz = max(hz, min(r, h)*.9 + 1e-3); }
+    if(uG1[i].y < .5){
+      r = min(r, hz*.98);
+      vec2 w = vec2(d2 + r, abs(p.z) - hz + r);
+      return min(max(w.x, w.y), 0.) + length(max(w, 0.)) - r;
+    }
+    vec2 w = vec2(d2, abs(p.z) - hz);
+    return max(max(w.x, w.y), (w.x + w.y + r)*.70710678);
+  }
+  if(k == 1) return length(p) - g.x;
+  if(k == 2){ vec3 q = abs(p) - g.xyz + r; return length(max(q, 0.)) + min(max(q.x, max(q.y, q.z)), 0.) - r; }
+  if(k == 3){ vec2 q = vec2(length(p.xy) - g.x, p.z); return length(q) - g.y; }
+  if(k == 4){ vec3 q = p; q.y -= clamp(q.y, -g.x, g.x); return length(q) - g.y; }
+  if(k == 5){ vec2 q = vec2(length(p.xz) - g.x + r, abs(p.y) - g.y + r); return min(max(q.x, q.y), 0.) + length(max(q, 0.)) - r; }
+  if(k == 6) return sdRoundCone(p + vec3(0., g.z*.5, 0.), g.x, g.y, g.z);
+  if(k == 7) return sdOcta(p, g.x) - r;
+  if(k == 8){ vec2 q = vec2(length(p.xz) - g.x, p.y); return length(q) - g.y; }
+  return length(p) - g.x;
+}
+float sdInst(int i, vec3 p, float id, out vec3 lp){
+  float sm = 1.;
+  int mt = int(uI0[i].x + .5);
+  if(mt > 0){
+    float ph = uI0[i].z + id*uI0[i].w, a = uI0[i].y;
+    if(mt == 1) p.xz = rot(ph)*p.xz;
+    else if(mt == 2) p.yz = rot(ph)*p.yz;
+    else if(mt == 3) p.xy = rot(ph)*p.xy;
+    else if(mt == 4) p.xz = rot(a*sin(ph))*p.xz;
+    else if(mt == 5){ p.y -= a*sin(ph); p.xy = rot(a*.35*cos(ph))*p.xy; }
+    else if(mt == 6){ float b = abs(sin(ph*.5)); p.y -= a*b*1.6; float sq = 1. + .18*a*pow(1.-b, 6.); p.y *= sq; p.x /= sqrt(sq); }
+    else if(mt == 7){ sm = 1. + a*sin(ph); p /= sm; }
+    else if(mt == 8){ p.yz = rot(ph)*p.yz; p.xz = rot(ph)*p.xz; }
+    else if(mt == 9) p.xy = rot(a*sin(ph))*p.xy;
+    else if(mt == 10) p.yz = rot(a*sin(ph))*p.yz;
+  }
+  vec4 d0 = uD0[i], d1 = uD1[i];
+  if(d0.z != 0.) p.x /= max(1. + d0.z*p.y, .15);
+  if(d0.x != 0.) p.xz = rot(d0.x*p.y)*p.xz;
+  if(d0.y != 0.) p.xy = rot(d0.y*p.x)*p.xy;
+  if(d1.x != 0.) p.z += d1.x*sin(p.x*d1.y + uWave);
+  if(d0.w != 0.){
+    float drip = d0.w*(.55 + .45*noise(vec3(p.x*3.1, 0., id*1.7)))*(.5 + .5*noise(vec3(p.x*7.3, 3., 0.)));
+    p.y += drip*smoothstep(.35, -.9, p.y);
+  }
+  lp = p;
+  float d = sdBase(i, p);
+  if(d1.z != 0.) d += d1.z*noise(p*d1.w + uFlow + vec3(id*3.7));
+  return d*sm;
+}
+float sdObj(int i, vec3 pw, out vec3 lp, out float id){
+  vec3 p = (uInv[i]*vec4(pw, 1.)).xyz;
+  float sc = uG1[i].w;
+  id = 0.; lp = p;
+  int cm = int(uC0[i].x + .5);
+  if(cm == 3){
+    float n = max(uC0[i].y, 1.); float ss = max(uC0[i].z, .05); vec3 off = uC1[i].xyz; float rs = uC1[i].w;
+    float best = 1e9;
+    for(int k = 0; k < 12; k++){
+      float fk = float(k); if(fk >= n) break;
+      float c = fk - (n-1.)*.5;
+      vec3 q = p - off*c;
+      q.xz = rot(rs*c)*q.xz;
+      float s = pow(ss, c);
+      vec3 l; float d = sdInst(i, q/s, fk, l)*s;
+      if(d < best){ best = d; lp = l; id = fk; }
+    }
+    return best*sc;
+  }
+  if(cm == 1){
+    vec3 n = max(uC0[i].yzw, vec3(1.)); vec3 s = max(uC1[i].xyz, vec3(1e-3));
+    vec3 hn = (n-1.)*.5; vec3 kk = clamp(floor(p/s + hn + .5), vec3(0.), n-1.);
+    p -= (kk-hn)*s; id = kk.x + kk.y*n.x + kk.z*n.x*n.y;
+  } else if(cm == 2){
+    float n = max(uC0[i].y, 1.); float R = uC1[i].x; bool zx = uC0[i].z > .5;
+    vec2 q = zx ? p.xy : p.xz;
+    float sec = TAU/n; float a = atan(q.y, q.x); float kk = floor(a/sec + .5); float ak = kk*sec;
+    q = rot(ak)*q; q.x -= R;
+    if(uC0[i].w < .5) q = rot(-ak)*q;
+    if(zx) p.xy = q; else p.xz = q;
+    id = mod(kk + n, n);
+  }
+  return sdInst(i, p, id, lp)*sc;
+}
+float map(vec3 p){
+  float d = 1e9; vec3 lp; float id; bool fb = false;
+  for(int i = 0; i < MAXO; i++){
+    if(i >= uN) break;
+    vec3 bq = abs((uInv[i]*vec4(p, 1.)).xyz) - uBox[i].xyz;
+    float db = (length(max(bq, 0.)) + min(max(bq.x, max(bq.y, bq.z)), 0.))*uG1[i].w;
+    bool ub = db > gBT;
+    float di = ub ? db : sdObj(i, p, lp, id);
+    if(di < d) fb = ub;
+    d = uK > 1e-4 ? smin(d, di, uK) : min(d, di);
+  }
+  gFB = fb;
+  return d;
+}
+vec3 calcNormal(vec3 p, float e){
+  const vec2 k = vec2(1., -1.);
+  gHQ = true;
+  vec3 n = k.xyy*map(p + k.xyy*e) + k.yyx*map(p + k.yyx*e) + k.yxy*map(p + k.yxy*e) + k.xxx*map(p + k.xxx*e);
+  gHQ = false;
+  return normalize(n);
+}
+/* union of the objects' oriented bounding boxes along a ray (t in world units) */
+bool hitBounds(vec3 ro, vec3 rd, float pad, out float t0, out float t1){
+  t0 = 1e9; t1 = -1e9;
+  for(int i = 0; i < MAXO; i++){
+    if(i >= uN) break;
+    vec3 o = (uInv[i]*vec4(ro, 1.)).xyz; vec3 d = mat3(uInv[i])*rd;
+    vec3 h = uBox[i].xyz + pad/uG1[i].w;
+    d = vec3(abs(d.x) < 1e-7 ? 1e-7 : d.x, abs(d.y) < 1e-7 ? 1e-7 : d.y, abs(d.z) < 1e-7 ? 1e-7 : d.z);
+    vec3 iv = 1./d; vec3 ta = (-h - o)*iv, tb = (h - o)*iv;
+    vec3 mn = min(ta, tb), mx = max(ta, tb);
+    float a0 = max(max(mn.x, mn.y), mn.z), a1 = min(min(mx.x, mx.y), mx.z);
+    if(a1 < max(a0, 0.)) continue;
+    t0 = min(t0, max(a0, 0.)); t1 = max(t1, a1);
+  }
+  return t1 > 0.;
+}
+float nearBounds(vec3 p){ float d = 1e9; for(int i = 0; i < MAXO; i++){ if(i >= uN) break; vec3 q = abs((uInv[i]*vec4(p, 1.)).xyz) - uBox[i].xyz; d = min(d, (length(max(q, 0.)) + min(max(q.x, max(q.y, q.z)), 0.))*uG1[i].w); } return d; }
+float calcAO(vec3 p, vec3 n){
+  float o = 0., s = 1.;
+  for(int i = 0; i < 5; i++){
+    float h = .015 + .11*float(i); vec3 q = p + n*h;
+    float d = map(q); if(gFB) d = max(d, h);
+    if(uFloorMode > 0) d = min(d, q.y - uFloorY);
+    o += (h - d)*s; s *= .8;
+  }
+  return clamp(1. - 2.2*o, 0., 1.);
+}
+float softShadow(vec3 ro, vec3 rd, float k){
+  float b0, b1;
+  if(!hitBounds(ro, rd, clamp(9./k, .25, 1.6) + uK*.3, b0, b1)) return 1.;
+  float res = 1., t = max(.02, b0);
+  int ns = uQ == 0 ? 32 : (uQ == 1 ? 56 : 84);
+  float gb = gBT; gBT = clamp(14./k, .3, 1.6);
+  for(int i = 0; i < 84; i++){
+    if(i >= ns || t > b1) break;
+    float h = map(ro + rd*t);
+    if(!gFB) res = min(res, k*h/t);
+    t += clamp(h, .012, .25);
+    if(res < .002 || t > 14.) break;
+  }
+  gBT = gb;
+  res = clamp(res, 0., 1.);
+  return res*res*(3. - 2.*res);
+}
+float floorAO(vec3 p){
+  if(nearBounds(p) > 1.25) return 1.;
+  float o = 0., w = 1.; float gb = gBT; gBT = 1.25;
+  for(int i = 1; i <= 4; i++){ float h = .07*float(i*i); float d = map(p + vec3(0., h, 0.)); if(gFB) d = h; o += max(h - d, 0.)/h*w; w *= .6; }
+  gBT = gb;
+  return clamp(1. - o*.55, 0., 1.);
+}
+bool traceLite(vec3 ro, vec3 rd, float tmax, out float t){
+  t = 0.;
+  float b0, b1;
+  if(!hitBounds(ro, rd, .02 + uK*.3, b0, b1)) return false;
+  t = b0; tmax = min(tmax, b1);
+  int ns = uQ == 2 ? 110 : 72;
+  for(int i = 0; i < 110; i++){
+    if(i >= ns) break;
+    float d = map(ro + rd*t);
+    if(d < .0015 + t*.0015) return true;
+    t += d*uStepK;
+    if(t > tmax) break;
+  }
+  return false;
+}
+
+/* ---------- materials ---------- */
+struct M { vec4 a; vec4 b; vec4 c; vec4 d; vec4 e; vec4 f; vec4 g; };
+vec3 hsv(float h, float s, float v){ vec3 k = clamp(abs(fract(h + vec3(0., 2./3., 1./3.))*6. - 3.) - 1., 0., 1.); return v*mix(vec3(1.), k, s); }
+float pat(int k, vec3 q, vec3 lp, float s){
+  if(k == 1) return clamp(.5 + lp.y*.5*s, 0., 1.);
+  if(k == 2) return smoothstep(.35, .65, abs(fract((lp.x + lp.y)*s*1.5)*2. - 1.));
+  if(k == 3) return mod(floor(q.x*2.) + floor(q.y*2.) + floor(q.z*2.), 2.);
+  if(k == 4){ vec3 f = fract(q*2.) - .5; return 1. - smoothstep(.2, .26, length(f)); }
+  if(k == 5){ float v = sin(q.x*2. + q.y*1.3 + fbm(q*1.2)*5.); return smoothstep(.8, 1., 1. - abs(v)); }
+  if(k == 6) return clamp(fbm(q*1.5)*.9 + .5, 0., 1.);
+  if(k == 7){ float r = length(q.xz)*3. + fbm(q*vec3(1., 4., 1.))*.8; return smoothstep(.25, .75, abs(fract(r)*2. - 1.)); }
+  if(k == 8){ vec2 g = floor(q.xy*3.); float ch = mod(g.x + g.y, 2.); vec2 f = fract(q.xy*3.);
+    float sx = smoothstep(.0, .6, abs(sin(f.y*PI*2.))); float sy = smoothstep(.0, .6, abs(sin(f.x*PI*2.))); return mix(sx, sy, ch); }
+  return 0.;
+}
+M getMat(int i, vec3 lp, vec3 n){
+  M m; m.a = uM0[i]; m.b = uM1[i]; m.c = uM2[i]; m.d = uM3[i]; m.e = uM4[i]; m.f = uM5[i]; m.g = uM6[i];
+  int pk = int(m.f.x + .5); float s = m.f.y;
+  if(pk == 9){ vec3 h = hsv(fract(lp.y*s*.3 + lp.x*s*.12 + n.x*.15 + n.y*.1), .6, 1.); m.a.rgb *= h*h; }
+  else if(pk > 0){ float t = pat(pk, lp*s, lp, s); m.a.rgb = mix(m.a.rgb, m.g.rgb, t); if(pk == 5 || pk == 8) m.b.x = mix(m.b.x, m.b.x*1.6 + .05, t); }
+  if(m.g.w > .5 && uG0[i].x < .5){
+    vec3 nl = normalize(mat3(uInv[i])*n);
+    float S = uG1[i].z; vec2 uv = lp.xy/(2.*S) + .5; uv.y = 1. - uv.y;
+    vec4 ic = textureLod(uImg, vec3(uv, uG0[i].y), 0.);
+    float fw = smoothstep(.3, .75, abs(nl.z));
+    m.a.rgb = mix(m.a.rgb, pow(ic.rgb, vec3(2.2)), fw);
+  }
+  return m;
+}
+M matAt(vec3 p, vec3 n, out int bi){
+  float ds[MAXO]; vec3 lps[MAXO];
+  float dmin = 1e9; bi = 0;
+  for(int i = 0; i < MAXO; i++){
+    ds[i] = 1e9; lps[i] = vec3(0.);
+    if(i >= uN) continue;
+    vec4 b = uBnd[i];
+    if(length(p - b.xyz) - b.w > .35) continue;
+    vec3 lp; float id; float d = sdObj(i, p, lp, id);
+    ds[i] = d; lps[i] = lp;
+    if(d < dmin){ dmin = d; bi = i; }
+  }
+  M acc; acc.a = vec4(0.); acc.b = vec4(0.); acc.c = vec4(0.); acc.d = vec4(0.); acc.e = vec4(0.); acc.f = vec4(0.); acc.g = vec4(0.);
+  float ws = 0.;
+  for(int i = 0; i < MAXO; i++){
+    if(ds[i] > 1e8) continue;
+    float w = uK > 1e-4 ? exp(-max(ds[i] - dmin, 0.)*5./uK) : (i == bi ? 1. : 0.);
+    if(w < .02) continue;
+    M mi = getMat(i, lps[i], n);
+    acc.a += mi.a*w; acc.b += mi.b*w; acc.c += mi.c*w; acc.d += mi.d*w; acc.e += mi.e*w; acc.f += mi.f*w; acc.g += mi.g*w; ws += w;
+  }
+  if(ws <= 0.){ acc = getMat(bi, lps[bi], n); ws = 1.; }
+  acc.a /= ws; acc.b /= ws; acc.c /= ws; acc.d /= ws; acc.e /= ws; acc.f /= ws; acc.g /= ws;
+  return acc;
+}
+
+/* ---------- lighting ---------- */
+vec3 neutralTM(vec3 c){
+  const float sc = .76; const float de = .15;
+  float x = min(c.r, min(c.g, c.b)); float off = x < .08 ? x - 6.25*x*x : .04; c -= off;
+  float pk = max(c.r, max(c.g, c.b)); if(pk < sc) return c;
+  const float d = 1. - sc; float np = 1. - d*d/(pk + d - sc); c *= np/pk;
+  float g = 1. - 1./(de*(pk - np) + 1.); return mix(c, vec3(np), g);
+}
+vec3 tonemap(vec3 c){
+  c = max(c, 0.);
+  if(uTone == 1) c = clamp((c*(2.51*c + .03))/(c*(2.43*c + .59) + .14), 0., 1.);
+  else if(uTone == 0) c = neutralTM(c);
+  return pow(clamp(c, 0., 1.), vec3(1./2.2));
+}
+vec3 envL(vec3 d, float lod){
+  d.xz = rot(uEnvRot)*d.xz;
+  vec2 uv = vec2(atan(d.z, d.x)/TAU + .5, acos(clamp(d.y, -1., 1.))/PI);
+  return textureLod(uEnv, uv, lod).rgb*uEnvInt;
+}
+float rlod(float r){ return clamp(sqrt(r), 0., 1.)*(uEnvMax - 1.5); }
+vec3 bgDisp(vec2 suv, vec3 rd, float lod){
+  if(uBgMode == 1){ vec2 dir = vec2(cos(uBgAng), -sin(uBgAng)); float t = clamp(dot(suv - .5, dir)/(.5*(abs(dir.x) + abs(dir.y))) * .5 + .5, 0., 1.); return mix(uBg1, uBg2, t); }
+  if(uBgMode == 2){ float asp = uRes.x/uRes.y; vec2 q = (suv - .5)*vec2(asp, 1.); float t = clamp(length(q)/(.5*length(vec2(asp, 1.))), 0., 1.); return mix(uBg1, uBg2, t); }
+  if(uBgMode == 3) return tonemap(envL(rd, max(uBgBlur*(uEnvMax - 1.), lod))*uExpo);
+  if(uBgMode == 4){ vec2 u = (suv - .5)*uBgFit.xy + .5; u.y = 1. - u.y; return textureLod(uBgImg, u, lod*.7).rgb; }
+  return uBg1;
+}
+vec3 bgDir(vec3 dir, float lod){
+  vec3 e = envL(dir, lod);
+  if(uBgMode == 3 || uTransp > .5) return e;
+  vec3 c = transpose(uCamRot)*dir;
+  vec2 suv;
+  if(c.z > .05){ vec2 nd = c.xy/(c.z*uTanF); suv = vec2(nd.x*uRes.y/uRes.x, nd.y)*.5 + .5; }
+  else suv = vec2(.5) + normalize(c.xy + 1e-5)*.7;
+  suv = clamp(suv, 0., 1.);
+  vec3 b = pow(bgDisp(suv, dir, lod), vec3(2.2));
+  return mix(b, e, uRefrEnv);
+}
+vec3 thinFilm(float NoV, float th){
+  float d = mix(200., 1000., th);
+  float ct = sqrt(max(1. - (1. - NoV*NoV)/1.77, 0.));
+  float opd = 2.*1.33*d*ct;
+  return .5 + .5*cos(TAU*opd/vec3(650., 532., 450.));
+}
+vec3 shadeLite(vec3 p, vec3 rd, vec3 n, M m){
+  vec3 V = -rd; float NoV = max(dot(n, V), 1e-3);
+  vec3 base = m.a.rgb; float metal = m.a.w, rough = clamp(m.b.x, .02, 1.), trans = m.b.y;
+  vec3 irr = envL(n, uEnvMax - 3.5);
+  float lam = max(dot(n, uKeyDir), 0.);
+  vec3 diff = base*(irr + uKeyCol*lam);
+  float ior = max(m.b.z, 1.); float f0s = pow((ior - 1.)/(ior + 1.), 2.);
+  vec3 F0 = mix(vec3(f0s), base, metal);
+  vec3 F = F0 + (max(vec3(1. - rough), F0) - F0)*pow(1. - NoV, 5.);
+  if(m.d.y > 0.){ vec3 tf = thinFilm(NoV, m.d.z); F = mix(F, tf*mix(.4, 1., metal) + F*.4, m.d.y); }
+  vec3 c = diff*(1. - metal)*(1. - trans) + envL(reflect(rd, n), rlod(rough))*F;
+  if(trans > 0.){ vec3 rr = refract(rd, n, 1./ior); if(dot(rr, rr) < .01) rr = reflect(rd, n); c += bgDir(rr, rlod(rough))*m.c.rgb*(1. - F)*trans*(1. - metal); }
+  c += m.e.rgb*m.e.w;
+  return c;
+}
+vec3 floorLin(vec3 pf){
+  return pow(uFloorCol, vec3(2.2));
+}
+vec3 behind(vec3 pe, vec3 dir, float lod, bool tr){
+  if(tr){
+    float th;
+    if(traceLite(pe + dir*.01, dir, 10., th)){
+      vec3 hp = pe + dir*(.01 + th); vec3 hn = calcNormal(hp, .003); int bi; M mm = matAt(hp, hn, bi);
+      return shadeLite(hp, dir, hn, mm);
+    }
+  }
+  if(uFloorMode == 2 && dir.y < 0.){
+    float tf = (uFloorY - pe.y)/dir.y;
+    if(tf > 0.){ vec3 pf = pe + dir*tf; float fade = 1. - smoothstep(uFloorFade*.3, uFloorFade, length(pf.xz - uFloorC)); return mix(bgDir(dir, lod), floorLin(pf), fade); }
+  }
+  return bgDir(dir, lod);
+}
+vec3 transmission(vec3 p, vec3 rd, vec3 n, M m){
+  float ior = max(m.b.z, 1.0001);
+  vec3 r1 = refract(rd, n, 1./ior);
+  if(dot(r1, r1) < .01) r1 = reflect(rd, n);
+  vec3 q = p - n*.004;
+  float ti = .01;
+  int ns = uQ == 0 ? 24 : (uQ == 1 ? 40 : 64);
+  for(int k = 0; k < 64; k++){
+    if(k >= ns) break;
+    float d = -map(q + r1*ti);
+    if(d < .0008) break;
+    ti += max(d*.9, .003);
+    if(ti > 8.) break;
+  }
+  vec3 pe = q + r1*ti;
+  vec3 ne = calcNormal(pe, .002);
+  vec3 r2 = refract(r1, -ne, ior);
+  bool tir = dot(r2, r2) < .01;
+  if(tir) r2 = reflect(r1, -ne);
+  float lod = rlod(m.b.x)*.85;
+  float disp = m.b.w;
+  vec3 col;
+  if(disp > .001 && !tir){
+    vec3 rr = refract(r1, -ne, ior*(1. - disp*.06)); vec3 bb = refract(r1, -ne, ior*(1. + disp*.06));
+    if(dot(rr, rr) < .01) rr = r2; if(dot(bb, bb) < .01) bb = r2;
+    col = vec3(behind(pe, rr, lod, false).r, behind(pe, r2, lod, uQ == 2).g, behind(pe, bb, lod, false).b);
+  } else col = behind(pe, r2, lod, uQ >= 1);
+  vec3 absorb = exp(-(1. - m.c.rgb)*m.c.w*ti*2.);
+  return col*absorb;
+}
+vec3 reflCol(vec3 p, vec3 n, vec3 R, float rough){
+  vec3 e = envL(R, rlod(rough));
+  if(uQ >= 1 && rough < .45){
+    float th; vec3 ro2 = p + n*.008;
+    if(traceLite(ro2, R, 14., th)){
+      vec3 hp = ro2 + R*th; vec3 hn = calcNormal(hp, .003); int bi; M mm = matAt(hp, hn, bi);
+      e = mix(shadeLite(hp, R, hn, mm), e, smoothstep(0., .45, rough)*.6);
+    } else if(uFloorMode == 2 && R.y < 0.){
+      float tf = (uFloorY - p.y)/R.y; vec3 pf = p + R*tf;
+      float fade = 1. - smoothstep(uFloorFade*.3, uFloorFade, length(pf.xz - uFloorC));
+      e = mix(e, floorLin(pf)*(.5 + .5*uEnvInt), fade);
+    }
+  }
+  return e;
+}
+vec3 shade(vec3 p, vec3 rd, vec3 n, M m){
+  vec3 V = -rd; float NoV = max(dot(n, V), 1e-3);
+  vec3 base = m.a.rgb; float metal = m.a.w, rough = clamp(m.b.x, .02, 1.), trans = m.b.y, ior = max(m.b.z, 1.), toon = m.f.z, sss = m.f.w;
+  float ao = calcAO(p, n);
+  float sh = softShadow(p + n*.004, uKeyDir, uShadowK);
+  float NoL = dot(n, uKeyDir);
+  vec3 irr = envL(n, uEnvMax - 3.5);
+  float lam = max(NoL, 0.)*sh;
+  if(sss > 0.) lam = mix(lam, clamp((NoL + .5)/1.5, 0., 1.)*mix(sh, 1., .5), sss);
+  if(toon > .5){ lam = floor(lam*toon + .5)/toon; irr *= .45; }
+  vec3 diff = base*(irr*ao + uKeyCol*lam);
+  float f0s = pow((ior - 1.)/(ior + 1.), 2.);
+  vec3 F0 = mix(vec3(f0s), base, metal);
+  vec3 F = F0 + (max(vec3(1. - rough), F0) - F0)*pow(1. - NoV, 5.);
+  if(m.d.y > 0.){ vec3 tf = thinFilm(NoV, m.d.z); F = mix(F, tf*mix(.4, 1., metal) + F*.4, m.d.y); }
+  vec3 R = reflect(rd, n);
+  vec3 spec = (toon > .5 ? envL(R, uEnvMax - 4.)*.5 : reflCol(p, n, R, rough))*mix(1., ao, .8);
+  vec3 col = diff*(1. - metal)*(1. - trans) + spec*F;
+  if(trans > 0.) col += transmission(p, rd, n, m)*(1. - F)*trans*(1. - metal);
+  if(m.d.x > 0.){ float Fc = .04 + .96*pow(1. - NoV, 5.); col = col*(1. - Fc*m.d.x) + envL(R, rlod(.03))*Fc*m.d.x*mix(1., ao, .6); }
+  if(sss > 0.){ float th = clamp(-map(p - n*.18)/.18, 0., 1.); col += base*(1. - th)*sss*(irr*.6 + uKeyCol*clamp(.5 - .5*NoL, 0., 1.)*.6)*(1. - metal); }
+  col += m.e.rgb*m.e.w;
+  if(toon > .5) col = mix(col, vec3(0.), 1. - smoothstep(.14, .26, NoV));
+  return col;
+}
+vec4 floorShade(vec3 pf, vec3 rd, vec4 bgc){
+  float fade = 1. - smoothstep(uFloorFade*.3, uFloorFade, length(pf.xz - uFloorC));
+  if(fade <= 0.) return bgc;
+  float sh = softShadow(pf + vec3(0., .002, 0.), uKeyDir, uShadowK);
+  float ao = floorAO(pf);
+  float dark = clamp(uFloorShadow*(1. - sh*mix(1., ao, .85)), 0., 1.)*fade;
+  if(uFloorMode == 1){
+    if(bgc.a < .5) return vec4(0., 0., 0., dark);
+    return vec4(bgc.rgb*(1. - dark), 1.);
+  }
+  vec3 fc = uFloorCol*(1. - dark);
+  if(uFloorRefl > 0.){
+    vec3 R = reflect(rd, vec3(0., 1., 0.)); float th;
+    if(traceLite(pf + R*.003, R, 12., th)){
+      vec3 hp = pf + R*(.003 + th); vec3 hn = calcNormal(hp, .003); int bi; M mm = matAt(hp, hn, bi);
+      vec3 c = tonemap(shadeLite(hp, R, hn, mm)*uExpo);
+      float fr = mix(.35, 1., pow(1. + rd.y, 4.));
+      float att = exp(-th*mix(2.5, .12, uFloorRefl));
+      fc = mix(fc, c, uFloorRefl*fr*att);
+    }
+  }
+  return vec4(mix(bgc.rgb, fc, fade), mix(bgc.a, 1., fade));
+}
+void main(){
+  vec2 px = gl_FragCoord.xy + uOff;
+  vec2 suv = px/uRes;
+  vec2 ndc = (px*2. - uRes)/uRes.y;
+  vec3 ro = uCamPos;
+  vec3 rd = normalize(uCamRot*vec3(ndc*uTanF, 1.));
+  float pixA = 2.*uTanF/uRes.y;
+  vec4 col = vec4(bgDisp(suv, rd, 0.), uTransp > .5 ? 0. : 1.);
+  float depth = 40.; float oid = 0.;
+  float tF = 1e9;
+  if(uFloorMode > 0 && rd.y < -1e-4){ tF = (uFloorY - ro.y)/rd.y; if(tF < 0.) tF = 1e9; }
+  if(tF < 1e8){ col = floorShade(ro + rd*tF, rd, col); depth = min(tF, 40.); }
+  float tmax = min(40., tF);
+  float t = .05, dmin = 1e9, tmin = 0.; bool hit = false;
+  int ns = uQ == 0 ? 110 : (uQ == 1 ? 170 : 260);
+  gBT = .3;
+  float b0, b1;
+  if(uN > 0 && hitBounds(ro, rd, .04 + uK*.3, b0, b1)){ t = max(t, b0 - .02); tmax = min(tmax, b1 + .02); } else ns = 0;
+  for(int i = 0; i < 260; i++){
+    if(i >= ns || t > tmax) break;
+    float d = map(ro + rd*t);
+    float fp = t*pixA;
+    float r = d/fp;
+    if(r < dmin){ dmin = r; tmin = t; }
+    if(d < fp*.3){ hit = true; break; }
+    t += d*uStepK;
+  }
+  float cov = hit ? 1. : clamp(1.25 - dmin, 0., 1.);
+  if(uN > 0 && cov > 0.){
+    float th = hit ? t : tmin;
+    vec3 p = ro + rd*th;
+    vec3 n = calcNormal(p, max(th*pixA*.75, 1.2e-3));
+    int bi; M m = matAt(p, n, bi);
+    vec3 c = shade(p, rd, n, m);
+    col.rgb = mix(col.rgb, tonemap(c*uExpo), cov);
+    col.a = mix(col.a, 1., cov);
+    if(cov > .5){ depth = th; oid = float(bi + 1); }
+  }
+  col.rgb += (hash12(px + uSeed) - .5)/255.;
+  oCol = vec4(clamp(col.rgb, 0., 1.)*col.a, col.a);
+  float dn = clamp(depth/40., 0., 1.);
+  oAux = vec4(floor(dn*255.)/255., fract(dn*255.), oid/8., 1.);
+}`;
+
+/* environment baker: equirect, linear HDR */
+const SH_ENV = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 o;
+uniform int uPreset; uniform vec3 uKey; uniform vec3 uC1, uC2, uTint; uniform float uSat;
+uniform sampler2D uSrc; uniform int uSrcMode;
+${GLSL_COMMON}
+float sbox(vec3 d, vec3 c, vec2 sz, float soft){
+  float k = dot(d, c); if(k <= 0.) return 0.;
+  vec3 up = abs(c.y) > .98 ? vec3(0., 0., 1.) : vec3(0., 1., 0.);
+  vec3 u = normalize(cross(up, c)); vec3 v = cross(c, u);
+  vec2 l = vec2(dot(d, u), dot(d, v))/k;
+  float r = max(abs(l.x)/sz.x, abs(l.y)/sz.y);
+  return 1. - smoothstep(1. - soft, 1., r);
+}
+vec3 dirAz(float az, float el){ return vec3(cos(el)*sin(az), sin(el), cos(el)*cos(az)); }
+void main(){
+  float phi = (vUv.x - .5)*TAU, th = vUv.y*PI;
+  vec3 d = vec3(sin(th)*cos(phi), cos(th), sin(th)*sin(phi));
+  vec3 c = vec3(0.);
+  if(uSrcMode == 1){ vec3 s = texture(uSrc, vUv).rgb; s = pow(s, vec3(2.2)); c = s/(1.04 - min(s, vec3(1.)))*.35; }
+  else if(uSrcMode == 2){ c = texture(uSrc, vUv).rgb; }
+  else if(uPreset == 0){ // product studio: key, front band, top, rims
+    c = mix(vec3(.035), vec3(.16), smoothstep(-.15, .85, d.y));
+    c = mix(c, vec3(.018), smoothstep(.02, -.3, d.y));
+    c += smoothstep(.12, 0., abs(d.y - .03))*.12;
+    c += sbox(d, uKey, vec2(.55, .38), .5)*6.5;
+    if(d.z > .05){ vec2 l = d.xy/d.z; float pnl = (1. - smoothstep(.8, 1.35, abs(l.x)))*(1. - smoothstep(.3, .6, abs(l.y - .02))); c += pnl*mix(.25, 2.8, smoothstep(-.32, .4, l.y)); }
+    c += sbox(d, normalize(vec3(-uKey.x*.8, .45, uKey.z*.3 + .6)), vec2(.35, .3), .6)*1.4;
+    c += sbox(d, vec3(0., 1., 0.), vec2(.7, .7), .75)*1.8;
+    c += sbox(d, normalize(vec3(-.92, .12, -.38)), vec2(.06, 1.1), .3)*5.;
+    c += sbox(d, normalize(vec3(.92, .12, -.38)), vec2(.06, 1.1), .3)*5.;
+    c += sbox(d, normalize(vec3(0., .25, -1.)), vec2(.9, .25), .7)*.9;
+  } else if(uPreset == 1){ // strips
+    c = vec3(.004) + vec3(.02)*smoothstep(-.2, .6, d.y);
+    for(int i = 0; i < 6; i++){ float a = float(i)/6.*TAU + .4; c += sbox(d, normalize(vec3(cos(a), .12, sin(a))), vec2(.035, 1.4), .25)*mix(3., 8., fract(float(i)*.618)); }
+    c += smoothstep(.02, 0., abs(d.y - .02))*2.5;
+    c += sbox(d, uKey, vec2(.18, .18), .4)*6.;
+  } else if(uPreset == 2){ // sunset
+    vec3 sky = mix(vec3(1.2, .45, .18), vec3(.18, .1, .45), smoothstep(0., .6, d.y));
+    sky = mix(sky, vec3(.04, .03, .1), smoothstep(.6, 1., d.y));
+    vec3 gr = mix(vec3(.25, .12, .08), vec3(.03, .02, .03), smoothstep(0., -.4, d.y));
+    c = d.y > 0. ? sky : gr;
+    float sd = max(dot(d, uKey), 0.);
+    c += vec3(9., 5., 2.)*smoothstep(.9985, .9995, sd) + vec3(1.6, .7, .3)*pow(sd, 18.);
+  } else if(uPreset == 3){ // neon
+    c = vec3(.006, .004, .012);
+    c += sbox(d, normalize(vec3(-.8, .25, .5)), vec2(.9, .025), .5)*vec3(6., .4, 4.);
+    c += sbox(d, normalize(vec3(.8, .05, .45)), vec2(.9, .025), .5)*vec3(.3, 3., 6.);
+    c += sbox(d, normalize(vec3(.1, .7, -.7)), vec2(.5, .04), .5)*vec3(5., 2., .4);
+    c += sbox(d, normalize(vec3(-.3, .2, -.9)), vec2(.06, .6), .4)*vec3(.4, 5., 3.);
+    c += sbox(d, uKey, vec2(.2, .2), .6)*vec3(3.);
+  } else if(uPreset == 4){ // pastel
+    vec3 a = vec3(1., .72, .86), b = vec3(.62, .78, 1.), e = vec3(1., .93, .68);
+    float n = fbm(d*1.6)*.5 + .5;
+    c = mix(mix(a, b, smoothstep(-.4, .6, d.x + n*.6)), e, smoothstep(.2, 1., d.y + n*.3))*1.1;
+    c += sbox(d, uKey, vec2(.4, .3), .6)*2.5;
+  } else if(uPreset == 5){ // overcast
+    c = mix(vec3(.22, .22, .24), vec3(1.6, 1.62, 1.68), smoothstep(-.25, .8, d.y));
+    c += sbox(d, uKey, vec2(.5, .4), .8)*1.5;
+  } else if(uPreset == 6){ // night city
+    c = mix(vec3(.01, .015, .04), vec3(.04, .05, .14), smoothstep(.6, -.05, d.y));
+    if(d.y < .35 && d.y > -.25){
+      vec2 g = vec2(phi*40., d.y*90.); vec2 cell = floor(g); vec2 f = fract(g);
+      float on = step(.62, hash12(cell)); float w = step(.15, f.x)*step(f.x, .85)*step(.2, f.y)*step(f.y, .8);
+      c += on*w*mix(vec3(2., 1.3, .5), vec3(.6, .9, 2.), step(.8, hash12(cell + 7.)))*(1. - smoothstep(-.25, .35, d.y)*.7);
+    }
+    c += sbox(d, uKey, vec2(.15, .15), .5)*vec3(2., 2.2, 3.);
+  } else if(uPreset == 7){ // ring light
+    c = vec3(.012) + vec3(.03)*smoothstep(-.2, .8, d.y);
+    float k = dot(d, uKey);
+    float ang = acos(clamp(k, -1., 1.));
+    c += smoothstep(.05, .0, abs(ang - .42))*8.;
+    c += sbox(d, normalize(vec3(-uKey.x, .2, -uKey.z)), vec2(.4, .6), .6)*.8;
+  } else if(uPreset == 8){ // two colors
+    vec3 a = pow(uC1, vec3(2.2)), b = pow(uC2, vec3(2.2));
+    c = mix(b, a, smoothstep(-.6, .8, d.y))*1.2;
+    c += sbox(d, uKey, vec2(.4, .3), .5)*5.;
+    c += sbox(d, normalize(vec3(-.9, .2, -.4)), vec2(.06, .9), .3)*a*4.;
+  } else { // windows
+    c = vec3(.03, .03, .035) + vec3(.05)*smoothstep(-.3, .8, d.y);
+    vec3 wc = normalize(vec3(uKey.x, .2, uKey.z));
+    float k = dot(d, wc);
+    if(k > 0.){
+      vec3 up = vec3(0., 1., 0.); vec3 u = normalize(cross(up, wc)); vec3 v = cross(wc, u);
+      vec2 l = vec2(dot(d, u), dot(d, v))/k;
+      vec2 g = fract(l*vec2(2.6, 2.2) + .5);
+      float pane = step(abs(l.x), .95)*step(abs(l.y), .6)*step(.06, g.x)*step(g.x, .94)*step(.06, g.y)*step(g.y, .94);
+      c += pane*vec3(7., 7.2, 7.6);
+    }
+    c += sbox(d, vec3(0., 1., 0.), vec2(.4, .4), .7)*.8;
+  }
+  float L = dot(c, vec3(.2126, .7152, .0722));
+  c = mix(vec3(L), c, uSat)*uTint;
+  o = vec4(c, 1.);
+}`;
+
+/* post effects: one pass per effect, premultiplied colour */
+const SH_FX = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 o;
+uniform sampler2D uSrc, uAux, uTmp, uPrev, uGlyph;
+uniform vec2 uRes; uniform int uT; uniform vec4 uP0, uP1; uniform vec3 uX0, uX1, uX2; uniform float uPhase, uFrame;
+${GLSL_COMMON}
+vec4 S(vec2 uv){ return textureLod(uSrc, uv, 0.); }
+vec4 SL(vec2 uv, float l){ return textureLod(uSrc, uv, l); }
+vec3 unp(vec4 s){ return s.a > 1e-4 ? s.rgb/s.a : vec3(0.); }
+float lum(vec3 c){ return dot(c, vec3(.299, .587, .114)); }
+float depthAt(vec2 uv){ vec4 a = textureLod(uAux, uv, 0.); return (a.r + a.g/255.)*40.; }
+float bayer2(vec2 a){ a = floor(a); return fract(dot(a, vec2(.5, a.y*.75))); }
+float bayer4(vec2 a){ return bayer2(.5*a)*.25 + bayer2(a); }
+float bayer8(vec2 a){ return bayer4(.5*a)*.25 + bayer2(a); }
+vec4 disk(vec2 uv, float lod, float rad){
+  vec4 acc = SL(uv, lod)*2.; float w = 2.;
+  for(int i = 0; i < 8; i++){ float a = float(i)*.785398 + .39; vec2 o2 = vec2(cos(a), sin(a))*rad/uRes; acc += SL(uv + o2, lod); w += 1.; }
+  return acc/w;
+}
+vec4 over(vec4 src, vec3 c, float a){ return vec4(mix(src.rgb, c, a), mix(src.a, 1., a)); }
+void main(){
+  vec2 uv = vUv; vec2 px = uv*uRes; float asp = uRes.x/uRes.y;
+  vec4 s = S(uv);
+  if(uT == 1){ // bloom prefilter: threshold, knee
+    vec3 c = unp(s); float l = max(c.r, max(c.g, c.b)); float k = max(uP0.y, 1e-3);
+    float w = clamp((l - uP0.x + k)/(2.*k), 0., 1.); w = max(w*w*k*2., l - uP0.x)/max(l, 1e-4);
+    o = vec4(c*clamp(w, 0., 1.)*s.a*uX0, 1.); return;
+  }
+  if(uT == 2){ // bloom composite
+    vec3 b = vec3(0.); float tw = 0.;
+    for(int i = 1; i <= 7; i++){ float l = float(i)*uP0.z; float w = 1./(1. + float(i)*.35); b += textureLod(uTmp, uv, l).rgb*w; tw += w; }
+    b = b/tw*uP0.w*3.;
+    o = vec4(s.rgb + b, max(s.a, clamp(lum(b)*1.5, 0., 1.))); return;
+  }
+  if(uT == 3){ // depth of field
+    float f = uP0.x > .01 ? uP0.x : depthAt(vec2(.5));
+    float coc = clamp(abs(depthAt(uv) - f)/max(uP0.y, .05), 0., 1.)*uP0.z;
+    o = disk(uv, coc*4., coc*6.); return;
+  }
+  if(uT == 4){ o = disk(uv, log2(max(uP0.x, 1.)), uP0.x*.6); return; } // blur
+  if(uT == 5){ // tilt shift
+    vec2 n = vec2(-sin(uP0.w), cos(uP0.w));
+    float dist = abs(dot((uv - vec2(.5, uP0.x))*vec2(asp, 1.), n));
+    float b = smoothstep(uP0.y, uP0.y + .25, dist)*uP1.x;
+    o = disk(uv, b*5., b*8.); return;
+  }
+  if(uT == 6){ // aberration
+    vec2 d = uP0.y > .5 ? vec2(uP0.x*.01, 0.) : (uv - .5)*uP0.x*.05;
+    vec4 a = S(uv + d), c = S(uv - d);
+    o = vec4(a.r, s.g, c.b, max(max(a.a, s.a), c.a)); return;
+  }
+  if(uT == 7){ // lens distortion
+    vec2 p = (uv - .5)*vec2(asp, 1.); float r2 = dot(p, p);
+    p *= (1. + uP0.x*r2 + uP0.y*r2*r2)/max(uP0.z, .1);
+    vec2 u2 = p/vec2(asp, 1.) + .5;
+    o = (u2.x < 0. || u2.y < 0. || u2.x > 1. || u2.y > 1.) ? vec4(0.) : S(u2); return;
+  }
+  if(uT == 8){ // kaleidoscope
+    vec2 p = (uv - .5)*vec2(asp, 1.); float r = length(p); float a = atan(p.y, p.x) + uP0.y + uPhase*uP0.w;
+    float seg = TAU/max(uP0.x, 1.); a = mod(a, seg); a = abs(a - seg*.5);
+    p = vec2(cos(a), sin(a))*r/max(uP0.z, .1); p.x /= asp;
+    vec2 u2 = p + .5 + uP1.xy; u2 = 1. - abs(1. - mod(u2, 2.));
+    o = S(u2); return;
+  }
+  if(uT == 9){ // halftone
+    float sz = max(uP0.x, 2.); int mode = int(uP0.z + .5);
+    if(mode == 1){
+      float ang[4]; ang[0] = .26; ang[1] = 1.31; ang[2] = 0.; ang[3] = .785;
+      vec3 res = uX1; float alpha = 0.;
+      for(int k = 0; k < 4; k++){
+        mat2 R = rot(ang[k] + uP0.y); vec2 q = R*px; vec2 cell = (floor(q/sz) + .5)*sz; vec2 cp = transpose(R)*cell;
+        vec4 sc = S(cp/uRes); vec3 c = unp(sc); float K = 1. - max(c.r, max(c.g, c.b));
+        float v = k == 3 ? K : (k == 0 ? (1. - c.r - K) : (k == 1 ? (1. - c.g - K) : (1. - c.b - K)))/max(1. - K, 1e-3);
+        if(k == 3) v = K;
+        float rad = sqrt(clamp(v, 0., 1.))*sz*.62;
+        float cov = 1. - smoothstep(rad - uP0.w, rad + uP0.w, length(q - cell));
+        vec3 ink = k == 0 ? vec3(0., .68, .94) : (k == 1 ? vec3(.93, 0., .55) : (k == 2 ? vec3(1., .94, 0.) : vec3(.08)));
+        res *= mix(vec3(1.), ink, cov*.92); alpha = max(alpha, sc.a);
+      }
+      o = vec4(res*max(alpha, step(.5, uP1.x)), max(alpha, step(.5, uP1.x))); return;
+    }
+    mat2 R = rot(uP0.y); vec2 q = R*px; vec2 cell = (floor(q/sz) + .5)*sz; vec2 cp = transpose(R)*cell;
+    vec4 sc = S(cp/uRes); vec3 c = unp(sc);
+    float v = mode == 2 ? max(c.r, max(c.g, c.b)) : 1. - lum(c);
+    float rad = (mode == 2 ? sqrt(v) : sqrt(v))*sz*.7;
+    float cov = (1. - smoothstep(rad - uP0.w, rad + uP0.w, length(q - cell)))*sc.a;
+    vec3 ink = mode == 2 ? c : uX0;
+    vec3 res = mix(uX1, ink, cov);
+    float al = uP1.x > .5 ? 1. : cov;
+    o = vec4(res*al, al); return;
+  }
+  if(uT == 10){ // pixelate
+    float sz = max(uP0.x, 1.); vec2 cell = (floor(px/sz) + .5)*sz; vec4 sc = S(cell/uRes);
+    if(uP0.y > .5){ float cov = 1. - smoothstep(sz*.42, sz*.48, length(px - cell)); float so = step(.5, uP0.z); float al = max(cov*sc.a, so); o = vec4(mix(uX0, unp(sc), cov*sc.a)*al, al); }
+    else o = sc;
+    return;
+  }
+  if(uT == 11){ // pixel sort (streaks of bright pixels)
+    float a = uP0.z; vec2 dir = vec2(sin(a), -cos(a))/uRes;
+    vec4 best = s; float bl = lum(unp(s));
+    float len = uP0.y;
+    for(int k = 1; k <= 40; k++){
+      vec4 q = S(uv - dir*float(k)*len/40.); float l = lum(unp(q));
+      if(l < uP0.x) break;
+      if(l > bl){ bl = l; best = q; }
+    }
+    o = mix(s, best, uP0.w); return;
+  }
+  if(uT == 12){ // CRT
+    vec2 p = uv*2. - 1.; p *= 1. + uP0.y*vec2(p.y*p.y, p.x*p.x)*.25; vec2 u2 = p*.5 + .5;
+    if(u2.x < 0. || u2.y < 0. || u2.x > 1. || u2.y > 1.){ o = vec4(0., 0., 0., 1.); return; }
+    vec4 sc = S(u2); vec3 c = unp(sc);
+    float sl = sin(u2.y*uRes.y*PI/max(uP0.z, 1.))*.5 + .5; c *= mix(1., sl*1.25 + .1, uP0.x);
+    float m = mod(floor(px.x), 3.); vec3 mask = m < 1. ? vec3(1.25, .8, .8) : (m < 2. ? vec3(.8, 1.25, .8) : vec3(.8, .8, 1.25));
+    c *= mix(vec3(1.), mask, uP0.w);
+    c *= 1. - dot(p, p)*.18*uP1.x;
+    c *= 1. - uP1.y*.08*(hash12(vec2(uFrame, 3.)) - .5);
+    o = vec4(c*max(sc.a, .0), sc.a); if(uP1.z > .5) o = vec4(c, 1.); return;
+  }
+  if(uT == 13){ // grain
+    float sz = max(uP0.y, .5); vec2 g = floor(px/sz);
+    float n = hash12(g + (uP0.z > .5 ? fract(uFrame*.618)*937. : 0.)) - .5;
+    vec3 c = unp(s);
+    if(uP0.w > .5) c += vec3(hash12(g + 1.3), hash12(g + 7.1), hash12(g + 3.7)) - .5;
+    c += n*uP0.x;
+    o = vec4(clamp(c, 0., 1.)*s.a, s.a); return;
+  }
+  if(uT == 14){ // vignette
+    vec2 p = (uv - .5)*vec2(mix(1., asp, .5), 1.);
+    float v = smoothstep(uP0.y, uP0.y + uP0.z, length(p))*uP0.x;
+    o = vec4(mix(unp(s), uX0, v)*max(s.a, v), max(s.a, v)); return;
+  }
+  if(uT == 15){ // colour
+    vec3 c = unp(s);
+    c = (c - .5)*uP0.y + .5 + uP0.x;
+    float L = lum(c); c = mix(vec3(L), c, uP0.z);
+    if(uP0.w != 0.){ const vec3 k = vec3(.57735); float ca = cos(uP0.w), sa = sin(uP0.w); c = c*ca + cross(k, c)*sa + k*dot(k, c)*(1. - ca); }
+    c += vec3(uP1.x, 0., -uP1.x)*.1;
+    if(uP1.y > .5) c = 1. - c;
+    c = pow(clamp(c, 0., 1.), vec3(1./max(uP1.z, .1)));
+    o = vec4(c*s.a, s.a); return;
+  }
+  if(uT == 16){ // outline (sobel on luminance + alpha + id)
+    float w = max(uP0.x, .5);
+    float tl = 0., gx = 0., gy = 0.;
+    for(int j = -1; j <= 1; j++) for(int i = -1; i <= 1; i++){
+      vec2 o2 = vec2(float(i), float(j))*w/uRes; vec4 q = S(uv + o2); vec4 ax = textureLod(uAux, uv + o2, 0.);
+      float v = lum(unp(q))*.6 + q.a + ax.b*3.;
+      float kx = float(i)*(j == 0 ? 2. : 1.), ky = float(j)*(i == 0 ? 2. : 1.);
+      gx += v*kx; gy += v*ky;
+    }
+    float e = smoothstep(uP0.y, uP0.y + .2, length(vec2(gx, gy)));
+    int mode = int(uP0.z + .5);
+    if(mode == 1){ vec3 c = mix(uX1, uX0, e); o = vec4(c, 1.); return; }
+    if(mode == 2){ vec3 c = unp(s)*1.8*e; o = vec4(c, max(e, 0.)*1.); return; }
+    o = over(s, uX0, e); return;
+  }
+  if(uT == 17){ // gradient map
+    vec3 c = unp(s); float L = lum(c);
+    vec3 g = L < .5 ? mix(uX0, uX1, L*2.) : mix(uX1, uX2, L*2. - 1.);
+    o = vec4(mix(c, g, uP0.x)*s.a, s.a); return;
+  }
+  if(uT == 18){ // dither
+    float sz = max(uP0.y, 1.); vec2 g = floor(px/sz);
+    float b = bayer8(g) - .5;
+    vec3 c = unp(s); float lv = max(uP0.x, 2.) - 1.;
+    if(uP0.z > .5){ float L = lum(c) + b/lv; float q = floor(L*lv + .5)/lv; o = vec4(mix(uX0, uX1, clamp(q, 0., 1.))*s.a, s.a); }
+    else { c = floor((c + b/lv)*lv + .5)/lv; o = vec4(clamp(c, 0., 1.)*s.a, s.a); }
+    return;
+  }
+  if(uT == 19){ vec3 c = unp(s); float lv = max(uP0.x, 2.) - 1.; c = floor(c*lv + .5)/lv; o = vec4(c*s.a, s.a); return; } // posterize
+  if(uT == 20){ // ripple
+    vec2 p = (uv - vec2(.5) - uP1.xy)*vec2(asp, 1.); float r = length(p);
+    vec2 off = normalize(p + 1e-5)*sin(r*uP0.y - uPhase*uP0.z)*uP0.x*.02*smoothstep(1.2, 0., r);
+    off.x /= asp; o = S(uv + off); return;
+  }
+  if(uT == 21){ // liquid warp
+    vec3 f = vec3(cos(uPhase), sin(uPhase), 0.)*uP0.z;
+    vec2 q = uv*vec2(asp, 1.)*uP0.y;
+    vec2 off = vec2(fbm(vec3(q, 0.) + f), fbm(vec3(q + 5.2, 1.3) + f))*uP0.x*.08;
+    o = S(uv + off); return;
+  }
+  if(uT == 22){ // risograph
+    vec2 off = vec2(uP0.x, -uP0.x*.6)/uRes;
+    vec3 c1 = unp(S(uv)), c2 = unp(S(uv + off));
+    float g = hash12(floor(px/max(uP0.z, 1.))) ;
+    float d1 = 1. - lum(c1);
+    float sat2 = max(c2.r, max(c2.g, c2.b)) - min(c2.r, min(c2.g, c2.b));
+    float d2 = clamp(sat2*1.3 + (1. - lum(c2))*.25, 0., 1.);
+    float k1 = smoothstep(g - .25, g + .25, pow(d1, 1.2)*1.15);
+    float k2 = smoothstep(g - .25, g + .25, d2*uP0.w);
+    vec3 res = uX2*mix(vec3(1.), uX0, k1*.95)*mix(vec3(1.), uX1, k2*.9);
+    res *= 1. - (hash12(px*.7 + 3.) - .5)*uP0.y;
+    o = vec4(res, 1.); return;
+  }
+  if(uT == 23){ // ascii
+    float cs = max(uP0.x, 4.); vec2 cell = floor(px/cs); vec2 f = fract(px/cs);
+    vec4 sc = S((cell + .5)*cs/uRes); vec3 c = unp(sc);
+    float L = clamp(lum(c)*uP0.y, 0., .999)*sc.a;
+    float n = 10.; float gi = floor(L*n);
+    float g = texture(uGlyph, vec2((gi + f.x)/n, 1. - f.y)).r;
+    vec3 ink = uP0.z > .5 ? uX0 : c*1.25;
+    vec3 res = mix(uX1, ink, g);
+    float al = uP0.w > .5 ? 1. : g*sc.a;
+    o = vec4(res*al, al); return;
+  }
+  if(uT == 24){ // trail
+    vec2 p = (uv - .5)/max(uP0.y, .5) + .5;
+    vec4 pr = textureLod(uPrev, p, 0.)*uP0.x;
+    o = uP0.z > .5 ? mix(s, pr, uP0.x*.92) : max(s, pr); return;
+  }
+  if(uT == 25){ // mirror
+    vec2 u2 = uv; int mode = int(uP0.x + .5);
+    if(mode == 0 || mode == 2) u2.x = uP0.y > .5 ? (u2.x > .5 ? u2.x : 1. - u2.x) : (u2.x < .5 ? u2.x : 1. - u2.x);
+    if(mode == 1 || mode == 2) u2.y = uP0.y > .5 ? (u2.y > .5 ? u2.y : 1. - u2.y) : (u2.y < .5 ? u2.y : 1. - u2.y);
+    o = S(u2); return;
+  }
+  if(uT == 26){ // glitch
+    float stp = floor(uPhase/TAU*max(uP0.z, 1.)*8.);
+    float bands = max(uP0.y, 2.);
+    float row = floor(uv.y*bands);
+    float r = hash12(vec2(row, stp));
+    float on = step(1. - uP0.w, r);
+    vec2 u2 = uv; u2.x += (hash12(vec2(row, stp + 7.)) - .5)*uP0.x*.3*on;
+    float blk = step(.93, hash12(floor(uv*vec2(12., bands)) + stp))*on;
+    vec4 a = S(u2 + vec2(.012, 0.)*on*uP0.x), b = S(u2), c = S(u2 - vec2(.012, 0.)*on*uP0.x);
+    o = vec4(a.r, b.g, c.b, max(b.a, max(a.a, c.a)));
+    if(blk > .5) o = vec4(o.gbr, o.a);
+    return;
+  }
+  o = s;
+}`;
+
+const SH_FINAL = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 o;
+uniform sampler2D uSrc, uAux; uniform float uSel, uLod, uFlip, uStraight; uniform vec2 uRes;
+float idAt(vec2 uv){ return floor(textureLod(uAux, uv, 0.).b*8. + .5); }
+void main(){
+  vec2 uv = vUv; if(uFlip > .5) uv.y = 1. - uv.y;
+  vec4 c = textureLod(uSrc, uv, uLod);
+  if(uSel > .5){
+    float me = idAt(uv) == uSel ? 1. : 0.; float e = 0.;
+    for(int i = 0; i < 8; i++){ float a = float(i)*.785398; vec2 off = vec2(cos(a), sin(a))*2./uRes; e = max(e, abs((idAt(uv + off) == uSel ? 1. : 0.) - me)); }
+    if(e > .5 && me < .5) c = vec4(.733, 1., .196, 1.);
+  }
+  if(uStraight > .5) c = vec4(c.a > 1e-4 ? c.rgb/c.a : vec3(0.), c.a);
+  o = c;
+}`;
+
+/* SDF sampling on a 3D grid (for GLB / STL export via marching cubes) */
+const SH_GRID = SH_SCENE.replace(/void main\(\)\{[\s\S]*$/, `
+uniform vec3 uGMin, uGStep; uniform float uGN, uGCols;
+void main(){
+  vec2 px = floor(gl_FragCoord.xy);
+  float tile = floor(px.x/uGN) + floor(px.y/uGN)*uGCols;
+  vec3 g = vec3(mod(px.x, uGN), mod(px.y, uGN), tile);
+  vec3 p = uGMin + g*uGStep;
+  gBT = .3;
+  float d = map(p);
+  float id = 0.;
+  if(d < uGStep.x*3.){ int bi; float best = 1e9; vec3 lp; float iid;
+    for(int i = 0; i < MAXO; i++){ if(i >= uN) break; float di = sdObj(i, p, lp, iid); if(di < best){ best = di; bi = i; } }
+    id = float(bi + 1); }
+  oCol = vec4(d, id, 0., 1.);
+  oAux = vec4(0.);
+}`);
+/* ================= core ================= */
+const $ = id => document.getElementById(id);
+const out = $("out");
+const MAXO = 6, MS = 1024, TS = 256;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a)*t;
+const DEG = Math.PI/180, TAU = Math.PI*2;
+const clone = o => JSON.parse(JSON.stringify(o));
+let uidN = 1; const uid = () => "o" + (Date.now().toString(36)) + (uidN++);
+function hex2rgb(h){ h = (h || "#000").replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [(n >> 16 & 255)/255, (n >> 8 & 255)/255, (n & 255)/255]; }
+const lin = c => c.map(v => Math.pow(v, 2.2));
+function showErr(msg){ const e = $("err"); e.textContent = msg; e.style.display = "block"; console.error(msg); }
+function status(t, busy){ $("status").textContent = t || "Готово"; $("dot").classList.toggle("rec", !!busy); }
+
+const gl = out.getContext("webgl2", { alpha:true, premultipliedAlpha:true, preserveDrawingBuffer:true, antialias:false, powerPreference:"high-performance" });
+if(!gl){ showErr("WebGL2 недоступний у цьому браузері."); throw new Error("no webgl2"); }
+const HAS_CBF = !!gl.getExtension("EXT_color_buffer_float");
+gl.getExtension("OES_texture_float_linear");
+const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+
+/* ---------- fonts ---------- */
+const FONTS = [
+  ["Archivo Black", [400]], ["Inter", [400, 700, 900]], ["Unbounded", [400, 700, 900]], ["Anton", [400]], ["Bebas Neue", [400]],
+  ["Rubik Mono One", [400]], ["Russo One", [400]], ["Bungee", [400]], ["Syne", [400, 700, 800]], ["Space Grotesk", [400, 700]],
+  ["Montserrat", [400, 700, 900]], ["Oswald", [400, 700]], ["Rubik", [400, 700, 900]], ["Playfair Display", [400, 700, 900]],
+  ["Abril Fatface", [400]], ["DM Serif Display", [400]], ["Shrikhand", [400]], ["Titan One", [400]], ["Bowlby One", [400]],
+  ["Righteous", [400]], ["Monoton", [400]], ["Pacifico", [400]], ["Lobster", [400]], ["Orbitron", [400, 700, 900]],
+  ["Michroma", [400]], ["Press Start 2P", [400]], ["Fredoka", [400, 700]], ["Climate Crisis", [400]], ["Black Ops One", [400]],
+];
+const fontLoaded = new Set(["Archivo Black", "Inter"]);
+const customFonts = new Set();
+function ensureFont(fam){
+  if(fontLoaded.has(fam) || customFonts.has(fam)) return Promise.resolve();
+  fontLoaded.add(fam);
+  const known = FONTS.find(f => f[0] === fam);
+  const l = document.createElement("link"); l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(fam).replace(/%20/g, "+") + (known && known[1].length > 1 ? ":wght@" + known[1].join(";") : "") + "&display=swap";
+  document.head.appendChild(l);
+  return new Promise(res => { l.onload = res; l.onerror = res; setTimeout(res, 4000); });
+}
+async function fontReady(fam, w, text){
+  await ensureFont(fam);
+  try{ await Promise.race([document.fonts.load(`${w} 100px "${fam}"`, text || "A"), new Promise(r => setTimeout(r, 4000))]); }catch(e){}
+}
+
+/* ---------- materials ---------- */
+const MB = { col:"#ffffff", col2:"#222222", metal:0, rough:.3, trans:0, ior:1.5, disp:0, tint:"#ffffff", dens:0, coat:0, irid:0, film:.5, emi:"#ffffff", emiS:0, pat:0, patS:1, toon:0, sss:0, img:true };
+const MATS = [
+  ["chrome", "Хром", "Метал", { col:"#f4f6f8", metal:1, rough:.03 }],
+  ["blackchrome", "Чорний хром", "Метал", { col:"#34353b", metal:1, rough:.07 }],
+  ["gold", "Золото", "Метал", { col:"#ffc35a", metal:1, rough:.1 }],
+  ["rosegold", "Рожеве золото", "Метал", { col:"#f3ad98", metal:1, rough:.16 }],
+  ["copper", "Мідь", "Метал", { col:"#ea8556", metal:1, rough:.2 }],
+  ["alu", "Алюміній", "Метал", { col:"#d7d9de", metal:1, rough:.36 }],
+  ["holo", "Голограма", "Метал", { col:"#ffffff", metal:1, rough:.12, irid:1, film:.7 }],
+  ["rainbow", "Веселка", "Метал", { col:"#ffffff", metal:1, rough:.1, pat:9, patS:1.2 }],
+  ["glass", "Скло", "Скло", { trans:1, ior:1.5, rough:0, disp:.25 }],
+  ["liquid", "Рідке скло", "Скло", { trans:1, ior:1.8, rough:0, disp:.8, coat:.4 }],
+  ["frosted", "Матове скло", "Скло", { trans:1, ior:1.45, rough:.32, tint:"#e8f1ff", dens:.3 }],
+  ["tinted", "Кольорове скло", "Скло", { trans:1, ior:1.5, rough:0, tint:"#ff4fa3", dens:1.4, disp:.2 }],
+  ["ice", "Лід", "Скло", { trans:.95, ior:1.31, rough:.1, tint:"#b9e2ff", dens:.7, col:"#dff2ff" }],
+  ["diamond", "Діамант", "Скло", { trans:1, ior:2.42, rough:0, disp:1 }],
+  ["soap", "Мильна плівка", "Скло", { trans:1, ior:1.08, rough:0, irid:1, film:.45 }],
+  ["plastic", "Пластик", "Пластик", { col:"#ff4a26", rough:.24, coat:.3 }],
+  ["candy", "Цукерка", "Пластик", { col:"#ff58b6", rough:.1, coat:1, sss:.35 }],
+  ["balloon", "Надувний", "Пластик", { col:"#3f6dff", rough:.16, coat:.85 }],
+  ["clay", "Глина", "Пластик", { col:"#e9d6c2", rough:.85 }],
+  ["rubber", "Гума", "Пластик", { col:"#2a2a2f", rough:.62 }],
+  ["pearl", "Перламутр", "Пластик", { col:"#f3ebe3", rough:.22, irid:.55, film:.3, coat:.7 }],
+  ["jelly", "Желе", "Пластик", { col:"#ff8a2b", rough:.08, trans:.55, tint:"#ff7a1a", dens:1.6, ior:1.35, sss:.6 }],
+  ["neon", "Неон", "Особливі", { col:"#141414", emi:"#ff2bd6", emiS:3.2, rough:.4 }],
+  ["toon", "Тун", "Особливі", { col:"#ffd23f", toon:3, rough:.5 }],
+  ["carbon", "Карбон", "Особливі", { col:"#17171b", col2:"#3a3b44", pat:8, patS:6, metal:.25, rough:.3, coat:1 }],
+  ["marble", "Мармур", "Особливі", { col:"#f2f0ea", col2:"#7d7f88", pat:5, patS:1.6, rough:.18, coat:.5 }],
+  ["wood", "Дерево", "Особливі", { col:"#a8693b", col2:"#5a341a", pat:7, patS:1.6, rough:.55 }],
+  ["stripes", "Смужки", "Особливі", { col:"#ffffff", col2:"#ff3d2e", pat:2, patS:2, rough:.25, coat:.6 }],
+];
+const MAT = Object.fromEntries(MATS.map(m => [m[0], m]));
+function matPreset(k){ return Object.assign({ preset:k }, clone(MB), clone((MAT[k] || MATS[0])[3])); }
+
+/* ---------- objects ---------- */
+const PRIMS = [["sphere", "Сфера"], ["box", "Куб"], ["torus", "Тор"], ["capsule", "Капсула"], ["cyl", "Циліндр"], ["cone", "Конус"], ["gem", "Кристал"], ["blob", "Блоб"], ["ring", "Кільце"]];
+const PRIM_K = { sphere:1, box:2, torus:3, capsule:4, cyl:5, cone:6, gem:7, blob:1, ring:8 };
+const PRIM_DEF = { sphere:[.8, 0, 0], box:[.62, .62, .62], torus:[.62, .26, 0], capsule:[.45, .38, 0], cyl:[.55, .6, 0], cone:[.6, .22, 1.2], gem:[.9, 0, 0], blob:[.75, 0, 0], ring:[.7, .1, 0] };
+const SHAPES = [["circle", "Коло"], ["star", "Зірка"], ["heart", "Серце"], ["poly", "Многокутник"], ["cross", "Хрест"], ["arrow", "Стрілка"], ["flower", "Квітка"], ["bolt", "Блискавка"], ["ring", "Бублик"], ["cloud", "Хмара"], ["squircle", "Сквіркл"], ["moon", "Місяць"]];
+const BLOBS = {};
+function newObj(kind, ex){
+  const o = {
+    id:uid(), kind, name:"", visible:true,
+    text:"KLIK", font:"Archivo Black", weight:400, tracking:0, leading:1, align:"center",
+    shape:"star", points:5, inner:.45,
+    prim:"sphere", pa:[.8, .8, .8],
+    src:null, srcName:"", maskMode:0, thr:.5,
+    depth:.16, bevel:.035, bevelStyle:0, inflate:0, infSoft:.8,
+    pos:[0, 0, 0], rot:[0, 0, 0], scale:1.6,
+    def:{ twist:0, bend:0, taper:0, melt:0, wave:0, waveF:3, noise:0, noiseF:2.5 },
+    clone:{ mode:0, nx:3, ny:3, nz:1, sx:1.25, sy:1.25, sz:1.25, n:8, r:1.7, axis:1, align:1, ln:5, ox:0, oy:0, oz:-.45, rs:0, ss:1 },
+    mat:matPreset("chrome"),
+    motion:{ type:0, cycles:1, amt:.25, delay:0 },
+  };
+  if(kind === "prim"){ o.scale = 1; o.prim = "sphere"; o.pa = PRIM_DEF.sphere.slice(); o.bevel = .06; o.mat = matPreset("plastic"); }
+  if(kind === "shape"){ o.scale = 1.4; o.depth = .18; o.bevel = .05; o.mat = matPreset("gold"); }
+  if(kind === "image"){ o.scale = 1.6; o.depth = .1; o.bevel = .02; o.mat = matPreset("plastic"); o.mat.col = "#ffffff"; }
+  if(ex){
+    const m = ex.mat; const e2 = Object.assign({}, ex); delete e2.mat;
+    deepAssign(o, e2);
+    if(typeof m === "string") o.mat = matPreset(m);
+    else if(m) o.mat = Object.assign(matPreset(m.preset || o.mat.preset), m);
+  }
+  if(kind === "prim" && !(ex && ex.pa)) o.pa = PRIM_DEF[o.prim].slice();
+  return o;
+}
+function deepAssign(t, s){
+  for(const k in s){
+    const v = s[k];
+    if(k === "mat" && typeof v === "string") continue;
+    if(v && typeof v === "object" && !Array.isArray(v) && t[k] && typeof t[k] === "object" && !Array.isArray(t[k])) deepAssign(t[k], v);
+    else t[k] = Array.isArray(v) ? v.slice() : v;
+  }
+  return t;
+}
+function objLabel(o){
+  if(o.name) return o.name;
+  if(o.kind === "text") return (o.text || "Текст").split("\n")[0].slice(0, 22) || "Текст";
+  if(o.kind === "shape") return (SHAPES.find(s => s[0] === o.shape) || ["", "Форма"])[1];
+  if(o.kind === "prim") return (PRIMS.find(s => s[0] === o.prim) || ["", "3D"])[1];
+  return o.srcName || "Зображення";
+}
+
+/* ---------- scene defaults ---------- */
+const DEF_SCENE = {
+  aspect:"1:1",
+  bg:{ mode:1, c1:"#16161c", c2:"#050507", ang:90, blur:.45 },
+  env:{ preset:0, int:1, rot:0, sat:1, tint:"#ffffff", c1:"#ffd1e6", c2:"#3a3dff" },
+  key:{ az:35, el:42, int:1.1, col:"#ffffff", soft:10 },
+  floor:{ mode:1, y:-1.05, col:"#16161c", refl:.35, shadow:.6, fade:7 },
+  cam:{ yaw:0, pitch:6, dist:6.2, fov:30, tx:0, ty:0, tz:0 },
+  merge:0, tone:0, expo:1, refrEnv:.35,
+};
+const DEF_MOTION = { loop:6, camOrbit:0, camAmt:25, animDeform:1, interact:1, intAmt:25 };
+const DEF_EX = { size:1080, ssaa:0, fps:30, vsize:1080, repeats:1, bitrate:12, mres:128 };
+let P = { v:1, scene:clone(DEF_SCENE), motion:clone(DEF_MOTION), ex:clone(DEF_EX), objects:[], fx:[], sel:0 };
+const curObj = () => P.objects[P.sel] || null;
+const ASPECTS = { "1:1":[1, 1], "4:5":[4, 5], "9:16":[9, 16], "16:9":[16, 9], "3:2":[3, 2], "21:9":[21, 9] };
+
+/* ---------- effects ---------- */
+const FXD = [
+  { t:"bloom", n:"Блум", code:2, pre:true, p:[["thr", "Поріг", 0, 1, .01, .62], ["knee", "Мʼякість", .01, .5, .01, .2], ["rad", "Радіус", .4, 1.6, .01, 1], ["int", "Сила", 0, 2, .01, .55]], c:[["tint", "Колір", "#ffffff"]] },
+  { t:"glow", n:"Сяйво", code:2, pre:true, p:[["thr", "Поріг", 0, 1, .01, .15], ["knee", "Мʼякість", .01, .5, .01, .35], ["rad", "Радіус", .4, 1.6, .01, 1.35], ["int", "Сила", 0, 2, .01, .35]], c:[["tint", "Колір", "#ffffff"]] },
+  { t:"dof", n:"Глибина різкості", code:3, mip:true, p:[["focus", "Фокус (0 = центр)", 0, 20, .05, 0], ["range", "Діапазон", .1, 6, .05, 1.2], ["str", "Сила", 0, 1.5, .01, .8]] },
+  { t:"blur", n:"Розмиття", code:4, mip:true, p:[["r", "Радіус", 0, 40, .5, 6]] },
+  { t:"tilt", n:"Тілт-шифт", code:5, mip:true, p:[["y", "Центр", 0, 1, .01, .5], ["w", "Ширина", 0, .6, .01, .12], ["a", "Кут", -1.57, 1.57, .01, 0], ["s", "Сила", 0, 1.5, .01, 1]], map:v => [v.y, v.w, 0, v.a, v.s] },
+  { t:"aberr", n:"Аберація", code:6, p:[["amt", "Сила", 0, 1, .01, .3], ["lin", "Лінійна", 0, 1, 1, 0]] },
+  { t:"lens", n:"Лінза", code:7, p:[["k1", "Бочка", -1, 1.5, .01, .35], ["k2", "Край", -1, 1, .01, .1], ["zoom", "Зум", .5, 2, .01, 1.12]] },
+  { t:"kaleido", n:"Калейдоскоп", code:8, p:[["seg", "Сегменти", 2, 16, 1, 6], ["ang", "Поворот", 0, 6.28, .01, 0], ["zoom", "Зум", .3, 3, .01, 1], ["spin", "Оберти за луп", -3, 3, 1, 0], ["ox", "Зсув X", -.5, .5, .01, 0], ["oy", "Зсув Y", -.5, .5, .01, 0]] },
+  { t:"halftone", n:"Півтон", code:9, p:[["size", "Крок, px", 3, 40, .5, 9], ["ang", "Кут", 0, 1.57, .01, .45], ["mode", "Режим", 0, 2, 1, 0, ["Моно", "CMYK", "Колір"]], ["soft", "Мʼякість", .3, 3, .05, 1], ["solid", "Залити фон", 0, 1, 1, 1]], c:[["ink", "Фарба", "#111114"], ["paper", "Папір", "#f2efe6"]] },
+  { t:"pixel", n:"Пікселі", code:10, p:[["size", "Розмір, px", 2, 60, 1, 10], ["dots", "Крапки", 0, 1, 1, 0], ["solid", "Залити фон", 0, 1, 1, 1]], c:[["bg", "Фон", "#000000"]] },
+  { t:"sort", n:"Піксель-сорт", code:11, p:[["thr", "Поріг", 0, 1, .01, .45], ["len", "Довжина, px", 10, 400, 1, 140], ["ang", "Напрям", -3.14, 3.14, .01, 0], ["mix", "Сила", 0, 1, .01, 1]] },
+  { t:"crt", n:"CRT", code:12, p:[["scan", "Сканлайни", 0, 1, .01, .55], ["curve", "Вигин", 0, 1, .01, .35], ["line", "Крок рядка, px", 1, 8, .5, 3], ["mask", "RGB-маска", 0, 1, .01, .45], ["vig", "Віньєтка", 0, 1, .01, .6], ["flick", "Мерехтіння", 0, 1, .01, .3], ["solid", "Залити фон", 0, 1, 1, 1]] },
+  { t:"grain", n:"Зерно", code:13, p:[["amt", "Сила", 0, .5, .005, .08], ["size", "Розмір", .5, 4, .1, 1.2], ["anim", "Анімоване", 0, 1, 1, 1], ["col", "Кольорове", 0, 1, 1, 0]] },
+  { t:"vignette", n:"Віньєтка", code:14, p:[["amt", "Сила", 0, 1, .01, .55], ["r", "Радіус", 0, 1, .01, .35], ["soft", "Мʼякість", .05, 1, .01, .45]], c:[["col", "Колір", "#000000"]] },
+  { t:"color", n:"Колір", code:15, p:[["bri", "Яскравість", -.5, .5, .01, 0], ["con", "Контраст", 0, 2, .01, 1], ["sat", "Насиченість", 0, 2, .01, 1], ["hue", "Відтінок", -3.14, 3.14, .01, 0], ["temp", "Температура", -1, 1, .01, 0], ["inv", "Інверсія", 0, 1, 1, 0], ["gam", "Гамма", .3, 3, .01, 1]] },
+  { t:"outline", n:"Контур", code:16, p:[["w", "Товщина, px", .5, 6, .1, 1.5], ["thr", "Поріг", 0, 2, .01, .35], ["mode", "Режим", 0, 2, 1, 0, ["Поверх", "Лише лінії", "Неон"]]], c:[["line", "Лінія", "#ffffff"], ["bg", "Фон", "#000000"]] },
+  { t:"gradmap", n:"Градієнт-мапа", code:17, p:[["mix", "Сила", 0, 1, .01, 1]], c:[["a", "Тіні", "#120327"], ["b", "Середина", "#ff2a6d"], ["c", "Світло", "#ffe66b"]] },
+  { t:"dither", n:"Дизеринг", code:18, p:[["lv", "Рівні", 2, 8, 1, 2], ["size", "Піксель", 1, 8, 1, 2], ["mono", "Два кольори", 0, 1, 1, 1]], c:[["a", "Темний", "#0d0d12"], ["b", "Світлий", "#e8ff5a"]] },
+  { t:"poster", n:"Постеризація", code:19, p:[["lv", "Рівні", 2, 12, 1, 5]] },
+  { t:"ripple", n:"Брижі", code:20, p:[["amp", "Сила", 0, 2, .01, .5], ["freq", "Частота", 5, 120, 1, 40], ["spd", "Швидкість", -4, 4, 1, 1], ["cx", "Центр X", -.5, .5, .01, 0], ["cy", "Центр Y", -.5, .5, .01, 0]], map:v => [v.amp, v.freq, v.spd, 0, v.cx, v.cy] },
+  { t:"liquid", n:"Рідина", code:21, p:[["amp", "Сила", 0, 2, .01, .5], ["scale", "Масштаб", .5, 10, .1, 2.5], ["flow", "Течія", 0, 2, .01, .6]] },
+  { t:"riso", n:"Різограф", code:22, p:[["off", "Зсув фарб, px", 0, 20, .5, 4], ["paper", "Папір", 0, .4, .01, .12], ["grain", "Зерно", 1, 4, .1, 1.4], ["ink2", "Друга фарба", 0, 2, .01, 1]], c:[["a", "Фарба 1", "#1c3f9e"], ["b", "Фарба 2", "#ff4f6d"], ["p", "Папір", "#f4efe2"]] },
+  { t:"ascii", n:"ASCII", code:23, p:[["cell", "Клітинка, px", 4, 32, 1, 10], ["gain", "Підсилення", .3, 3, .01, 1.2], ["mono", "Моно", 0, 1, 1, 0], ["solid", "Залити фон", 0, 1, 1, 1]], c:[["ink", "Символи", "#bbff32"], ["bg", "Фон", "#050505"]] },
+  { t:"trail", n:"Шлейф", code:24, hist:true, p:[["decay", "Згасання", 0, .98, .01, .82], ["zoom", "Зум шлейфу", .9, 1.1, .001, 1.01], ["mix", "Змішування", 0, 1, 1, 0]] },
+  { t:"mirror", n:"Дзеркало", code:25, p:[["mode", "Вісь", 0, 2, 1, 0, ["X", "Y", "XY"]], ["flip", "Інша сторона", 0, 1, 1, 0]] },
+  { t:"glitch", n:"Глітч", code:26, p:[["amt", "Зсув", 0, 1, .01, .4], ["bands", "Смуги", 4, 80, 1, 24], ["rate", "Темп", 1, 8, 1, 3], ["prob", "Частота", 0, 1, .01, .25]] },
+];
+const FX = Object.fromEntries(FXD.map(f => [f.t, f]));
+function newFx(t, ex){ const d = FX[t]; const f = { t, on:true, v:{} }; d.p.forEach(p => f.v[p[0]] = p[5]); (d.c || []).forEach(c => f.v[c[0]] = c[2]); if(ex) Object.assign(f.v, ex); return f; }
+
+/* ================= GL helpers ================= */
+function shader(type, src){
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+    const log = gl.getShaderInfoLog(s); const lines = src.split("\n");
+    const m = /0:(\d+)/.exec(log || ""); const ln = m ? +m[1] : 0;
+    throw new Error(log + "\n" + lines.slice(Math.max(0, ln - 4), ln + 2).map((l, i) => (ln - 3 + i) + ": " + l).join("\n"));
+  }
+  return s;
+}
+const VS = shader(gl.VERTEX_SHADER, SH_VS);
+function program(fs){
+  const p = gl.createProgram(); gl.attachShader(p, VS); gl.attachShader(p, shader(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+  if(!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const U = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for(let i = 0; i < n; i++){ const inf = gl.getActiveUniform(p, i); U[inf.name.replace(/\[0\]$/, "")] = gl.getUniformLocation(p, inf.name); }
+  return { p, U };
+}
+function texRT(w, h, fmt, mips, nearest){
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  const lv = mips ? Math.floor(Math.log2(Math.max(w, h))) + 1 : 1;
+  gl.texStorage2D(gl.TEXTURE_2D, lv, fmt, w, h);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, nearest ? gl.NEAREST : (mips ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, nearest ? gl.NEAREST : gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+}
+function fbo(texs){
+  const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+  texs.forEach((t, i) => gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, t, 0));
+  if(texs.length > 1) gl.drawBuffers(texs.map((_, i) => gl.COLOR_ATTACHMENT0 + i));
+  return f;
+}
+function texArray(size, fmt, layers){
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D_ARRAY, t);
+  gl.texStorage3D(gl.TEXTURE_2D_ARRAY, fmt === gl.RGBA8 ? Math.floor(Math.log2(size)) + 1 : 1, fmt, size, size, layers);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+}
+
+let PR = {};
+try{
+  PR.scene = program(SH_SCENE); PR.env = program(SH_ENV); PR.fx = program(SH_FX); PR.fin = program(SH_FINAL);
+}catch(e){ showErr("Помилка WebGL: " + e.message); throw e; }
+
+/* environment target */
+const ENV_W = 1024, ENV_H = 512;
+const ENV_FMT = HAS_CBF ? gl.RGBA16F : gl.RGBA8;
+function mkEnv(w, h){ const t = texRT(w, h, ENV_FMT, true); gl.bindTexture(gl.TEXTURE_2D, t); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); return { t, f:fbo([t]), w, h, max:Math.floor(Math.log2(w)) }; }
+const ENV = mkEnv(ENV_W, ENV_H);
+const ENV_T = mkEnv(256, 128);
+let envSrc = null, envSrcMode = 0; // uploaded panorama
+
+/* render target set */
+function mkTargets(w, h){
+  const T = { w, h };
+  T.col = texRT(w, h, gl.RGBA8, true); T.aux = texRT(w, h, gl.RGBA8, false, true);
+  T.scene = fbo([T.col, T.aux]);
+  T.a = texRT(w, h, gl.RGBA8, true); T.fa = fbo([T.a]);
+  T.b = texRT(w, h, gl.RGBA8, true); T.fb = fbo([T.b]);
+  T.tmp = texRT(w, h, gl.RGBA8, true); T.ft = fbo([T.tmp]);
+  T.hist = texRT(w, h, gl.RGBA8, false); T.fh = fbo([T.hist]);
+  T.fin = null;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, T.fh); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+  return T;
+}
+function freeTargets(T){
+  if(!T) return;
+  ["col", "aux", "a", "b", "tmp", "hist", "finT"].forEach(k => T[k] && gl.deleteTexture(T[k]));
+  ["scene", "fa", "fb", "ft", "fh", "fin"].forEach(k => T[k] && gl.deleteFramebuffer(T[k]));
+}
+
+/* SDF + image arrays */
+const SDF = { tex:texArray(MS, gl.RG16F, MAXO), img:texArray(MS, gl.RGBA8, MAXO), size:MS, info:{} };
+const SDF_T = { tex:texArray(TS, gl.RG16F, MAXO), img:texArray(TS, gl.RGBA8, MAXO), size:TS, info:{} };
+
+/* glyph atlas for ASCII */
+const glyphTex = (() => {
+  const ramp = " .:-=+*#%@", cw = 32, c = document.createElement("canvas"); c.width = cw*ramp.length; c.height = cw;
+  const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, c.width, c.height); x.fillStyle = "#fff";
+  x.font = "bold 30px ui-monospace,Menlo,monospace"; x.textAlign = "center"; x.textBaseline = "middle";
+  for(let i = 0; i < ramp.length; i++) x.fillText(ramp[i], i*cw + cw/2, cw/2 + 1);
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+})();
+const blackTex = (() => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255])); return t; })();
+let bgTex = null, bgAsp = 1;
+
+/* ================= masks → signed distance ================= */
+const INF = 1e20;
+function edt1d(g, off, stride, len, f, v, z){
+  v[0] = 0; z[0] = -INF; z[1] = INF; f[0] = g[off];
+  for(let q = 1, k = 0, s = 0; q < len; q++){
+    f[q] = g[off + q*stride];
+    const q2 = q*q;
+    do { const r = v[k]; s = (f[q] - f[r] + q2 - r*r)/(q - r)/2; } while(s <= z[k] && --k > -1);
+    k++; v[k] = q; z[k] = s; z[k + 1] = INF;
+  }
+  for(let q = 0, k = 0; q < len; q++){ while(z[k + 1] < q) k++; const r = v[k], qr = q - r; g[off + q*stride] = f[r] + qr*qr; }
+}
+function edt(g, w, h, f, v, z){ for(let x = 0; x < w; x++) edt1d(g, x, w, h, f, v, z); for(let y = 0; y < h; y++) edt1d(g, y*w, 1, w, f, v, z); }
+const edtBuf = {};
+function maskToSdf(alpha, N){
+  const len = N*N;
+  if(!edtBuf[N]) edtBuf[N] = { o:new Float64Array(len), i:new Float64Array(len), f:new Float64Array(N), v:new Uint16Array(N), z:new Float64Array(N + 1) };
+  const B = edtBuf[N]; const go = B.o, gi = B.i;
+  for(let j = 0; j < len; j++){
+    const a = alpha[j]/255;
+    if(a <= 0){ go[j] = INF; gi[j] = 0; }
+    else if(a >= 1){ go[j] = 0; gi[j] = INF; }
+    else { const d = .5 - a; go[j] = d > 0 ? d*d : 0; gi[j] = d < 0 ? d*d : 0; }
+  }
+  edt(go, N, N, B.f, B.v, B.z); edt(gi, N, N, B.f, B.v, B.z);
+  const out = new Float32Array(len); const k = 2/N; let mn = 0;
+  for(let j = 0; j < len; j++) out[j] = (Math.sqrt(go[j]) - Math.sqrt(gi[j]))*k;
+  /* separable gaussian: removes the sub-pixel ripple a raster EDT leaves on diagonal walls */
+  const R = N >= 1024 ? 6 : 2, sig = N >= 1024 ? 2.3 : 1, wk = [];
+  let ws = 0; for(let i = -R; i <= R; i++){ const w = Math.exp(-i*i/(2*sig*sig)); wk.push(w); ws += w; } for(let i = 0; i < wk.length; i++) wk[i] /= ws;
+  const tmp = new Float32Array(len);
+  for(let y = 0; y < N; y++){ const row = y*N; for(let x = 0; x < N; x++){ let s = 0; for(let i = -R; i <= R; i++){ const xx = x + i < 0 ? 0 : (x + i >= N ? N - 1 : x + i); s += out[row + xx]*wk[i + R]; } tmp[row + x] = s; } }
+  for(let x = 0; x < N; x++){ for(let y = 0; y < N; y++){ let s = 0; for(let i = -R; i <= R; i++){ const yy = y + i < 0 ? 0 : (y + i >= N ? N - 1 : y + i); s += tmp[yy*N + x]*wk[i + R]; } out[y*N + x] = s; if(s < mn) mn = s; } }
+  /* smooth interior field for inflation: blurred inside-distance at low res, normalised 0..1 (no medial-axis crease) */
+  const F = Math.max(1, N/256), M = N/F;
+  const lo = new Float32Array(M*M);
+  for(let y = 0; y < M; y++) for(let x = 0; x < M; x++){ let s = 0; for(let dy = 0; dy < F; dy++) for(let dx = 0; dx < F; dx++){ const v = out[(y*F + dy)*N + x*F + dx]; s += v < 0 ? -v : 0; } lo[y*M + x] = s/(F*F); }
+  const sg = Math.max(1.2, (-mn)*M/2*.55), RR = Math.min(40, Math.ceil(sg*2.5)), wg = [];
+  let wgs = 0; for(let i = -RR; i <= RR; i++){ const w = Math.exp(-i*i/(2*sg*sg)); wg.push(w); wgs += w; } for(let i = 0; i < wg.length; i++) wg[i] /= wgs;
+  const t2 = new Float32Array(M*M), g2 = new Float32Array(M*M);
+  for(let y = 0; y < M; y++) for(let x = 0; x < M; x++){ let s = 0; for(let i = -RR; i <= RR; i++){ const xx = clamp(x + i, 0, M - 1); s += lo[y*M + xx]*wg[i + RR]; } t2[y*M + x] = s; }
+  let gmax = 1e-6;
+  for(let x = 0; x < M; x++) for(let y = 0; y < M; y++){ let s = 0; for(let i = -RR; i <= RR; i++){ const yy = clamp(y + i, 0, M - 1); s += t2[yy*M + x]*wg[i + RR]; } g2[y*M + x] = s; if(s > gmax) gmax = s; }
+  const rg = new Float32Array(len*2);
+  for(let y = 0; y < N; y++){
+    const fy = clamp((y + .5)/F - .5, 0, M - 1), y0 = Math.floor(fy), y1 = Math.min(M - 1, y0 + 1), ty = fy - y0;
+    for(let x = 0; x < N; x++){
+      const fx = clamp((x + .5)/F - .5, 0, M - 1), x0 = Math.floor(fx), x1 = Math.min(M - 1, x0 + 1), tx = fx - x0;
+      const g = (g2[y0*M + x0]*(1 - tx) + g2[y0*M + x1]*tx)*(1 - ty) + (g2[y1*M + x0]*(1 - tx) + g2[y1*M + x1]*tx)*ty;
+      const j = y*N + x; rg[j*2] = out[j]; rg[j*2 + 1] = g/gmax;
+    }
+  }
+  return { sdf:rg, maxIn:-mn };
+}
+/* pull-push fill of transparent colour pixels (so edges never sample black) */
+function bleed(rgba, N){
+  const lv = [];
+  let n = N; const c0 = new Float32Array(N*N*4);
+  for(let i = 0; i < N*N; i++){ const a = rgba[i*4 + 3]/255; c0[i*4] = rgba[i*4]*a; c0[i*4 + 1] = rgba[i*4 + 1]*a; c0[i*4 + 2] = rgba[i*4 + 2]*a; c0[i*4 + 3] = a; }
+  lv.push({ n, c:c0 });
+  while(n > 1){
+    const p = lv[lv.length - 1], m = n >> 1, d = new Float32Array(m*m*4);
+    for(let y = 0; y < m; y++) for(let x = 0; x < m; x++){
+      const o = (y*m + x)*4;
+      for(let dy = 0; dy < 2; dy++) for(let dx = 0; dx < 2; dx++){ const q = ((y*2 + dy)*n + x*2 + dx)*4; d[o] += p.c[q]; d[o + 1] += p.c[q + 1]; d[o + 2] += p.c[q + 2]; d[o + 3] += p.c[q + 3]; }
+      d[o] *= .25; d[o + 1] *= .25; d[o + 2] *= .25; d[o + 3] *= .25;
+    }
+    lv.push({ n:m, c:d }); n = m;
+  }
+  const top = lv[lv.length - 1].c; if(top[3] > 1e-6){ top[0] /= top[3]; top[1] /= top[3]; top[2] /= top[3]; } top[3] = 1;
+  for(let l = lv.length - 2; l >= 0; l--){
+    const L = lv[l], U = lv[l + 1];
+    for(let y = 0; y < L.n; y++) for(let x = 0; x < L.n; x++){
+      const o = (y*L.n + x)*4, q = ((y >> 1)*U.n + (x >> 1))*4;
+      const a = Math.min(1, L.c[o + 3]);
+      L.c[o] += (1 - a)*U.c[q]; L.c[o + 1] += (1 - a)*U.c[q + 1]; L.c[o + 2] += (1 - a)*U.c[q + 2]; L.c[o + 3] = 1;
+    }
+  }
+  const outp = new Uint8Array(N*N*4);
+  for(let i = 0; i < N*N; i++){ outp[i*4] = clamp(c0[i*4], 0, 255); outp[i*4 + 1] = clamp(c0[i*4 + 1], 0, 255); outp[i*4 + 2] = clamp(c0[i*4 + 2], 0, 255); outp[i*4 + 3] = 255; }
+  return outp;
+}
+
+const mCan = document.createElement("canvas"); const mCtx = mCan.getContext("2d", { willReadFrequently:true });
+const tCan = document.createElement("canvas"); const tCtx = tCan.getContext("2d", { willReadFrequently:true });
+const imgCache = {};
+function loadImg(src){
+  if(imgCache[src]) return imgCache[src];
+  imgCache[src] = new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+  return imgCache[src];
+}
+function shapePath(x, o){
+  const n = Math.max(3, Math.round(o.points || 5)), inr = clamp(o.inner || .45, .1, .95);
+  x.beginPath();
+  switch(o.shape){
+    case "circle": x.arc(0, 0, 1, 0, Math.PI*2); break;
+    case "ring": x.arc(0, 0, 1, 0, Math.PI*2); x.arc(0, 0, inr, 0, Math.PI*2, true); break;
+    case "star": for(let i = 0; i < n*2; i++){ const a = -Math.PI/2 + i*Math.PI/n, r = i % 2 ? inr : 1; x.lineTo(Math.cos(a)*r, Math.sin(a)*r); } x.closePath(); break;
+    case "poly": for(let i = 0; i < n; i++){ const a = -Math.PI/2 + i*Math.PI*2/n; x.lineTo(Math.cos(a), Math.sin(a)); } x.closePath(); break;
+    case "heart": x.moveTo(0, .95); x.bezierCurveTo(-1.15, .15, -1.05, -.95, -.5, -.95); x.bezierCurveTo(-.2, -.95, -.02, -.75, 0, -.5); x.bezierCurveTo(.02, -.75, .2, -.95, .5, -.95); x.bezierCurveTo(1.05, -.95, 1.15, .15, 0, .95); x.closePath(); break;
+    case "cross": { const w = inr*.75; x.rect(-w, -1, w*2, 2); x.rect(-1, -w, 2, w*2); break; }
+    case "arrow": x.moveTo(-1, -.32*inr*2); x.lineTo(.1, -.32*inr*2); x.lineTo(.1, -.85); x.lineTo(1, 0); x.lineTo(.1, .85); x.lineTo(.1, .32*inr*2); x.lineTo(-1, .32*inr*2); x.closePath(); break;
+    case "flower": for(let i = 0; i <= 240; i++){ const a = i/240*Math.PI*2, r = inr + (1 - inr)*Math.pow(Math.abs(Math.cos(a*n/2)), 1.2); x.lineTo(Math.cos(a - Math.PI/2)*r, Math.sin(a - Math.PI/2)*r); } x.closePath(); break;
+    case "bolt": x.moveTo(.25, -1); x.lineTo(-.6, .12); x.lineTo(-.02, .12); x.lineTo(-.3, 1); x.lineTo(.62, -.18); x.lineTo(.04, -.18); x.lineTo(.42, -1); x.closePath(); break;
+    case "cloud": [[-.5, .15, .42], [0, -.2, .55], [.5, .1, .45], [-.05, .3, .45]].forEach(([cx, cy, r]) => { x.moveTo(cx + r, cy); x.arc(cx, cy, r, 0, Math.PI*2); }); x.rect(-.5, .1, 1, .47); break;
+    case "squircle": for(let i = 0; i <= 200; i++){ const a = i/200*Math.PI*2, c = Math.cos(a), s = Math.sin(a); const e = 2/(4 + inr*6); x.lineTo(Math.sign(c)*Math.pow(Math.abs(c), e), Math.sign(s)*Math.pow(Math.abs(s), e)); } x.closePath(); break;
+    case "moon": x.arc(0, 0, 1, 0, Math.PI*2); x.arc(.15 + inr*.6, -.15 - inr*.2, .86, 0, Math.PI*2, true); break;
+    default: x.arc(0, 0, 1, 0, Math.PI*2);
+  }
+}
+/* draws the object's 2D silhouette into an N×N canvas; returns { alpha:Uint8, rgba:Uint8|null, hx, hy } */
+async function rasterize(o, N){
+  const can = N === MS ? mCan : tCan, x = N === MS ? mCtx : tCtx;
+  can.width = N; can.height = N; x.clearRect(0, 0, N, N);
+  const fit = N*.84;
+  let hx = .84, hy = .84, colors = null;
+  if(o.kind === "text"){
+    const fam = o.font, w = o.weight || 400, txt = (o.text || " ").replace(/\r/g, "");
+    await fontReady(fam, w, txt);
+    const lines = txt.split("\n");
+    const base = 160;
+    const fstr = s => `${w} ${s}px "${fam}", "Inter", sans-serif`;
+    const measure = (s) => {
+      x.font = fstr(s);
+      const lw = lines.map(l => { let t = 0; for(const ch of l) t += x.measureText(ch).width; return t + Math.max(0, [...l].length - 1)*o.tracking*s; });
+      const m = x.measureText("HÐgjÅ");
+      const asc = m.actualBoundingBoxAscent, des = m.actualBoundingBoxDescent;
+      const lh = s*o.leading;
+      return { lw, asc, des, lh, W:Math.max(1, ...lw), H:asc + des + (lines.length - 1)*lh };
+    };
+    let m = measure(base);
+    const sc = Math.min(fit/m.W, fit/m.H);
+    const s = base*sc; m = measure(s);
+    x.font = fstr(s); x.fillStyle = "#fff"; x.textBaseline = "alphabetic";
+    let y = N/2 - m.H/2 + m.asc;
+    lines.forEach((l, li) => {
+      let xx = o.align === "left" ? N/2 - m.W/2 : (o.align === "right" ? N/2 + m.W/2 - m.lw[li] : N/2 - m.lw[li]/2);
+      for(const ch of l){ x.fillText(ch, xx, y); xx += x.measureText(ch).width + o.tracking*s; }
+      y += m.lh;
+    });
+    hx = m.W/N*1.0; hy = m.H/N*1.0;
+  } else if(o.kind === "shape"){
+    x.save(); x.translate(N/2, N/2); x.scale(fit/2, fit/2); x.fillStyle = "#fff"; shapePath(x, o); x.fill("evenodd"); x.restore();
+  } else if(o.kind === "image" && o.src && BLOBS[o.src]){
+    const im = await loadImg(BLOBS[o.src]);
+    let iw = im.naturalWidth || im.width || 512, ih = im.naturalHeight || im.height || 512;
+    const k = Math.min(fit/iw, fit/ih); const dw = iw*k, dh = ih*k;
+    x.drawImage(im, N/2 - dw/2, N/2 - dh/2, dw, dh);
+    hx = dw/N; hy = dh/N;
+    const d = x.getImageData(0, 0, N, N).data;
+    colors = new Uint8Array(d.buffer.slice(0));
+    const alpha = new Uint8Array(N*N);
+    const x0 = Math.floor(N/2 - dw/2), x1 = Math.ceil(N/2 + dw/2), y0 = Math.floor(N/2 - dh/2), y1 = Math.ceil(N/2 + dh/2);
+    for(let yy = 0; yy < N; yy++) for(let xx = 0; xx < N; xx++){
+      const i = yy*N + xx; const a = d[i*4 + 3];
+      if(o.maskMode === 0){ alpha[i] = a; continue; }
+      if(xx < x0 || xx >= x1 || yy < y0 || yy >= y1 || a === 0){ alpha[i] = 0; continue; }
+      const L = (d[i*4]*.299 + d[i*4 + 1]*.587 + d[i*4 + 2]*.114)/255;
+      const v = o.maskMode === 1 ? (o.thr - L) : (L - o.thr);
+      alpha[i] = clamp(Math.round((v*12 + .5)*255), 0, 255)*a/255;
+    }
+    return { alpha, rgba:bleed(colors, N), hx, hy };
+  }
+  const d = x.getImageData(0, 0, N, N).data;
+  const alpha = new Uint8Array(N*N);
+  for(let i = 0; i < N*N; i++) alpha[i] = d[i*4 + 3];
+  return { alpha, rgba:null, hx, hy };
+}
+function maskKey(o){
+  if(o.kind === "text") return ["t", o.text, o.font, o.weight, o.tracking, o.leading, o.align].join("|");
+  if(o.kind === "shape") return ["s", o.shape, o.points, o.inner].join("|");
+  if(o.kind === "image") return ["i", o.src, o.maskMode, o.thr].join("|");
+  return "p";
+}
+/* slot allocation per target set */
+function assignSlots(objs, store){
+  const used = new Set();
+  objs.forEach(o => { if(o._slot != null && o._slot < MAXO && !used.has(o._slot)) used.add(o._slot); else o._slot = null; });
+  objs.forEach(o => { if(o._slot == null){ for(let s = 0; s < MAXO; s++) if(!used.has(s)){ o._slot = s; used.add(s); break; } } });
+}
+async function buildMask(o, store, slot){
+  if(o.kind === "prim") return;
+  const key = maskKey(o) + "#" + slot;
+  if(store.info[o.id] && store.info[o.id].key === key) return;
+  const N = store.size;
+  const r = await rasterize(o, N);
+  const { sdf, maxIn } = maskToSdf(r.alpha, N);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, store.tex);
+  gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, slot, N, N, 1, gl.RG, gl.FLOAT, sdf);
+  if(r.rgba){
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, store.img);
+    gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, slot, N, N, 1, gl.RGBA, gl.UNSIGNED_BYTE, r.rgba);
+  }
+  store.info[o.id] = { key, maxIn, hx:r.hx, hy:r.hy, img:!!r.rgba };
+}
+
+/* ================= environment ================= */
+function keyDir(sc){ const az = sc.key.az*DEG, el = clamp(sc.key.el, 2, 89)*DEG; return [Math.cos(el)*Math.sin(az), Math.sin(el), Math.cos(el)*Math.cos(az)]; }
+function bakeEnv(sc, E){
+  const U = PR.env.U; gl.useProgram(PR.env.p);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, E.f); gl.viewport(0, 0, E.w, E.h);
+  const custom = sc.env.preset === 99 && envSrc;
+  gl.uniform1i(U.uPreset, sc.env.preset);
+  gl.uniform3fv(U.uKey, keyDir(sc));
+  gl.uniform3fv(U.uC1, hex2rgb(sc.env.c1)); gl.uniform3fv(U.uC2, hex2rgb(sc.env.c2));
+  gl.uniform3fv(U.uTint, hex2rgb(sc.env.tint)); gl.uniform1f(U.uSat, sc.env.sat);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, custom ? envSrc : blackTex); gl.uniform1i(U.uSrc, 0);
+  gl.uniform1i(U.uSrcMode, custom ? envSrcMode : 0);
+  gl.disable(gl.BLEND); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.bindTexture(gl.TEXTURE_2D, E.t); gl.generateMipmap(gl.TEXTURE_2D);
+}
+/* Radiance .hdr (RGBE) parser */
+function parseHDR(buf){
+  const u8 = new Uint8Array(buf); let p = 0; const line = () => { let s = ""; while(p < u8.length && u8[p] !== 10) s += String.fromCharCode(u8[p++]); p++; return s; };
+  if(!line().startsWith("#?")) throw new Error("not HDR");
+  let l; while((l = line()) !== ""){ if(p >= u8.length) throw new Error("bad header"); }
+  const dim = line().split(" "); const H = +dim[1], W = +dim[3];
+  const data = new Float32Array(W*H*4); const scan = new Uint8Array(W*4);
+  for(let y = 0; y < H; y++){
+    if(u8[p] === 2 && u8[p + 1] === 2 && !(u8[p + 2] & 128)){
+      p += 4;
+      for(let c = 0; c < 4; c++){ let x = 0; while(x < W){ let n = u8[p++]; if(n > 128){ n -= 128; const v = u8[p++]; while(n--) scan[(x++)*4 + c] = v; } else { while(n--) scan[(x++)*4 + c] = u8[p++]; } } }
+    } else { for(let x = 0; x < W; x++){ for(let c = 0; c < 4; c++) scan[x*4 + c] = u8[p++]; } }
+    for(let x = 0; x < W; x++){ const e = scan[x*4 + 3]; const f = e ? Math.pow(2, e - 136) : 0; const o = (y*W + x)*4; data[o] = scan[x*4]*f; data[o + 1] = scan[x*4 + 1]*f; data[o + 2] = scan[x*4 + 2]*f; data[o + 3] = 1; }
+  }
+  return { W, H, data };
+}
+
+/* ================= camera / object uniforms ================= */
+function camBasis(cam, extra){
+  const yaw = (cam.yaw + (extra ? extra.yaw : 0))*DEG, pitch = clamp(cam.pitch + (extra ? extra.pitch : 0), -85, 85)*DEG;
+  const tg = [cam.tx, cam.ty, cam.tz];
+  const pos = [tg[0] + cam.dist*Math.sin(yaw)*Math.cos(pitch), tg[1] + cam.dist*Math.sin(pitch), tg[2] + cam.dist*Math.cos(yaw)*Math.cos(pitch)];
+  let f = [tg[0] - pos[0], tg[1] - pos[1], tg[2] - pos[2]]; const fl = Math.hypot(...f); f = f.map(v => v/fl);
+  let r = [-f[2], 0, f[0]]; // f × (0,1,0)
+  const rl = Math.hypot(...r) || 1; r = r.map(v => v/rl);
+  const u = [r[1]*f[2] - r[2]*f[1], r[2]*f[0] - r[0]*f[2], r[0]*f[1] - r[1]*f[0]];
+  return { pos, r, u, f, tg };
+}
+function rotMat(rx, ry, rz){ // R = Rz*Ry*Rx (column-major 3x3 as rows array)
+  const cx = Math.cos(rx), sx = Math.sin(rx), cy = Math.cos(ry), sy = Math.sin(ry), cz = Math.cos(rz), sz = Math.sin(rz);
+  return [
+    [cz*cy, cz*sy*sx - sz*cx, cz*sy*cx + sz*sx],
+    [sz*cy, sz*sy*sx + cz*cx, sz*sy*cx - cz*sx],
+    [-sy, cy*sx, cy*cx],
+  ];
+}
+function localRadius(o, info){
+  let r;
+  const pa = o.pa || [.8, .8, .8];
+  if(o.kind === "prim"){
+    switch(o.prim){
+      case "box": r = Math.hypot(pa[0], pa[1], pa[2]); break;
+      case "torus": case "ring": r = pa[0] + pa[1]; break;
+      case "capsule": r = pa[0] + pa[1]; break;
+      case "cyl": r = Math.hypot(pa[0], pa[1]); break;
+      case "cone": r = Math.hypot(Math.max(pa[0], pa[1]), pa[2]) + Math.max(pa[0], pa[1]); break;
+      default: r = pa[0];
+    }
+    if(o.prim === "blob") r += .25;
+  } else {
+    const hx = info ? info.hx : .84, hy = info ? info.hy : .84;
+    r = Math.hypot(hx, hy, o.depth*1.05);
+  }
+  const d = o.def; r *= 1 + Math.abs(d.taper)*.6; r += Math.abs(d.wave) + Math.abs(d.noise) + Math.abs(d.melt)*1.4;
+  if(Math.abs(d.bend) > 0) r *= 1 + Math.abs(d.bend)*.25;
+  const m = o.motion; if(m.type === 5 || m.type === 6) r += m.amt*1.7; if(m.type === 7) r *= 1 + m.amt;
+  const c = o.clone;
+  if(c.mode === 1) r += Math.hypot((c.nx - 1)/2*c.sx, (c.ny - 1)/2*c.sy, (c.nz - 1)/2*c.sz);
+  else if(c.mode === 2) r += Math.abs(c.r);
+  else if(c.mode === 3){ const h = (c.ln - 1)/2; r = r*Math.pow(Math.max(c.ss, 1/c.ss), h) + Math.hypot(c.ox, c.oy, c.oz)*h; }
+  return r*1.04 + .02;
+}
+/* local-space half extents covering clones, motion and deformation */
+function localBox(o, info){
+  let hx, hy, hz;
+  const pa = o.pa || [.8, .8, .8];
+  if(o.kind === "prim"){
+    switch(o.prim){
+      case "box": hx = pa[0]; hy = pa[1]; hz = pa[2]; break;
+      case "torus": case "ring": hx = hy = pa[0] + pa[1]; hz = pa[1]; if(o.prim === "ring"){ hx = hz = pa[0] + pa[1]; hy = pa[1]; } break;
+      case "capsule": hx = hz = pa[1]; hy = pa[0] + pa[1]; break;
+      case "cyl": hx = hz = pa[0]; hy = pa[1]; break;
+      case "cone": hx = hz = Math.max(pa[0], pa[1]); hy = pa[2]*.5 + Math.max(pa[0], pa[1]); break;
+      case "gem": hx = hy = hz = pa[0] + o.bevel; break;
+      default: hx = hy = hz = pa[0] + (o.prim === "blob" ? .25 : 0);
+    }
+  } else { hx = info ? info.hx : .84; hy = info ? info.hy : .84; hz = o.depth*1.02; hx += .01; hy += .01; }
+  const d = o.def, m = o.motion;
+  const xz = () => { const r = Math.hypot(hx, hz); hx = hz = r; }, xy = () => { const r = Math.hypot(hx, hy); hx = hy = r; }, yz = () => { const r = Math.hypot(hy, hz); hy = hz = r; };
+  if(d.taper) hx *= 1 + Math.abs(d.taper)*hy;
+  if(d.twist) xz();
+  if(d.bend){ xy(); }
+  if(d.wave) hz += Math.abs(d.wave);
+  if(d.melt) hy += Math.abs(d.melt);
+  const nz = (o.kind === "prim" && o.prim === "blob" && !d.noise) ? .2 : Math.abs(d.noise); hx += nz; hy += nz; hz += nz;
+  if(m.type === 1 || m.type === 4) xz(); else if(m.type === 2 || m.type === 10) yz(); else if(m.type === 3 || m.type === 9) xy();
+  else if(m.type === 8){ const r = Math.hypot(hx, hy, hz); hx = hy = hz = r; }
+  else if(m.type === 5){ hy += m.amt; xy(); } else if(m.type === 6){ hy += m.amt*1.7; hx *= 1.1; } else if(m.type === 7){ hx *= 1 + m.amt; hy *= 1 + m.amt; hz *= 1 + m.amt; }
+  const c = o.clone;
+  if(c.mode === 1){ hx += (c.nx - 1)/2*c.sx; hy += (c.ny - 1)/2*c.sy; hz += (c.nz - 1)/2*c.sz; }
+  else if(c.mode === 2){ if(c.axis){ const r = Math.hypot(hx, hy); hx = hy = Math.abs(c.r) + r; } else { const r = Math.hypot(hx, hz); hx = hz = Math.abs(c.r) + r; } }
+  else if(c.mode === 3){ const h = (c.ln - 1)/2, g = Math.pow(Math.max(c.ss, 1/c.ss), h); hx *= g; hy *= g; hz *= g; if(c.rs) xz(); hx += Math.abs(c.ox)*h; hy += Math.abs(c.oy)*h; hz += Math.abs(c.oz)*h; }
+  return [hx*1.03 + .015, hy*1.03 + .015, hz*1.03 + .015];
+}
+const UB = {
+  inv:new Float32Array(16*MAXO), g0:new Float32Array(4*MAXO), g1:new Float32Array(4*MAXO), g2:new Float32Array(4*MAXO),
+  d0:new Float32Array(4*MAXO), d1:new Float32Array(4*MAXO), c0:new Float32Array(4*MAXO), c1:new Float32Array(4*MAXO), i0:new Float32Array(4*MAXO), bnd:new Float32Array(4*MAXO), box:new Float32Array(4*MAXO),
+  m:[0, 1, 2, 3, 4, 5, 6].map(() => new Float32Array(4*MAXO)),
+};
+function packObjects(objs, store, t, loop){
+  const vis = objs.filter(o => o.visible);
+  let stepK = .9;
+  const ph = TAU*t/Math.max(loop, .1);
+  vis.forEach((o, i) => {
+    const info = store.info[o.id];
+    const R = rotMat(o.rot[0]*DEG, o.rot[1]*DEG, o.rot[2]*DEG);
+    const s = Math.max(o.scale, .01);
+    // inverse: local = R^T (p - pos) / s   (column-major mat4)
+    const M = UB.inv, b = i*16;
+    for(let c = 0; c < 3; c++) for(let r = 0; r < 3; r++) M[b + c*4 + r] = R[c][r]/s; // (R^T)[r][c] = R[c][r]
+    for(let r = 0; r < 3; r++){ let v = 0; for(let c = 0; c < 3; c++) v += R[c][r]*o.pos[c]; M[b + 12 + r] = -v/s; }
+    M[b + 3] = M[b + 7] = M[b + 11] = 0; M[b + 15] = 1;
+    const k = o.kind === "prim" ? PRIM_K[o.prim] : 0;
+    const maxIn = info ? info.maxIn : .1;
+    const bev = o.kind === "prim" ? o.bevel : Math.min(o.bevel, maxIn*.95, o.depth*.98);
+    UB.g0.set([k, o._slot || 0, o.depth, Math.max(0, bev)], i*4);
+    UB.g1.set([o.inflate, o.bevelStyle, 1, s], i*4);
+    const pa = o.pa || [.8, .8, .8];
+    const infR = Math.max(o.infSoft, .05);
+    UB.g2.set(o.kind === "prim" ? [pa[0], pa[1], pa[2], 0] : [infR, 0, 0, 0], i*4);
+    const d = o.def;
+    UB.d0.set([d.twist, d.bend, d.taper, d.melt], i*4);
+    const nAmt = (o.kind === "prim" && o.prim === "blob" && !d.noise) ? .2 : d.noise;
+    UB.d1.set([d.wave, d.waveF, nAmt, d.noiseF], i*4);
+    const c = o.clone;
+    if(c.mode === 1){ UB.c0.set([1, c.nx, c.ny, c.nz], i*4); UB.c1.set([c.sx, c.sy, c.sz, 0], i*4); }
+    else if(c.mode === 2){ UB.c0.set([2, c.n, c.axis, c.align], i*4); UB.c1.set([c.r, 0, 0, 0], i*4); }
+    else if(c.mode === 3){ UB.c0.set([3, c.ln, c.ss, 0], i*4); UB.c1.set([c.ox, c.oy, c.oz, c.rs*DEG], i*4); }
+    else { UB.c0.set([0, 0, 0, 0], i*4); UB.c1.set([0, 0, 0, 0], i*4); }
+    const mo = o.motion;
+    const cnt = c.mode === 1 ? c.nx*c.ny*c.nz : (c.mode === 2 ? c.n : (c.mode === 3 ? c.ln : 1));
+    UB.i0.set([mo.type, mo.amt, ph*mo.cycles, mo.delay*TAU/Math.max(cnt, 1)], i*4);
+    const bx = localBox(o, info);
+    UB.box.set([bx[0], bx[1], bx[2], 0], i*4);
+    const rad = Math.min(localRadius(o, info), Math.hypot(bx[0], bx[1], bx[2]))*s;
+    UB.bnd.set([o.pos[0], o.pos[1], o.pos[2], rad], i*4);
+    // material
+    const m = o.mat;
+    const col = lin(hex2rgb(m.col)), col2 = lin(hex2rgb(m.col2)), tint = lin(hex2rgb(m.tint)), emi = lin(hex2rgb(m.emi));
+    UB.m[0].set([...col, m.metal], i*4);
+    UB.m[1].set([m.rough, m.trans, m.ior, m.disp], i*4);
+    UB.m[2].set([...tint, m.dens], i*4);
+    UB.m[3].set([m.coat, m.irid, m.film, 0], i*4);
+    UB.m[4].set([...emi, m.emiS], i*4);
+    UB.m[5].set([m.pat, m.patS, m.toon, m.sss], i*4);
+    UB.m[6].set([...col2, (m.img && info && info.img) ? 1 : 0], i*4);
+    // marching step safety
+    const lip = 1 + Math.abs(d.twist)*rad/s + Math.abs(d.bend)*1.2 + Math.abs(d.wave*d.waveF)*.8 + Math.abs(nAmt*d.noiseF)*1.2 + Math.abs(d.melt)*2.2 + Math.abs(d.taper)*.8 + (o.kind === "prim" ? 0 : o.inflate*o.depth/Math.max(maxIn*infR, .02)*.6) + (mo.type === 7 ? mo.amt : 0);
+    stepK = Math.min(stepK, .9/lip);
+  });
+  return { n:vis.length, stepK:Math.max(stepK, .2), vis };
+}
+
+/* ================= render ================= */
+function setTex(unit, target, tex, U, name){ gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(target, tex); gl.uniform1i(U[name], unit); }
+function sceneUniforms(prog, st, T, store, E, opts){
+  const sc = st.scene, U = prog.U; gl.useProgram(prog.p);
+  const pk = packObjects(st.objects, store, st.t, st.motion.loop);
+  const cb = camBasis(sc.cam, opts.camExtra);
+  gl.uniform2f(U.uRes, T.w, T.h);
+  gl.uniform3fv(U.uCamPos, cb.pos);
+  gl.uniformMatrix3fv(U.uCamRot, false, [...cb.r, ...cb.u, ...cb.f]);
+  gl.uniform1f(U.uTanF, Math.tan(sc.cam.fov*DEG/2));
+  gl.uniform1i(U.uN, pk.n);
+  gl.uniformMatrix4fv(U.uInv, false, UB.inv);
+  gl.uniform4fv(U.uG0, UB.g0); gl.uniform4fv(U.uG1, UB.g1); gl.uniform4fv(U.uG2, UB.g2);
+  gl.uniform4fv(U.uD0, UB.d0); gl.uniform4fv(U.uD1, UB.d1); gl.uniform4fv(U.uC0, UB.c0); gl.uniform4fv(U.uC1, UB.c1);
+  gl.uniform4fv(U.uI0, UB.i0); gl.uniform4fv(U.uBnd, UB.bnd); gl.uniform4fv(U.uBox, UB.box);
+  for(let k = 0; k < 7; k++) gl.uniform4fv(U["uM" + k], UB.m[k]);
+  gl.uniform1f(U.uK, sc.merge); gl.uniform1f(U.uStepK, pk.stepK);
+  const ph = TAU*st.t/Math.max(st.motion.loop, .1);
+  const an = st.motion.animDeform ? 1 : 0;
+  gl.uniform1f(U.uWave, ph*an); gl.uniform3f(U.uFlow, 0, Math.sin(ph)*.8*an, Math.cos(ph)*.8*an);
+  setTex(0, gl.TEXTURE_2D_ARRAY, store.tex, U, "uSdf");
+  setTex(1, gl.TEXTURE_2D_ARRAY, store.img, U, "uImg");
+  setTex(2, gl.TEXTURE_2D, E.t, U, "uEnv");
+  gl.uniform1f(U.uEnvMax, E.max); gl.uniform1f(U.uEnvInt, sc.env.int); gl.uniform1f(U.uEnvRot, sc.env.rot*DEG);
+  gl.uniform3fv(U.uKeyDir, keyDir(sc)); gl.uniform3fv(U.uKeyCol, lin(hex2rgb(sc.key.col)).map(v => v*sc.key.int));
+  gl.uniform1f(U.uShadowK, sc.key.soft);
+  gl.uniform1i(U.uFloorMode, sc.floor.mode); gl.uniform1f(U.uFloorY, sc.floor.y); gl.uniform1f(U.uFloorRefl, sc.floor.refl);
+  gl.uniform1f(U.uFloorShadow, sc.floor.shadow); gl.uniform1f(U.uFloorFade, sc.floor.fade); gl.uniform2f(U.uFloorC, sc.cam.tx, sc.cam.tz);
+  gl.uniform3fv(U.uFloorCol, hex2rgb(sc.floor.col));
+  const bgm = sc.bg.mode === 4 && !(opts.bgTex || bgTex) ? 0 : sc.bg.mode;
+  gl.uniform1i(U.uBgMode, bgm === 5 ? 0 : bgm);
+  gl.uniform3fv(U.uBg1, hex2rgb(sc.bg.c1)); gl.uniform3fv(U.uBg2, hex2rgb(sc.bg.c2));
+  gl.uniform1f(U.uBgAng, sc.bg.ang*DEG); gl.uniform1f(U.uBgBlur, sc.bg.blur);
+  setTex(3, gl.TEXTURE_2D, bgTex || blackTex, U, "uBgImg");
+  const ca = T.w/T.h; const fitx = ca > bgAsp ? 1 : ca/bgAsp, fity = ca > bgAsp ? bgAsp/ca : 1;
+  gl.uniform4f(U.uBgFit, fitx, fity, 0, 0);
+  gl.uniform1f(U.uExpo, sc.expo); gl.uniform1i(U.uTone, sc.tone); gl.uniform1i(U.uQ, opts.q);
+  gl.uniform1f(U.uTransp, (sc.bg.mode === 5 || opts.transparent) ? 1 : 0);
+  gl.uniform1f(U.uRefrEnv, sc.refrEnv); gl.uniform1f(U.uSeed, (st.t*97.3) % 1000);
+  return pk;
+}
+function drawScene(st, T, store, E, opts){
+  const pk = sceneUniforms(PR.scene, st, T, store, E, opts), U = PR.scene.U;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, T.scene);
+  gl.disable(gl.BLEND);
+  const tile = opts.tile || 0;
+  if(!tile){ gl.viewport(0, 0, T.w, T.h); gl.uniform2f(U.uOff, 0, 0); gl.drawArrays(gl.TRIANGLES, 0, 3); }
+  else {
+    gl.enable(gl.SCISSOR_TEST);
+    for(let y = 0; y < T.h; y += tile) for(let x = 0; x < T.w; x += tile){
+      const w = Math.min(tile, T.w - x), h = Math.min(tile, T.h - y);
+      gl.viewport(x, y, w, h); gl.scissor(x, y, w, h); gl.uniform2f(U.uOff, x, y);
+      gl.drawArrays(gl.TRIANGLES, 0, 3); gl.flush();
+    }
+    gl.disable(gl.SCISSOR_TEST);
+  }
+  return pk;
+}
+function fxPass(T, srcTex, dstFbo, code, f, d, st){
+  const U = PR.fx.U; gl.useProgram(PR.fx.p);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, dstFbo); gl.viewport(0, 0, T.w, T.h);
+  setTex(0, gl.TEXTURE_2D, srcTex, U, "uSrc"); setTex(1, gl.TEXTURE_2D, T.aux, U, "uAux");
+  setTex(2, gl.TEXTURE_2D, dstFbo === T.ft ? blackTex : T.tmp, U, "uTmp"); setTex(3, gl.TEXTURE_2D, dstFbo === T.fh ? blackTex : T.hist, U, "uPrev"); setTex(4, gl.TEXTURE_2D, glyphTex, U, "uGlyph");
+  gl.uniform2f(U.uRes, T.w, T.h); gl.uniform1i(U.uT, code);
+  const vals = d.map ? d.map(f.v) : d.p.map(p => f.v[p[0]]);
+  while(vals.length < 8) vals.push(0);
+  gl.uniform4f(U.uP0, vals[0], vals[1], vals[2], vals[3]); gl.uniform4f(U.uP1, vals[4], vals[5], vals[6], vals[7]);
+  const cols = d.cmap ? d.cmap(f.v) : (d.c || []).map(c => f.v[c[0]]);
+  gl.uniform3fv(U.uX0, hex2rgb(cols[0] || "#ffffff")); gl.uniform3fv(U.uX1, hex2rgb(cols[1] || "#000000")); gl.uniform3fv(U.uX2, hex2rgb(cols[2] || "#ffffff"));
+  gl.uniform1f(U.uPhase, TAU*st.t/Math.max(st.motion.loop, .1)); gl.uniform1f(U.uFrame, st.frame || 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function runFx(st, T){
+  let src = T.col, srcIsA = null;
+  const chain = (st.fx || []).filter(f => f.on && FX[f.t]);
+  for(const f of chain){
+    const d = FX[f.t];
+    const dst = src === T.a ? T.fb : T.fa, dstT = src === T.a ? T.b : T.a;
+    if(d.mip || d.pre){ gl.bindTexture(gl.TEXTURE_2D, src); gl.generateMipmap(gl.TEXTURE_2D); }
+    if(d.pre){
+      fxPass(T, src, T.ft, 1, f, d, st);
+      gl.bindTexture(gl.TEXTURE_2D, T.tmp); gl.generateMipmap(gl.TEXTURE_2D);
+    }
+    fxPass(T, src, dst, d.code, f, d, st);
+    if(d.hist){ gl.bindFramebuffer(gl.READ_FRAMEBUFFER, dst); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, T.fh); gl.blitFramebuffer(0, 0, T.w, T.h, 0, 0, T.w, T.h, gl.COLOR_BUFFER_BIT, gl.NEAREST); }
+    src = dstT;
+  }
+  return src;
+}
+function drawFinal(T, src, target, w, h, opts){
+  const U = PR.fin.U; gl.useProgram(PR.fin.p);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, target); gl.viewport(0, 0, w, h);
+  let lod = 0;
+  if(w < T.w){ gl.bindTexture(gl.TEXTURE_2D, src); gl.generateMipmap(gl.TEXTURE_2D); lod = Math.log2(T.w/w); }
+  setTex(0, gl.TEXTURE_2D, src, U, "uSrc"); setTex(1, gl.TEXTURE_2D, T.aux, U, "uAux");
+  gl.uniform1f(U.uSel, opts.sel || 0); gl.uniform1f(U.uLod, lod); gl.uniform1f(U.uFlip, opts.flip ? 1 : 0); gl.uniform1f(U.uStraight, opts.straight ? 1 : 0);
+  gl.uniform2f(U.uRes, T.w, T.h);
+  gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+/* ================= templates ================= */
+const TPLS = [
+  ["Хромований KLIK", { scene:{ bg:{ mode:1, c1:"#1b1b22", c2:"#040405" }, env:{ preset:0 }, floor:{ mode:1, shadow:.65 } }, motion:{ loop:6 },
+    objects:[["text", { text:"KLIK", font:"Archivo Black", depth:.2, bevel:.05, mat:"chrome", motion:{ type:4, amt:.45 } }]], fx:[["bloom", { thr:.7, int:.35 }]] }],
+  ["Рідке скло", { scene:{ bg:{ mode:1, c1:"#ff5ea8", c2:"#2b2bff", ang:120 }, env:{ preset:4 }, floor:{ mode:0 }, refrEnv:.2 }, motion:{ loop:6 },
+    objects:[["text", { text:"flow", font:"Unbounded", weight:900, depth:.24, bevel:.05, inflate:.85, infSoft:.85, mat:"liquid", motion:{ type:5, amt:.12 } }]] }],
+  ["Надувні літери", { scene:{ bg:{ mode:2, c1:"#ffe6f3", c2:"#ffb3d9" }, env:{ preset:4, int:1.1 }, floor:{ mode:1, shadow:.35, y:-1 }, key:{ el:60 } }, motion:{ loop:4 },
+    objects:[["text", { text:"PUFF", font:"Rubik", weight:900, depth:.36, bevel:.05, inflate:1, infSoft:.75, mat:{ preset:"balloon", col:"#ff5fc8" }, motion:{ type:6, amt:.22 } }]] }],
+  ["Голо-блоб", { scene:{ bg:{ mode:2, c1:"#14101f", c2:"#030305" }, env:{ preset:3, int:1.2 }, floor:{ mode:0 } }, motion:{ loop:8 },
+    objects:[["prim", { prim:"blob", pa:[.95, 0, 0], def:{ noise:.16, noiseF:1.6 }, mat:"holo", motion:{ type:1 } }]], fx:[["bloom", { thr:.6, int:.5 }], ["grain", { amt:.05 }]] }],
+  ["Золота зірка", { scene:{ bg:{ mode:2, c1:"#2a1706", c2:"#000000" }, env:{ preset:2 }, key:{ az:-30, el:22 }, floor:{ mode:2, col:"#0e0804", refl:.55, y:-1.25 } }, motion:{ loop:6 },
+    objects:[["shape", { shape:"star", points:5, inner:.48, scale:1.5, depth:.22, bevel:.14, bevelStyle:1, mat:"gold", motion:{ type:1 } }]], fx:[["bloom", { thr:.75, int:.5 }]] }],
+  ["Сітка кубиків", { scene:{ bg:{ mode:0, c1:"#f1ede6" }, env:{ preset:5 }, floor:{ mode:1, shadow:.45, y:-1.55 }, cam:{ pitch:22, dist:7.5 } }, motion:{ loop:4 },
+    objects:[["prim", { prim:"box", pa:[.36, .36, .36], bevel:.1, scale:1, clone:{ mode:1, nx:4, ny:4, nz:1, sx:.95, sy:.95 }, mat:{ preset:"plastic", col:"#ff4a26" }, motion:{ type:8, delay:1 } }]] }],
+  ["Кільце сфер", { scene:{ bg:{ mode:1, c1:"#15151b", c2:"#020203" }, env:{ preset:0 }, floor:{ mode:2, col:"#050506", refl:.85, y:-.95 }, cam:{ pitch:14, dist:7 } }, motion:{ loop:6 },
+    objects:[["prim", { prim:"sphere", pa:[.26, 0, 0], scale:1, clone:{ mode:2, n:12, r:1.75, axis:0 }, mat:"chrome", motion:{ type:5, amt:.3, delay:1 } }],
+             ["prim", { prim:"sphere", pa:[.62, 0, 0], scale:1, mat:"glass" }]], fx:[["bloom", { thr:.72, int:.4 }]] }],
+  ["Неон", { scene:{ bg:{ mode:0, c1:"#050008" }, env:{ preset:3 }, floor:{ mode:2, col:"#07030c", refl:.6, y:-.9 }, tone:1 }, motion:{ loop:6 },
+    objects:[["text", { text:"NEON", font:"Monoton", depth:.05, bevel:.02, scale:1.7, mat:{ preset:"neon", emi:"#ff2bd6" }, motion:{ type:4, amt:.25 } }]], fx:[["glow", { int:.55 }], ["bloom", { thr:.5, int:.7 }]] }],
+  ["Калейдо-хром", { scene:{ bg:{ mode:2, c1:"#2a1a4a", c2:"#050308" }, env:{ preset:0 }, floor:{ mode:0 }, cam:{ dist:5.2 } }, motion:{ loop:8 },
+    objects:[["prim", { prim:"torus", pa:[.78, .3, 0], scale:1.45, def:{ twist:1.4 }, mat:"holo", motion:{ type:8 } }]], fx:[["kaleido", { seg:8, zoom:2.4, ang:.6, spin:1 }], ["aberr", { amt:.25 }], ["bloom", { thr:.7, int:.4 }]] }],
+  ["Півтон-поп", { scene:{ bg:{ mode:0, c1:"#ff4f6d" }, env:{ preset:5 }, floor:{ mode:1, shadow:.5 } }, motion:{ loop:4 },
+    objects:[["text", { text:"POP!", font:"Bowlby One", depth:.22, bevel:.06, mat:{ preset:"plastic", col:"#ffd23f" }, motion:{ type:4, amt:.35 } }]], fx:[["halftone", { size:7, mode:1, solid:1 }]] }],
+  ["Тане лід", { scene:{ bg:{ mode:1, c1:"#e3f2ff", c2:"#6aa7ff" }, env:{ preset:9 }, floor:{ mode:1, shadow:.28, y:-1.2 }, refrEnv:.25 }, motion:{ loop:6 },
+    objects:[["text", { text:"ICE", font:"Archivo Black", depth:.24, bevel:.08, def:{ melt:.55 }, mat:"ice", motion:{ type:4, amt:.3 } }]] }],
+  ["Кристал", { scene:{ bg:{ mode:2, c1:"#1d1236", c2:"#030208" }, env:{ preset:0 }, floor:{ mode:1, shadow:.5 } }, motion:{ loop:6 },
+    objects:[["prim", { prim:"gem", pa:[1, 0, 0], bevel:.03, def:{ twist:.9 }, mat:"diamond", motion:{ type:1 } }]], fx:[["bloom", { thr:.65, int:.5 }]] }],
+  ["Глиняні іграшки", { scene:{ bg:{ mode:0, c1:"#e9e1d6" }, env:{ preset:5 }, floor:{ mode:1, shadow:.5, y:-1.1 }, merge:.35, cam:{ pitch:12 } }, motion:{ loop:6 },
+    objects:[["prim", { prim:"capsule", pa:[.42, .36, 0], pos:[-.95, -.25, 0], rot:[0, 0, 35], mat:{ preset:"clay", col:"#ff8f70" }, motion:{ type:5, amt:.15 } }],
+             ["prim", { prim:"torus", pa:[.5, .22, 0], pos:[.25, .3, 0], rot:[20, 30, 0], mat:{ preset:"clay", col:"#7aa2ff" }, motion:{ type:9, amt:.4 } }],
+             ["prim", { prim:"sphere", pa:[.42, 0, 0], pos:[1.05, -.45, .2], mat:{ preset:"clay", col:"#ffd166" }, motion:{ type:6, amt:.2 } }]] }],
+  ["Ретро CRT", { scene:{ bg:{ mode:0, c1:"#0d0b12" }, env:{ preset:3 }, floor:{ mode:0 } }, motion:{ loop:4 },
+    objects:[["text", { text:"1999", font:"Righteous", depth:.18, bevel:.05, mat:{ preset:"candy", col:"#38e1ff" }, motion:{ type:4, amt:.5 } }]], fx:[["crt", {}], ["aberr", { amt:.25 }], ["grain", { amt:.07 }]] }],
+  ["Прапор", { scene:{ bg:{ mode:1, c1:"#202024", c2:"#09090b" }, env:{ preset:9 }, floor:{ mode:1, shadow:.4 } }, motion:{ loop:4 },
+    objects:[["text", { text:"WAVE", font:"Anton", depth:.06, bevel:.02, def:{ wave:.14, waveF:4 }, mat:"stripes" }]] }],
+  ["Дизер", { scene:{ bg:{ mode:2, c1:"#2b2b33", c2:"#050506" }, env:{ preset:0, int:1.3 }, floor:{ mode:1, shadow:.7 } }, motion:{ loop:6 },
+    objects:[["text", { text:"KLIK", font:"Unbounded", weight:900, depth:.22, bevel:.07, mat:{ preset:"plastic", col:"#d8d8d8" }, motion:{ type:4, amt:.5 } }]], fx:[["dither", { size:2 }]] }],
+];
+function buildTemplate(def){
+  return {
+    scene:deepAssign(clone(DEF_SCENE), def.scene || {}),
+    motion:deepAssign(clone(DEF_MOTION), def.motion || {}),
+    objects:(def.objects || []).map(([k, ex]) => newObj(k, ex)),
+    fx:(def.fx || []).map(([t, v]) => newFx(t, v)),
+  };
+}
+const ENVS = [[0, "Студія"], [1, "Смуги"], [2, "Захід"], [3, "Неон"], [4, "Пастель"], [5, "Хмарно"], [6, "Нічне місто"], [7, "Кільце"], [8, "Два кольори"], [9, "Вікна"]];
+const MOTIONS = [[0, "Немає"], [1, "Оберт Y"], [2, "Оберт X"], [3, "Оберт Z"], [4, "Гойдання"], [5, "Плавання"], [6, "Стрибок"], [7, "Пульс"], [8, "Кульбіт"], [9, "Хитання"], [10, "Кивок"]];
+const PATS = [[0, "Немає"], [1, "Градієнт"], [2, "Смужки"], [3, "Шахи"], [4, "Горох"], [5, "Мармур"], [6, "Шум"], [7, "Дерево"], [8, "Карбон"], [9, "Веселка"]];
+
+/* ================= state plumbing ================= */
+let T = null, quality = 1, playing = true, t0 = performance.now(), pausedAt = 0, curT = 0, frame = 0;
+let dirty = true, envDirty = true, busy = false, lastVis = [], selFlash = 0;
+let preview = false, isEmbed = false;
+const IA = { yaw:0, pitch:0, vy:0, vp:0, down:false, tx:0, ty:0 };
+function baseSize(){ const [a, b] = ASPECTS[P.scene.aspect] || [1, 1]; const L = 1080; return a >= b ? [L, Math.round(L*b/a)] : [Math.round(L*a/b), L]; }
+const even = x => Math.max(2, Math.round(x/2)*2);
+function resize(){
+  const [bw, bh] = baseSize(); const qs = [.5, .72, 1][quality];
+  const w = even(bw*qs), h = even(bh*qs);
+  if(T && T.w === w && T.h === h) return;
+  freeTargets(T); T = mkTargets(w, h); out.width = w; out.height = h; dirty = true; fitCanvas();
+}
+function fitCanvas(){
+  const st = $("stage"); const r = st.getBoundingClientRect();
+  const aw = r.width - (isEmbed ? 0 : 36), ah = (isEmbed ? window.innerHeight : r.height - 82);
+  const a = out.width/out.height; let w = aw, h = aw/a; if(h > ah){ h = ah; w = ah*a; }
+  out.style.width = Math.floor(w) + "px"; out.style.height = Math.floor(h) + "px";
+}
+function camExtraAt(t){
+  const m = P.motion; const ph = TAU*t/Math.max(m.loop, .1);
+  let yaw = 0, pitch = 0;
+  if(m.camOrbit === 1) yaw += 360*t/m.loop; else if(m.camOrbit === 2) yaw += m.camAmt*Math.sin(ph);
+  if(preview || isEmbed){ yaw += IA.yaw; pitch += IA.pitch; }
+  return { yaw, pitch };
+}
+const stateNow = t => ({ scene:P.scene, objects:P.objects, motion:P.motion, fx:P.fx, t:t == null ? curT : t, frame });
+
+/* masks: rebuild asynchronously, coalescing requests */
+let maskBusy = false, maskAgain = false, maskTimer = 0;
+function scheduleMasks(delay){ clearTimeout(maskTimer); maskTimer = setTimeout(syncMasks, delay == null ? 90 : delay); }
+async function syncMasks(){
+  if(maskBusy){ maskAgain = true; return; }
+  maskBusy = true;
+  try{
+    assignSlots(P.objects, SDF);
+    for(const o of P.objects){ await buildMask(o, SDF, o._slot); }
+  }catch(e){ console.error(e); }
+  maskBusy = false; dirty = true; renderLayers();
+  if(maskAgain){ maskAgain = false; syncMasks(); }
+}
+
+/* history + autosave */
+const HIST = { stack:[], idx:-1 };
+function snap(){ return JSON.stringify({ scene:P.scene, motion:P.motion, ex:P.ex, objects:P.objects.map(o => { const c = Object.assign({}, o); delete c._slot; return c; }), fx:P.fx, sel:P.sel }); }
+let histTimer = 0, saveTimer = 0;
+function scheduleHist(){ clearTimeout(histTimer); histTimer = setTimeout(pushHist, 350); }
+function pushHist(){ const s = snap(); if(HIST.stack[HIST.idx] === s) return; HIST.stack = HIST.stack.slice(0, HIST.idx + 1); HIST.stack.push(s); if(HIST.stack.length > 80) HIST.stack.shift(); HIST.idx = HIST.stack.length - 1; }
+function restore(s, keepHist){
+  const d = JSON.parse(s);
+  P.scene = deepAssign(clone(DEF_SCENE), d.scene || {}); P.motion = deepAssign(clone(DEF_MOTION), d.motion || {}); P.ex = deepAssign(clone(DEF_EX), d.ex || {});
+  P.objects = (d.objects || []).map(o => newObj(o.kind, o)); P.objects.forEach((o, i) => { o.id = d.objects[i].id || o.id; });
+  P.fx = (d.fx || []).filter(f => FX[f.t]).map(f => { const n = newFx(f.t, f.v); n.on = f.on !== false; return n; });
+  P.sel = clamp(d.sel || 0, 0, Math.max(0, P.objects.length - 1));
+  envDirty = true; dirty = true; resize(); syncAll(); renderLayers(); renderFx(); scheduleMasks(0);
+}
+function undo(){ if(HIST.idx > 0){ HIST.idx--; restore(HIST.stack[HIST.idx]); scheduleSave(); } }
+function redo(){ if(HIST.idx < HIST.stack.length - 1){ HIST.idx++; restore(HIST.stack[HIST.idx]); scheduleSave(); } }
+function usedBlobs(){ const b = {}; P.objects.forEach(o => { if(o.src && BLOBS[o.src]) b[o.src] = BLOBS[o.src]; }); return b; }
+function scheduleSave(){ if(isEmbed) return; clearTimeout(saveTimer); saveTimer = setTimeout(() => { try{ localStorage.setItem("volumeStudio", JSON.stringify({ s:snap(), b:usedBlobs() })); }catch(e){ try{ localStorage.setItem("volumeStudio", JSON.stringify({ s:snap(), b:{} })); }catch(_){} } }, 800); }
+
+/* ================= schema UI ================= */
+const CTL = [];
+const el = (tag, cls, html) => { const e = document.createElement(tag); if(cls) e.className = cls; if(html != null) e.innerHTML = html; return e; };
+function rootOf(k){ const r = k[0]; return r === "o" ? curObj() : r === "s" ? P.scene : r === "m" ? P.motion : P.ex; }
+function getK(k){ const ps = k.split("."); let o = rootOf(ps[0]); for(let i = 1; i < ps.length && o != null; i++) o = o[ps[i]]; return o; }
+function setK(k, v){ const ps = k.split("."); let o = rootOf(ps[0]); if(!o) return; for(let i = 1; i < ps.length - 1; i++) o = o[ps[i]]; o[ps[ps.length - 1]] = v; onChange(k); }
+function decOf(step){ return step >= 1 ? 0 : step >= .1 ? 1 : step >= .01 ? 2 : 3; }
+function reg(c){ CTL.push(c); return c; }
+function cRange(k, l, mn, mx, st, o = {}){
+  const w = el("div", "prm"); w.innerHTML = `<div class="row"><label class="lbl">${l}</label><span class="val"></span></div><input type="range" min="${mn}" max="${mx}" step="${st}">`;
+  const inp = w.querySelector("input"), val = w.querySelector(".val"); const dc = decOf(st);
+  const fmt = o.fmt || (v => (+v).toFixed(dc));
+  inp.addEventListener("input", () => { setK(k, parseFloat(inp.value)); val.textContent = fmt(getK(k)); });
+  inp.addEventListener("dblclick", () => { if(o.def != null){ setK(k, o.def); inp.value = o.def; val.textContent = fmt(o.def); } });
+  reg({ el:w, show:o.show, sync(){ const v = getK(k); if(v == null) return; inp.value = v; val.textContent = fmt(v); } });
+  return w;
+}
+function cSeg(k, l, opts, cols, o = {}){
+  const w = el("div", "prm");
+  if(l) w.appendChild(el("div", "seg-lbl", l));
+  const box = el("div", "presets c" + (cols || opts.length));
+  opts.forEach(([lab, v]) => {
+    const b = el("div", "preset sm", lab); b.dataset.v = v;
+    b.addEventListener("click", () => { if(o.on) o.on(v); else setK(k, v); syncAll(); });
+    box.appendChild(b);
+  });
+  w.appendChild(box);
+  reg({ el:w, show:o.show, sync(){ const v = getK(k); box.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", String(v) === b.dataset.v)); } });
+  return w;
+}
+function colorField(k, l){
+  const f = el("div", "color-field"); f.innerHTML = `<span>${l}</span><div class="color-wrap"><input type="color"><span class="hex"></span></div>`;
+  const inp = f.querySelector("input"), hx = f.querySelector(".hex");
+  inp.addEventListener("input", () => { setK(k, inp.value); hx.textContent = inp.value; });
+  return { f, sync(){ const v = getK(k) || "#000000"; inp.value = v; hx.textContent = v; } };
+}
+function cColors(list, o = {}){
+  const w = el("div", "prm"); const g = el("div", "colors" + (list.length > 2 ? " c3" : "")); const fs = list.map(([k, l]) => colorField(k, l));
+  fs.forEach(x => g.appendChild(x.f)); w.appendChild(g);
+  reg({ el:w, show:o.show, sync(){ fs.forEach(x => x.sync()); } });
+  return w;
+}
+function cSwitch(k, l, o = {}){
+  const w = el("div", "switch-row"); w.innerHTML = `<span class="lbl">${l}</span><label class="switch"><input type="checkbox"><span class="track"></span></label>`;
+  const inp = w.querySelector("input");
+  inp.addEventListener("change", () => setK(k, o.num ? (inp.checked ? 1 : 0) : inp.checked));
+  reg({ el:w, show:o.show, sync(){ inp.checked = !!getK(k); } });
+  return w;
+}
+function cSelect(k, l, opts, o = {}){
+  const w = el("div", "prm"); w.innerHTML = (l ? `<div class="row"><label class="lbl">${l}</label></div>` : "") + `<select>${opts.map(([lb, v]) => `<option value="${v}">${lb}</option>`).join("")}</select>`;
+  const s = w.querySelector("select");
+  s.addEventListener("change", () => { const v = o.num ? +s.value : s.value; if(o.on) o.on(v); else setK(k, v); syncAll(); });
+  reg({ el:w, show:o.show, sync(){ const v = getK(k); if(o.dyn) o.dyn(s); s.value = String(v); } });
+  return w;
+}
+function cBtns(list, cls, o = {}){
+  const w = el("div", "btns-grid" + (cls ? " " + cls : "")); w.style.marginTop = "12px";
+  list.forEach(([l, fn, c, id]) => { const b = el("button", "btn" + (c ? " " + c : ""), l); if(id) b.id = id; b.addEventListener("click", fn); w.appendChild(b); });
+  reg({ el:w, show:o.show, sync(){} });
+  return w;
+}
+function cWrap(cls, kids, o = {}){ const w = el("div", cls); kids.forEach(k => w.appendChild(k)); reg({ el:w, show:o.show, sync(){} }); return w; }
+function group(h, items, show){ const g = el("div", "group"); if(h) g.appendChild(el("h2", null, h)); items.forEach(i => i && g.appendChild(i)); reg({ el:g, show, sync(){} }); return g; }
+function refreshVis(){ CTL.forEach(c => { if(c.show) c.el.classList.toggle("hide", !c.show()); }); }
+function syncAll(){ CTL.forEach(c => c.sync()); refreshVis(); }
+
+const isK = (...k) => () => { const o = curObj(); return !!o && k.includes(o.kind); };
+const hasObj = () => !!curObj();
+const prim = (...p) => () => { const o = curObj(); return !!o && o.kind === "prim" && p.includes(o.prim); };
+const cm = m => () => { const o = curObj(); return !!o && o.clone.mode === m; };
+
+function onChange(k){
+  dirty = true;
+  const o = curObj();
+  if(/^o\.(text|font|weight|tracking|leading|align|shape|points|inner|maskMode|thr|src)$/.test(k)) scheduleMasks(k === "o.text" ? 140 : 60);
+  if(/^s\.(env|key\.az|key\.el)/.test(k)) envDirty = true;
+  if(k === "s.aspect"){ resize(); }
+  if(k === "s.bg.mode" && P.scene.bg.mode === 4 && !bgTex) $("fileBg").click();
+  if(k === "o.text" || k === "o.prim" || k === "o.shape") renderLayers();
+  if(k.startsWith("o.mat.")) markMat();
+  if(k.startsWith("o.clone") || k.startsWith("o.motion") || k.startsWith("o.def")) {}
+  refreshVis(); scheduleHist(); scheduleSave();
+}
+
+/* ---------- panes ---------- */
+const PANES = {};
+function buildPanes(){
+  const host = $("panes");
+  const pane = (id, kids) => { const p = el("div"); p.dataset.pane = id; if(id === "obj") p.classList.add("active"); kids.forEach(k => k && p.appendChild(k)); host.appendChild(p); PANES[id] = p; };
+  const none = el("div", "note", "Додай шар зліва або вибери шаблон."); reg({ el:none, show:() => !curObj(), sync(){} });
+  /* object */
+  const fontSel = cSelect("o.font", "Шрифт", FONTS.map(f => [f[0], f[0]]), { dyn:s => { const v = getK("o.font"); if(v && ![...s.options].some(x => x.value === v)){ const op = el("option", null, v); op.value = v; s.appendChild(op); } } });
+  const gfont = el("div", "prm"); gfont.innerHTML = `<div class="inl"><input class="txt" id="gfName" placeholder="Будь-який Google Font, напр. Sora"><button class="btn" id="gfGo">OK</button><button class="btn" id="gfUp" title="Свій шрифт .ttf / .otf / .woff">⬆</button></div>`;
+  const ta = el("textarea", "txt"); ta.rows = 2; ta.addEventListener("input", () => setK("o.text", ta.value));
+  reg({ el:ta, sync(){ const o = curObj(); if(o && document.activeElement !== ta) ta.value = o.text; } });
+  const shapeGrid = el("div", "presets c4"); SHAPES.forEach(([k, l]) => { const b = el("div", "preset sm", l); b.dataset.v = k; b.addEventListener("click", () => { setK("o.shape", k); syncAll(); }); shapeGrid.appendChild(b); });
+  reg({ el:shapeGrid, sync(){ const v = getK("o.shape"); shapeGrid.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", b.dataset.v === v)); } });
+  const primGrid = el("div", "presets c3"); PRIMS.forEach(([k, l]) => { const b = el("div", "preset sm", l); b.dataset.v = k; b.addEventListener("click", () => { const o = curObj(); o.prim = k; o.pa = PRIM_DEF[k].slice(); if(k === "blob" && !o.def.noise) o.def.noise = 0; onChange("o.prim"); syncAll(); }); primGrid.appendChild(b); });
+  reg({ el:primGrid, sync(){ const v = getK("o.prim"); primGrid.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", b.dataset.v === v)); } });
+  const PL = { sphere:["Радіус"], blob:["Радіус"], gem:["Розмір"], box:["Ширина", "Висота", "Глибина"], torus:["Радіус", "Товщина"], ring:["Радіус", "Товщина"], capsule:["Довжина", "Радіус"], cyl:["Радіус", "Висота"], cone:["Низ", "Верх", "Висота"] };
+  const paR = i => { const w = cRange("o.pa." + i, "", .02, 2, .01, { show:() => { const o = curObj(); return !!o && o.kind === "prim" && PL[o.prim].length > i; } }); const c = CTL[CTL.length - 1]; const s0 = c.sync; c.sync = () => { s0(); const o = curObj(); if(o && o.kind === "prim") w.querySelector(".lbl").textContent = PL[o.prim][i] || ""; }; return w; };
+  pane("obj", [
+    none,
+    group("Текст", [ta, fontSel, gfont,
+      cSeg("o.weight", "Накреслення", [["Regular", 400], ["Bold", 700], ["Black", 900]], 3),
+      cSeg("o.align", "Вирівнювання", [["Ліво", "left"], ["Центр", "center"], ["Право", "right"]], 3),
+      cWrap("two", [cRange("o.tracking", "Трекінг", -.2, .6, .01, { def:0 }), cRange("o.leading", "Інтерліньяж", .6, 2, .01, { def:1 })]),
+    ], isK("text")),
+    group("Форма", [shapeGrid,
+      cRange("o.points", "Променів / кутів", 3, 14, 1, { show:() => ["star", "poly", "flower"].includes(getK("o.shape")) }),
+      cRange("o.inner", "Внутрішній радіус", .1, .95, .01, { show:() => ["star", "ring", "cross", "arrow", "flower", "squircle", "moon"].includes(getK("o.shape")) }),
+    ], isK("shape")),
+    group("3D-фігура", [primGrid, paR(0), paR(1), paR(2), cRange("o.bevel", "Заокруглення", 0, .5, .005, { show:prim("box", "cyl", "gem") })], isK("prim")),
+    group("Зображення", [
+      cBtns([["Замінити файл", () => { replaceTarget = curObj(); $("fileImg").click(); }, "full"]], ""),
+      cSeg("o.maskMode", "Форма з", [["Прозорості", 0], ["Темного", 1], ["Світлого", 2]], 3),
+      cRange("o.thr", "Поріг", .02, .98, .01, { show:() => getK("o.maskMode") > 0 }),
+      cSwitch("o.mat.img", "Кольори з картинки на фасаді"),
+    ], isK("image")),
+    group("Обʼєм", [
+      cWrap("two", [cRange("o.depth", "Глибина", .01, .9, .005, { def:.16 }), cRange("o.bevel", "Радіус фаски", 0, .3, .002, { def:.035 })]),
+      cSeg("o.bevelStyle", "Профіль фаски", [["Кругла", 0], ["Скіс", 1]], 2),
+      cWrap("two", [cRange("o.inflate", "Надування", 0, 1, .01, { def:0 }), cRange("o.infSoft", "Ширина надування", .1, 1.5, .01, { def:.8, show:() => getK("o.inflate") > 0 })]),
+    ], isK("text", "shape", "image")),
+    group("Трансформація", [
+      cWrap("three", [cRange("o.pos.0", "X", -4, 4, .01, { def:0 }), cRange("o.pos.1", "Y", -4, 4, .01, { def:0 }), cRange("o.pos.2", "Z", -4, 4, .01, { def:0 })]),
+      cWrap("three", [cRange("o.rot.0", "Нахил", -180, 180, 1, { def:0, fmt:v => v + "°" }), cRange("o.rot.1", "Поворот", -180, 180, 1, { def:0, fmt:v => v + "°" }), cRange("o.rot.2", "Крен", -180, 180, 1, { def:0, fmt:v => v + "°" })]),
+      cRange("o.scale", "Масштаб", .1, 5, .01, { def:1.6 }),
+    ], hasObj),
+    group("Деформація", [
+      cWrap("two", [cRange("o.def.twist", "Скрут", -4, 4, .01, { def:0 }), cRange("o.def.bend", "Згин", -1.5, 1.5, .01, { def:0 })]),
+      cWrap("two", [cRange("o.def.taper", "Звуження", -1, 1, .01, { def:0 }), cRange("o.def.melt", "Плавлення", 0, 1.5, .01, { def:0 })]),
+      cWrap("two", [cRange("o.def.wave", "Хвиля", 0, .4, .005, { def:0 }), cRange("o.def.waveF", "Частота хвилі", .5, 12, .1, { def:3 })]),
+      cWrap("two", [cRange("o.def.noise", "Вмʼятини", 0, .35, .005, { def:0 }), cRange("o.def.noiseF", "Частота вмʼятин", .5, 10, .1, { def:2.5 })]),
+    ], hasObj),
+    group("Клонер", [
+      cSeg("o.clone.mode", null, [["Немає", 0], ["Сітка", 1], ["Коло", 2], ["Лінія", 3]], 4),
+      cWrap("three", [cRange("o.clone.nx", "X", 1, 8, 1), cRange("o.clone.ny", "Y", 1, 8, 1), cRange("o.clone.nz", "Z", 1, 6, 1)], { show:cm(1) }),
+      cWrap("three", [cRange("o.clone.sx", "Крок X", .1, 4, .01), cRange("o.clone.sy", "Крок Y", .1, 4, .01), cRange("o.clone.sz", "Крок Z", .1, 4, .01)], { show:cm(1) }),
+      cWrap("two", [cRange("o.clone.n", "Кількість", 2, 24, 1), cRange("o.clone.r", "Радіус", .2, 5, .01)], { show:cm(2) }),
+      cSeg("o.clone.axis", "Площина", [["Горизонт", 0], ["Циферблат", 1]], 2, { show:cm(2) }),
+      cSwitch("o.clone.align", "Повертати до центру", { num:true, show:cm(2) }),
+      cWrap("two", [cRange("o.clone.ln", "Кількість", 2, 12, 1), cRange("o.clone.ss", "Масштаб кроку", .7, 1.3, .005)], { show:cm(3) }),
+      cWrap("three", [cRange("o.clone.ox", "Крок X", -2, 2, .01), cRange("o.clone.oy", "Крок Y", -2, 2, .01), cRange("o.clone.oz", "Крок Z", -2, 2, .01)], { show:cm(3) }),
+      cRange("o.clone.rs", "Поворот кроку", -90, 90, .5, { show:cm(3), fmt:v => v + "°" }),
+    ], hasObj),
+  ]);
+  /* material */
+  const matBox = el("div"); let lastCat = "";
+  let grid = null;
+  MATS.forEach(([k, l, cat]) => {
+    if(cat !== lastCat){ matBox.appendChild(el("div", "mat-cat", cat)); grid = el("div", "mats"); matBox.appendChild(grid); lastCat = cat; }
+    const m = el("div", "mat"); m.dataset.k = k; m.innerHTML = `<div class="ball"></div>${l}`;
+    m.addEventListener("click", () => { const o = curObj(); if(!o) return; const img = o.mat.img; o.mat = matPreset(k); o.mat.img = img; onChange("o.mat.preset"); syncAll(); });
+    grid.appendChild(m);
+  });
+  reg({ el:matBox, show:hasObj, sync:markMat });
+  pane("mat", [
+    group("Бібліотека", [matBox], hasObj),
+    group("Налаштування", [
+      cColors([["o.mat.col", "Колір"], ["o.mat.col2", "Колір 2"]]),
+      cWrap("two", [cRange("o.mat.metal", "Метал", 0, 1, .01), cRange("o.mat.rough", "Шорсткість", 0, 1, .005)]),
+      cWrap("two", [cRange("o.mat.trans", "Прозорість", 0, 1, .01), cRange("o.mat.ior", "Заломлення", 1, 2.6, .01, { show:() => getK("o.mat.trans") > 0 })]),
+      cWrap("two", [cRange("o.mat.disp", "Дисперсія", 0, 1.5, .01), cRange("o.mat.dens", "Густина", 0, 4, .01)], { show:() => getK("o.mat.trans") > 0 }),
+      cColors([["o.mat.tint", "Тон скла"]], { show:() => getK("o.mat.trans") > 0 }),
+      cWrap("two", [cRange("o.mat.coat", "Лак", 0, 1, .01), cRange("o.mat.sss", "Підсвіт зсередини", 0, 1, .01)]),
+      cWrap("two", [cRange("o.mat.irid", "Райдужність", 0, 1, .01), cRange("o.mat.film", "Плівка", 0, 1, .01, { show:() => getK("o.mat.irid") > 0 })]),
+      cColors([["o.mat.emi", "Світіння"]]),
+      cWrap("two", [cRange("o.mat.emiS", "Сила світіння", 0, 8, .05), cRange("o.mat.toon", "Тун-ступені", 0, 6, 1)]),
+      cSelect("o.mat.pat", "Візерунок", PATS.map(([v, l]) => [l, v]), { num:true }),
+      cRange("o.mat.patS", "Масштаб візерунка", .1, 12, .05, { show:() => getK("o.mat.pat") > 0 }),
+    ], hasObj),
+  ]);
+  /* motion */
+  pane("motion", [
+    group("Рух шару", [
+      cSeg("o.motion.type", null, MOTIONS.map(([v, l]) => [l, v]), 3),
+      cWrap("two", [cRange("o.motion.cycles", "Циклів за луп", 1, 4, 1), cRange("o.motion.amt", "Амплітуда", 0, 1.5, .01, { show:() => ![1, 2, 3, 8].includes(getK("o.motion.type")) })], { show:() => getK("o.motion.type") > 0 }),
+      cRange("o.motion.delay", "Хвиля по копіях", 0, 2, .01, { show:() => getK("o.motion.type") > 0 && getK("o.clone.mode") > 0 }),
+    ], hasObj),
+    group("Луп і камера", [
+      cRange("m.loop", "Тривалість лупа, с", 1, 20, .5, { fmt:v => v + " с" }),
+      cSeg("m.camOrbit", "Камера", [["Стоїть", 0], ["Облітає", 1], ["Гойдається", 2]], 3),
+      cRange("m.camAmt", "Кут гойдання", 5, 90, 1, { show:() => P.motion.camOrbit === 2, fmt:v => v + "°" }),
+      cSwitch("m.animDeform", "Анімувати хвилю й вмʼятини", { num:true }),
+    ]),
+    group("Інтерактив (embed і перегляд)", [
+      cSeg("m.interact", null, [["Немає", 0], ["Тягни", 1], ["Курсор", 2]], 3),
+      cRange("m.intAmt", "Сила", 5, 90, 1, { show:() => P.motion.interact > 0, fmt:v => v + "°" }),
+      el("div", "note", "Перевір кнопкою з оком під превʼю — так сцена поводиться у вбудованому iframe."),
+    ]),
+  ]);
+  /* scene */
+  const envGrid = el("div", "presets c3");
+  [...ENVS, [99, "Своє HDR"]].forEach(([v, l]) => { const b = el("div", "preset sm", l); b.dataset.v = v; b.addEventListener("click", () => { if(v === 99 && !envSrc){ $("fileEnv").click(); return; } setK("s.env.preset", v); syncAll(); }); envGrid.appendChild(b); });
+  reg({ el:envGrid, sync(){ const v = P.scene.env.preset; envGrid.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", +b.dataset.v === v)); } });
+  pane("scene", [
+    group("Полотно", [cSeg("s.aspect", null, Object.keys(ASPECTS).map(a => [a, a]), 6)]),
+    group("Фон", [
+      cSeg("s.bg.mode", null, [["Колір", 0], ["Градієнт", 1], ["Радіал", 2], ["Оточення", 3], ["Фото", 4], ["Прозорий", 5]], 3),
+      cColors([["s.bg.c1", "Колір 1"], ["s.bg.c2", "Колір 2"]], { show:() => [0, 1, 2].includes(P.scene.bg.mode) }),
+      cRange("s.bg.ang", "Кут градієнта", 0, 360, 1, { show:() => P.scene.bg.mode === 1, fmt:v => v + "°" }),
+      cRange("s.bg.blur", "Розмиття оточення", 0, 1, .01, { show:() => P.scene.bg.mode === 3 }),
+      cBtns([["Вибрати фото", () => $("fileBg").click(), "full"]], "", { show:() => P.scene.bg.mode === 4 }),
+    ]),
+    group("Оточення (HDR-світло)", [envGrid,
+      cColors([["s.env.c1", "Верх"], ["s.env.c2", "Низ"]], { show:() => P.scene.env.preset === 8 }),
+      cWrap("two", [cRange("s.env.int", "Яскравість", 0, 3, .01, { def:1 }), cRange("s.env.rot", "Поворот", -180, 180, 1, { def:0, fmt:v => v + "°" })]),
+      cWrap("two", [cRange("s.env.sat", "Насиченість", 0, 2, .01, { def:1 }), cRange("s.refrEnv", "Скло: фон ↔ оточення", 0, 1, .01)]),
+      cColors([["s.env.tint", "Тон світла"]]),
+      cBtns([["Завантажити .hdr / панораму", () => $("fileEnv").click(), "full"]], ""),
+    ]),
+    group("Ключове світло і тіні", [
+      cWrap("two", [cRange("s.key.az", "Азимут", -180, 180, 1, { fmt:v => v + "°" }), cRange("s.key.el", "Висота", 2, 89, 1, { fmt:v => v + "°" })]),
+      cWrap("two", [cRange("s.key.int", "Сила", 0, 4, .01), cRange("s.key.soft", "Різкість тіні", 2, 40, .5)]),
+      cColors([["s.key.col", "Колір світла"]]),
+    ]),
+    group("Підлога", [
+      cSeg("s.floor.mode", null, [["Немає", 0], ["Лише тінь", 1], ["Підлога", 2]], 3),
+      cWrap("two", [cRange("s.floor.y", "Висота", -4, 1, .01), cRange("s.floor.shadow", "Тінь", 0, 1, .01)], { show:() => P.scene.floor.mode > 0 }),
+      cWrap("two", [cRange("s.floor.refl", "Відбиття", 0, 1, .01), cRange("s.floor.fade", "Розчинення", 1.5, 30, .1)], { show:() => P.scene.floor.mode === 2 }),
+      cColors([["s.floor.col", "Колір підлоги"]], { show:() => P.scene.floor.mode === 2 }),
+    ]),
+    group("Камера і рендер", [
+      cWrap("two", [cRange("s.cam.fov", "Обʼєктив (FOV)", 8, 80, .5, { fmt:v => v + "°" }), cRange("s.cam.dist", "Відстань", 1.5, 25, .05)]),
+      cWrap("two", [cRange("s.merge", "Злиття шарів", 0, 1.2, .01), cRange("s.expo", "Експозиція", .2, 3, .01)]),
+      cSeg("s.tone", "Тонмапінг", [["Нейтральний", 0], ["Плівка", 1], ["Лінійний", 2]], 3),
+    ]),
+  ]);
+  /* fx */
+  const fxList = el("div", "fxlist"); fxList.id = "fxList";
+  const fxAdd = el("div", "fxadd"); FXD.forEach(d => { const b = el("div", "preset", d.n); b.addEventListener("click", () => { P.fx.push(newFx(d.t)); P.fx[P.fx.length - 1]._open = true; renderFx(); dirty = true; scheduleHist(); scheduleSave(); }); fxAdd.appendChild(b); });
+  pane("fx", [
+    group("Стек ефектів", [fxList, el("div", "note", "Ефекти йдуть зверху вниз. Подвійний клік по повзунку — значення за замовчуванням.")]),
+    group("Додати ефект", [fxAdd]),
+  ]);
+  /* export */
+  pane("export", [
+    group("Зображення", [
+      cSeg("x.size", "Довга сторона", [["1080", 1080], ["2K", 2048], ["4K", 3840]], 3),
+      cSwitch("x.ssaa", "Згладжування 2× (до 2K)", { num:true }),
+      cBtns([["PNG", () => exportPng(false), "primary"], ["PNG без фону", () => exportPng(true)], ["JPG", () => exportJpg(), "full"]], ""),
+    ]),
+    group("Відео (безшовний луп)", [
+      cSeg("x.vsize", "Розмір", [["720", 720], ["1080", 1080], ["1440", 1440]], 3),
+      cSeg("x.fps", "Кадрів/с", [["24", 24], ["30", 30], ["60", 60]], 3),
+      cWrap("two", [cRange("x.repeats", "Повторів лупа", 1, 6, 1), cRange("x.bitrate", "Бітрейт, Мбіт/с", 4, 40, 1)]),
+      cBtns([["MP4", () => exportMp4(), "primary", "mp4Btn"], ["WebM", () => exportWebm(), "", "webmBtn"]], ""),
+      el("div", "note", "MP4 рендериться покадрово (WebCodecs) з високою якістю — нічого не вивантажується."),
+    ]),
+    group("3D-модель", [
+      cSeg("x.mres", "Деталізація сітки", [["96", 96], ["128", 128], ["192", 192]], 3),
+      cBtns([["GLB", () => export3d("glb"), "primary"], ["STL", () => export3d("stl")]], ""),
+      el("div", "note", "Поточний кадр стає сіткою (marching tetrahedra) з матеріалами шарів — для Blender, Spline, Figma 3D, AR."),
+    ]),
+    group("Проєкт", [
+      cBtns([["Зберегти .json", saveJson], ["Відкрити .json", () => $("fileJson").click()], ["Поділитись посиланням / embed", openShare, "full"]], ""),
+      el("div", "kbd", "<b>⌘Z</b> скасувати · <b>⇧⌘Z</b> повторити · <b>⌘D</b> дублювати шар · <b>⌫</b> видалити шар · <b>␣</b> пауза"),
+    ]),
+  ]);
+  // google font / upload
+  $("gfGo").addEventListener("click", async () => { const v = $("gfName").value.trim(); if(!v) return; status("Шрифт…", true); await fontReady(v, 400, "A"); setK("o.font", v); syncAll(); status(""); });
+  $("gfName").addEventListener("keydown", e => { if(e.key === "Enter") $("gfGo").click(); });
+  $("gfUp").addEventListener("click", () => $("fileFont").click());
+}
+function markMat(){ const o = curObj(); document.querySelectorAll(".mat").forEach(m => m.classList.toggle("active", !!o && m.dataset.k === o.mat.preset)); }
+
+/* ---------- fx stack UI ---------- */
+const ICO = {
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 15 6-6 6 6"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>',
+  del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/></svg>',
+  dup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg>',
+  text:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 6h14M12 6v13"/></svg>',
+  shape:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>',
+  prim:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2"/></svg>',
+  image:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>',
+};
+function renderFx(){
+  const box = $("fxList"); if(!box) return; box.innerHTML = "";
+  if(!P.fx.length) box.appendChild(el("div", "note", "Поки без ефектів — додай нижче."));
+  P.fx.forEach((f, i) => {
+    const d = FX[f.t]; const c = el("div", "fx" + (f.on ? "" : " off") + (f._open ? " open" : ""));
+    const h = el("div", "fx-h");
+    h.innerHTML = `<span class="nm">${d.n}</span><span class="lb" data-a="up">${ICO.up}</span><span class="lb" data-a="down">${ICO.down}</span><label class="switch"><input type="checkbox" ${f.on ? "checked" : ""}><span class="track"></span></label><span class="lb" data-a="del">${ICO.del}</span>`;
+    h.addEventListener("click", e => {
+      const a = e.target.closest("[data-a]"); if(e.target.closest(".switch")) return;
+      if(a){ e.stopPropagation(); const k = a.dataset.a;
+        if(k === "del") P.fx.splice(i, 1);
+        if(k === "up" && i > 0) [P.fx[i - 1], P.fx[i]] = [P.fx[i], P.fx[i - 1]];
+        if(k === "down" && i < P.fx.length - 1) [P.fx[i + 1], P.fx[i]] = [P.fx[i], P.fx[i + 1]];
+        renderFx(); dirty = true; scheduleHist(); scheduleSave(); return; }
+      f._open = !f._open; c.classList.toggle("open", f._open);
+    });
+    h.querySelector("input").addEventListener("change", e => { f.on = e.target.checked; c.classList.toggle("off", !f.on); dirty = true; scheduleHist(); scheduleSave(); });
+    const b = el("div", "fx-b");
+    d.p.forEach(([k, l, mn, mx, st, df, names]) => {
+      const w = el("div", "prm");
+      if(names){
+        w.appendChild(el("div", "seg-lbl", l)); const sg = el("div", "presets c" + names.length);
+        names.forEach((nm, vi) => { const pb = el("div", "preset sm" + (f.v[k] === vi ? " active" : ""), nm); pb.addEventListener("click", () => { f.v[k] = vi; sg.querySelectorAll(".preset").forEach((x, xi) => x.classList.toggle("active", xi === vi)); dirty = true; scheduleHist(); scheduleSave(); }); sg.appendChild(pb); });
+        w.appendChild(sg);
+      } else if(mn === 0 && mx === 1 && st === 1){
+        const sw = cSwitchRaw(l, !!f.v[k], v => { f.v[k] = v ? 1 : 0; dirty = true; scheduleHist(); scheduleSave(); }); b.appendChild(sw); return;
+      } else {
+        const dc = decOf(st);
+        w.innerHTML = `<div class="row"><label class="lbl">${l}</label><span class="val">${(+f.v[k]).toFixed(dc)}</span></div><input type="range" min="${mn}" max="${mx}" step="${st}" value="${f.v[k]}">`;
+        const inp = w.querySelector("input"), val = w.querySelector(".val");
+        inp.addEventListener("input", () => { f.v[k] = parseFloat(inp.value); val.textContent = f.v[k].toFixed(dc); dirty = true; scheduleHist(); scheduleSave(); });
+        inp.addEventListener("dblclick", () => { f.v[k] = df; inp.value = df; val.textContent = (+df).toFixed(dc); dirty = true; });
+      }
+      b.appendChild(w);
+    });
+    if(d.c){
+      const g = el("div", "colors" + (d.c.length > 2 ? " c3" : "")); g.style.marginTop = "12px";
+      d.c.forEach(([k, l]) => { if(!l) return; const f2 = el("div", "color-field"); f2.innerHTML = `<span>${l}</span><div class="color-wrap"><input type="color" value="${f.v[k]}"><span class="hex">${f.v[k]}</span></div>`;
+        const inp = f2.querySelector("input"); inp.addEventListener("input", () => { f.v[k] = inp.value; f2.querySelector(".hex").textContent = inp.value; dirty = true; scheduleHist(); scheduleSave(); }); g.appendChild(f2); });
+      b.appendChild(g);
+    }
+    c.appendChild(h); c.appendChild(b); box.appendChild(c);
+  });
+}
+function cSwitchRaw(l, v, on){ const w = el("div", "switch-row"); w.innerHTML = `<span class="lbl">${l}</span><label class="switch"><input type="checkbox" ${v ? "checked" : ""}><span class="track"></span></label>`; w.querySelector("input").addEventListener("change", e => on(e.target.checked)); return w; }
+
+/* ---------- layers ---------- */
+let replaceTarget = null;
+function renderLayers(){
+  const box = $("layers"); box.innerHTML = "";
+  if(!P.objects.length) box.appendChild(el("div", "note", "Сцена порожня."));
+  P.objects.forEach((o, i) => {
+    const r = el("div", "layer" + (i === P.sel ? " active" : "") + (o.visible ? "" : " off"));
+    r.innerHTML = `<span class="ic">${ICO[o.kind]}</span><span class="nm"></span><span class="lb" data-a="vis" title="Показати / сховати">${o.visible ? ICO.eye : ICO.eyeOff}</span><span class="lb" data-a="dup" title="Дублювати">${ICO.dup}</span><span class="lb" data-a="del" title="Видалити">${ICO.del}</span>`;
+    r.querySelector(".nm").textContent = objLabel(o);
+    r.addEventListener("click", e => {
+      const a = e.target.closest("[data-a]");
+      if(a){ e.stopPropagation(); const k = a.dataset.a;
+        if(k === "vis") o.visible = !o.visible;
+        if(k === "dup") dupLayer(i);
+        if(k === "del") delLayer(i);
+        renderLayers(); syncAll(); dirty = true; scheduleHist(); scheduleSave(); return; }
+      select(i);
+    });
+    r.addEventListener("dblclick", () => { const n = prompt("Назва шару", objLabel(o)); if(n != null){ o.name = n.trim(); renderLayers(); scheduleSave(); } });
+    box.appendChild(r);
+  });
+  ["addText", "addShape", "addPrim", "addImage"].forEach(id => $(id).disabled = P.objects.length >= MAXO);
+}
+function select(i){ P.sel = clamp(i, 0, Math.max(0, P.objects.length - 1)); selFlash = performance.now(); renderLayers(); syncAll(); dirty = true; }
+function addLayer(o){
+  if(P.objects.length >= MAXO){ alert("Максимум 6 шарів у сцені."); return; }
+  const n = P.objects.length; if(n) o.pos = [clamp((n % 2 ? 1 : -1)*Math.ceil(n/2)*.35, -2, 2), 0, 0];
+  P.objects.push(o); select(P.objects.length - 1); scheduleMasks(0); scheduleHist(); scheduleSave();
+}
+function dupLayer(i){ if(P.objects.length >= MAXO) return; const c = JSON.parse(JSON.stringify(P.objects[i])); c.id = uid(); delete c._slot; c.pos = c.pos.map((v, k) => k === 0 ? v + .3 : v); P.objects.splice(i + 1, 0, c); P.sel = i + 1; scheduleMasks(0); }
+function delLayer(i){ P.objects.splice(i, 1); P.sel = clamp(P.sel >= i ? P.sel - 1 : P.sel, 0, Math.max(0, P.objects.length - 1)); }
+
+/* ---------- templates + material thumbnails ---------- */
+let TT = null;
+async function thumbRender(st, w, h, q){
+  if(!TT || TT.w !== w || TT.h !== h){ freeTargets(TT); TT = mkTargets(w, h); TT.finT = texRT(w, h, gl.RGBA8, false); TT.fin = fbo([TT.finT]); }
+  assignSlots(st.objects, SDF_T);
+  for(const o of st.objects) await buildMask(o, SDF_T, o._slot);
+  bakeEnv(st.scene, ENV_T);
+  drawScene(st, TT, SDF_T, ENV_T, { q:q == null ? 0 : q, camExtra:{ yaw:0, pitch:0 } });
+  const src = runFx(st, TT);
+  drawFinal(TT, src, TT.fin, w, h, { flip:true, straight:true });
+  const px = new Uint8ClampedArray(w*h*4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d");
+  x.putImageData(new ImageData(px, w, h), 0, 0);
+  dirty = true;
+  return c.toDataURL("image/jpeg", .86);
+}
+function renderTemplates(){
+  const box = $("templates"); box.innerHTML = "";
+  TPLS.forEach(([name], i) => {
+    const t = el("div", "thumb"); t.innerHTML = `<div class="ph"></div><span>${name}</span>`; t.dataset.i = i;
+    t.addEventListener("click", () => applyTemplate(i));
+    box.appendChild(t);
+  });
+}
+function applyTemplate(i){
+  const d = buildTemplate(TPLS[i][1]);
+  P.scene = d.scene; P.motion = d.motion; P.objects = d.objects; P.fx = d.fx; P.sel = 0;
+  document.querySelectorAll(".thumb").forEach(t => t.classList.toggle("active", +t.dataset.i === i));
+  envDirty = true; resize(); syncAll(); renderLayers(); renderFx(); scheduleMasks(0); scheduleHist(); scheduleSave();
+  t0 = performance.now(); curT = 0;
+}
+async function makeThumbs(){
+  const matScene = deepAssign(clone(DEF_SCENE), { bg:{ mode:2, c1:"#26262e", c2:"#101014" }, floor:{ mode:0 }, cam:{ dist:3.2, pitch:8 }, key:{ az:30, el:40 } });
+  for(const [k] of MATS){
+    const st = { scene:matScene, motion:DEF_MOTION, fx:[], t:0, frame:0, objects:[newObj("prim", { prim:"sphere", pa:[.95, 0, 0], scale:1, mat:k })] };
+    const url = await thumbRender(st, 96, 96, 1);
+    const b = document.querySelector(`.mat[data-k="${k}"] .ball`); if(b) b.innerHTML = `<img src="${url}" alt="">`;
+    await new Promise(r => setTimeout(r, 0));
+  }
+  for(let i = 0; i < TPLS.length; i++){
+    const d = buildTemplate(TPLS[i][1]); d.t = d.motion.loop*.12; d.frame = 0;
+    for(const o of d.objects) if(o.kind === "text") await fontReady(o.font, o.weight, o.text);
+    const url = await thumbRender(d, 240, 240, 1);
+    const t = document.querySelector(`.thumb[data-i="${i}"]`); if(t) t.innerHTML = `<img src="${url}" alt=""><span>${TPLS[i][0]}</span>`;
+    await new Promise(r => setTimeout(r, 0));
+  }
+}
+
+/* ================= render loop ================= */
+let fpsN = 0, fpsT = performance.now(), lastRender = 0;
+function renderMain(){
+  if(!T) resize();
+  if(envDirty){ bakeEnv(P.scene, ENV); envDirty = false; }
+  const st = stateNow(); st.frame = frame++;
+  const pk = drawScene(st, T, SDF, ENV, { q:quality, camExtra:camExtraAt(curT) });
+  lastVis = pk.vis;
+  const src = runFx(st, T);
+  const showSel = !preview && !isEmbed && (performance.now() - selFlash < 1400 || drag.mode === "move");
+  drawFinal(T, src, null, out.width, out.height, { sel:showSel ? lastVis.indexOf(curObj()) + 1 : 0 });
+  fpsN++;
+}
+function tick(){
+  const now = performance.now();
+  if(playing && !busy){ curT = ((now - t0)/1000) % P.motion.loop; dirty = true; }
+  if(preview || isEmbed){
+    if(P.motion.interact === 1 && !IA.down){ IA.vy *= .92; IA.vp *= .92; IA.yaw += IA.vy; IA.pitch += IA.vp; IA.yaw *= .965; IA.pitch *= .965; if(Math.abs(IA.yaw) + Math.abs(IA.pitch) > .01) dirty = true; }
+    if(P.motion.interact === 2){ const ny = IA.tx*P.motion.intAmt, np = IA.ty*P.motion.intAmt*.6; if(Math.abs(ny - IA.yaw) + Math.abs(np - IA.pitch) > .01){ IA.yaw = lerp(IA.yaw, ny, .08); IA.pitch = lerp(IA.pitch, np, .08); dirty = true; } }
+  }
+  if(performance.now() - selFlash < 1500) dirty = true;
+  if(dirty && !busy){ dirty = false; try{ renderMain(); }catch(e){ showErr(String(e.stack || e)); busy = true; } }
+  if(now - fpsT > 1000){ $("fpsBadge").textContent = Math.round(fpsN*1000/(now - fpsT)) + " fps"; fpsN = 0; fpsT = now; }
+  $("timeBadge").textContent = curT.toFixed(1) + " / " + (+P.motion.loop).toFixed(1) + " с";
+}
+let rafOK = false;
+function loopRaf(){ rafOK = true; tick(); requestAnimationFrame(loopRaf); }
+requestAnimationFrame(loopRaf);
+setInterval(() => { if(!rafOK || document.hidden) tick(); rafOK = false; }, 120);
+
+function setPlaying(p){
+  playing = p;
+  if(p) t0 = performance.now() - curT*1000;
+  $("playIco").innerHTML = p ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M7 4.5v15l12-7.5z"/>';
+  dirty = true;
+}
+
+/* ================= interaction ================= */
+const drag = { mode:null, x:0, y:0, sx:0, sy:0, moved:false, btn:0 };
+let tool = "orbit";
+function setTool(t){ tool = t; $("toolOrbit").classList.toggle("on", t === "orbit"); $("toolMove").classList.toggle("on", t === "move"); $("stage").classList.toggle("tool-move", t === "move"); }
+function pick(cx, cy){
+  const r = out.getBoundingClientRect();
+  const x = Math.floor((cx - r.left)/r.width*T.w), y = Math.floor((1 - (cy - r.top)/r.height)*T.h);
+  if(x < 0 || y < 0 || x >= T.w || y >= T.h) return -1;
+  gl.bindFramebuffer(gl.READ_FRAMEBUFFER, T.scene); gl.readBuffer(gl.COLOR_ATTACHMENT1);
+  const px = new Uint8Array(4); gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.readBuffer(gl.COLOR_ATTACHMENT0);
+  const id = Math.round(px[2]/255*8) - 1;
+  if(id < 0 || id >= lastVis.length) return -1;
+  return P.objects.indexOf(lastVis[id]);
+}
+function bindStage(){
+  const st = $("stage");
+  st.addEventListener("pointerdown", e => {
+    if(e.target.closest(".stage-bar") || e.target.closest(".err")) return;
+    drag.mode = (preview || isEmbed) ? "ia" : (e.shiftKey || e.button === 1 || e.button === 2) ? "pan" : (tool === "move" && curObj()) ? "move" : "orbit";
+    drag.x = drag.sx = e.clientX; drag.y = drag.sy = e.clientY; drag.moved = false;
+    IA.down = true; st.setPointerCapture(e.pointerId); st.classList.add("grabbing"); $("hint").style.opacity = 0;
+  });
+  st.addEventListener("pointermove", e => {
+    if(P.motion.interact === 2 && (preview || isEmbed)){ const r = out.getBoundingClientRect(); IA.tx = clamp((e.clientX - r.left)/r.width*2 - 1, -1, 1); IA.ty = clamp((e.clientY - r.top)/r.height*2 - 1, -1, 1); }
+    if(!drag.mode) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+    if(Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 4) drag.moved = true;
+    const c = P.scene.cam;
+    if(drag.mode === "orbit"){ c.yaw -= dx*.35; c.pitch = clamp(c.pitch + dy*.25, -80, 80); }
+    else if(drag.mode === "pan" || drag.mode === "move"){
+      const cb = camBasis(c); const k = 2*c.dist*Math.tan(c.fov*DEG/2)/out.getBoundingClientRect().height;
+      const v = [cb.r[0]*dx*k - cb.u[0]*dy*k, cb.r[1]*dx*k - cb.u[1]*dy*k, cb.r[2]*dx*k - cb.u[2]*dy*k];
+      if(drag.mode === "pan"){ c.tx -= v[0]; c.ty -= v[1]; c.tz -= v[2]; }
+      else { const o = curObj(); for(let i = 0; i < 3; i++) o.pos[i] = +(o.pos[i] + v[i]).toFixed(3); selFlash = performance.now(); }
+    } else if(drag.mode === "ia" && P.motion.interact === 1){ IA.vy = -dx*.25; IA.vp = dy*.18; IA.yaw = clamp(IA.yaw - dx*.35, -P.motion.intAmt*2, P.motion.intAmt*2); IA.pitch = clamp(IA.pitch + dy*.25, -P.motion.intAmt, P.motion.intAmt); }
+    dirty = true;
+  });
+  const up = e => {
+    if(!drag.mode) return;
+    const m = drag.mode; drag.mode = null; IA.down = false; st.classList.remove("grabbing");
+    if(!drag.moved && m !== "ia"){ const i = pick(e.clientX, e.clientY); if(i >= 0) select(i); }
+    else if(m !== "ia"){ syncAll(); scheduleHist(); scheduleSave(); }
+  };
+  st.addEventListener("pointerup", up); st.addEventListener("pointercancel", up);
+  st.addEventListener("contextmenu", e => e.preventDefault());
+  st.addEventListener("wheel", e => {
+    if(isEmbed) return;
+    e.preventDefault();
+    if(tool === "move" && curObj()){ const o = curObj(); o.scale = clamp(+(o.scale*Math.exp(-e.deltaY*.0012)).toFixed(3), .1, 5); selFlash = performance.now(); }
+    else P.scene.cam.dist = clamp(P.scene.cam.dist*Math.exp(e.deltaY*.0012), 1.5, 25);
+    dirty = true; syncAll(); scheduleHist(); scheduleSave();
+  }, { passive:false });
+  // drop / paste
+  st.addEventListener("dragover", e => { e.preventDefault(); st.classList.add("dragging"); });
+  st.addEventListener("dragleave", () => st.classList.remove("dragging"));
+  st.addEventListener("drop", e => { e.preventDefault(); st.classList.remove("dragging"); const f = e.dataTransfer.files[0]; if(f) handleFile(f); });
+  window.addEventListener("paste", e => { const f = [...(e.clipboardData || {}).files || []][0]; if(f && f.type.startsWith("image/")) handleFile(f); });
+  window.addEventListener("resize", fitCanvas);
+  new ResizeObserver(fitCanvas).observe(st);
+}
+
+/* ================= files ================= */
+const readAs = (f, how) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r[how](f); });
+async function imageToBlob(f){
+  if(f.type === "image/svg+xml" || /\.svg$/i.test(f.name)){
+    let txt = await readAs(f, "readAsText");
+    const doc = new DOMParser().parseFromString(txt, "image/svg+xml"); const svg = doc.documentElement;
+    const vb = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
+    let w = parseFloat(svg.getAttribute("width")), h = parseFloat(svg.getAttribute("height"));
+    if(vb.length === 4 && vb[2] > 0){ const k = 1024/Math.max(vb[2], vb[3]); w = vb[2]*k; h = vb[3]*k; }
+    else if(!(w > 0 && h > 0)){ w = 1024; h = 1024; }
+    else { const k = 1024/Math.max(w, h); w *= k; h *= k; }
+    svg.setAttribute("width", w); svg.setAttribute("height", h);
+    txt = new XMLSerializer().serializeToString(svg);
+    return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(txt)));
+  }
+  const url = await readAs(f, "readAsDataURL");
+  const im = await loadImg(url);
+  const k = Math.min(1, 1600/Math.max(im.naturalWidth, im.naturalHeight));
+  if(k >= 1 && f.size < 1.5e6) return url;
+  const c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth*k); c.height = Math.round(im.naturalHeight*k);
+  c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+  return c.toDataURL("image/png");
+}
+async function hasAlpha(src){
+  const im = await loadImg(src); const c = document.createElement("canvas"); c.width = 64; c.height = 64; const x = c.getContext("2d");
+  x.drawImage(im, 0, 0, 64, 64); const d = x.getImageData(0, 0, 64, 64).data; for(let i = 3; i < d.length; i += 4) if(d[i] < 250) return true; return false;
+}
+async function handleFile(f){
+  try{
+    if(/\.json$/i.test(f.name)){ loadProject(await readAs(f, "readAsText")); return; }
+    if(/\.hdr$/i.test(f.name)){ await loadEnvFile(f); return; }
+    if(f.type.startsWith("image/") || /\.svg$/i.test(f.name)){
+      status("Зображення…", true);
+      const url = await imageToBlob(f); const id = "b" + Date.now().toString(36); BLOBS[id] = url;
+      const alpha = await hasAlpha(url);
+      if(replaceTarget && P.objects.includes(replaceTarget)){ replaceTarget.src = id; replaceTarget.srcName = f.name; replaceTarget.maskMode = alpha ? 0 : replaceTarget.maskMode; replaceTarget = null; scheduleMasks(0); renderLayers(); syncAll(); }
+      else addLayer(newObj("image", { src:id, srcName:f.name, maskMode:0, depth:alpha ? .12 : .05, bevel:alpha ? .025 : .012 }));
+      status("");
+    }
+  }catch(e){ alert("Не вдалося відкрити файл: " + (e.message || e)); status(""); }
+}
+async function loadEnvFile(f){
+  status("Оточення…", true);
+  if(!envSrc) envSrc = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, envSrc); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  if(/\.hdr$/i.test(f.name)){
+    const h = parseHDR(await readAs(f, "readAsArrayBuffer"));
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, h.W, h.H, 0, gl.RGBA, gl.FLOAT, h.data);
+    const lin = !!gl.getExtension("OES_texture_float_linear");
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, lin ? gl.LINEAR : gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, lin ? gl.LINEAR : gl.NEAREST);
+    envSrcMode = 2;
+  } else {
+    const im = await loadImg(await readAs(f, "readAsDataURL"));
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    envSrcMode = 1;
+  }
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  P.scene.env.preset = 99; envDirty = true; dirty = true; syncAll(); status("");
+}
+async function loadBgFile(f){
+  const im = await loadImg(await readAs(f, "readAsDataURL"));
+  if(!bgTex) bgTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, bgTex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im); gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  bgAsp = im.naturalWidth/im.naturalHeight; P.scene.bg.mode = 4; dirty = true; syncAll();
+}
+function bindFiles(){
+  $("fileImg").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if(f) handleFile(f); else replaceTarget = null; });
+  $("fileEnv").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if(f) loadEnvFile(f).catch(er => alert("Не вдалося відкрити файл: " + er.message)); });
+  $("fileBg").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if(f) loadBgFile(f); });
+  $("fileJson").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if(f) loadProject(await readAs(f, "readAsText")); });
+  $("fileFont").addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+    const fam = f.name.replace(/\.[^.]+$/, "");
+    try{ const ff = new FontFace(fam, await readAs(f, "readAsArrayBuffer")); await ff.load(); document.fonts.add(ff); customFonts.add(fam); setK("o.font", fam); syncAll(); }
+    catch(er){ alert("Не вдалося відкрити файл: " + er.message); }
+  });
+}
+
+/* ================= export ================= */
+function fname(ext){ const o = P.objects[0]; const base = (o && o.kind === "text" ? o.text.split("\n")[0] : "volume").replace(/[^\wа-яіїєґ-]+/gi, "-").slice(0, 24) || "volume"; return `volume-${base}-${Date.now().toString(36)}.${ext}`; }
+function download(blob, name){ if(window.VOLUME_DL){ window.VOLUME_DL(blob, name); return; } const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+function exportDims(L){ const [bw, bh] = baseSize(); const k = L/Math.max(bw, bh); return [even(bw*k), even(bh*k)]; }
+async function renderImage(w, h, transparent, ssaa){
+  const k = ssaa && Math.max(w, h) <= 2048 ? 2 : 1;
+  const TE = mkTargets(w*k, h*k); TE.finT = texRT(w, h, gl.RGBA8, false); TE.fin = fbo([TE.finT]);
+  if(envDirty){ bakeEnv(P.scene, ENV); envDirty = false; }
+  const st = stateNow(); st.frame = frame;
+  drawScene(st, TE, SDF, ENV, { q:2, camExtra:camExtraAt(curT), transparent, tile:Math.max(w, h)*k > 1400 ? 384 : 0 });
+  const src = runFx(st, TE);
+  drawFinal(TE, src, TE.fin, w, h, { flip:true, straight:true });
+  const px = new Uint8ClampedArray(w*h*4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  freeTargets(TE);
+  const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").putImageData(new ImageData(px, w, h), 0, 0);
+  dirty = true;
+  return c;
+}
+async function exportPng(transparent){
+  if(busy) return; busy = true; status("Рендер PNG…", true); await new Promise(r => setTimeout(r, 30));
+  try{ const [w, h] = exportDims(P.ex.size); const c = await renderImage(w, h, transparent, P.ex.ssaa); c.toBlob(b => b && download(b, fname(transparent ? "alpha.png" : "png")), "image/png"); }
+  catch(e){ alert("Помилка рендера: " + (e.message || e)); }
+  busy = false; status("");
+}
+async function exportJpg(){
+  if(busy) return; busy = true; status("Рендер JPG…", true); await new Promise(r => setTimeout(r, 30));
+  try{ const [w, h] = exportDims(P.ex.size); const c = await renderImage(w, h, false, P.ex.ssaa); c.toBlob(b => b && download(b, fname("jpg")), "image/jpeg", .94); }
+  catch(e){ alert("Помилка рендера: " + (e.message || e)); }
+  busy = false; status("");
+}
+let vidAbort = false;
+async function exportMp4(){
+  if(busy){ vidAbort = true; return; }
+  if(!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+  busy = true; vidAbort = false; $("mp4Btn").textContent = "■ Скасувати";
+  const [w, h] = exportDims(P.ex.vsize), FPS = P.ex.fps;
+  const TV = mkTargets(w, h); const ow = out.width, oh = out.height;
+  out.width = w; out.height = h;
+  let err = null;
+  try{
+    if(envDirty){ bakeEnv(P.scene, ENV); envDirty = false; }
+    let codec = null; const br = P.ex.bitrate*1e6;
+    for(const c of [w*h > 2e6 ? "avc1.640033" : "avc1.640028", "avc1.4d0033", "avc1.42003e"]){
+      try{ const s = await VideoEncoder.isConfigSupported({ codec:c, width:w, height:h, bitrate:br, framerate:FPS }); if(s && s.supported){ codec = c; break; } }catch(e){}
+    }
+    if(!codec) throw new Error("H.264 " + w + "×" + h);
+    const muxer = new Mp4Muxer.Muxer({ target:new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:w, height:h }, fastStart:"in-memory" });
+    const enc = new VideoEncoder({ output:(c, m) => { const b = new Uint8Array(c.byteLength); c.copyTo(b); muxer.addVideoChunkRaw(b, c.type, c.timestamp, c.duration ?? Math.round(1e6/FPS), m); }, error:e => { err = e; } });
+    enc.configure({ codec, width:w, height:h, bitrate:br, framerate:FPS });
+    const L = P.motion.loop, total = Math.round(L*FPS)*P.ex.repeats;
+    const hasTrail = P.fx.some(f => f.on && f.t === "trail");
+    for(let i = hasTrail ? -FPS : 0; i < total && !err && !vidAbort; i++){
+      const t = ((i/FPS) % L + L) % L;
+      const st = stateNow(t); st.frame = i;
+      drawScene(st, TV, SDF, ENV, { q:2, camExtra:camExtraAt(t) });
+      const src = runFx(st, TV);
+      drawFinal(TV, src, null, w, h, {});
+      if(i < 0) continue;
+      const fr = new VideoFrame(out, { timestamp:Math.round(i*1e6/FPS), duration:Math.round(1e6/FPS) });
+      enc.encode(fr, { keyFrame:i % (FPS*2) === 0 }); fr.close();
+      if(enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 0));
+      if(i % 4 === 0){ status(`Рендер ${Math.round(i/total*100)}%`, true); await new Promise(r => setTimeout(r, 0)); }
+    }
+    if(!err && !vidAbort){
+      status("Кодування…", true);
+      const ok = await Promise.race([enc.flush().then(() => true), new Promise(r => setTimeout(() => r(false), 30000))]);
+      if(!ok) throw new Error("timeout");
+      muxer.finalize(); download(new Blob([muxer.target.buffer], { type:"video/mp4" }), fname("mp4"));
+    }
+    try{ enc.close(); }catch(e){}
+  }catch(e){ err = err || e; }
+  freeTargets(TV); out.width = ow; out.height = oh; fitCanvas();
+  if(err) alert("Помилка кодування MP4: " + (err.message || err));
+  busy = false; dirty = true; $("mp4Btn").textContent = "MP4"; status("");
+}
+let webmRec = null;
+function exportWebm(){
+  if(webmRec){ webmRec.stop(); return; }
+  if(!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+  setPlaying(true); t0 = performance.now(); curT = 0;
+  const chunks = []; const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+  try{ webmRec = new MediaRecorder(out.captureStream(60), { mimeType:mime, videoBitsPerSecond:P.ex.bitrate*1e6 }); }catch(e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+  webmRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+  webmRec.onstop = () => { if(chunks.length) download(new Blob(chunks, { type:"video/webm" }), fname("webm")); webmRec = null; $("webmBtn").textContent = "WebM"; status(""); };
+  webmRec.start(200); $("webmBtn").textContent = "■ Стоп"; status("Запис…", true);
+  setTimeout(() => { if(webmRec) webmRec.stop(); }, P.motion.loop*P.ex.repeats*1000 + 150);
+}
+
+/* ---------- 3D export: SDF grid → marching tetrahedra → GLB / STL ---------- */
+let PR_GRID = null;
+async function export3d(kind){
+  if(busy) return;
+  if(!HAS_CBF){ alert("Для 3D-експорту потрібен float-рендер (EXT_color_buffer_float)."); return; }
+  const vis = P.objects.filter(o => o.visible); if(!vis.length){ alert("Сцена порожня."); return; }
+  busy = true; status("Сітка…", true); await new Promise(r => setTimeout(r, 30));
+  try{
+    if(!PR_GRID) PR_GRID = program(SH_GRID);
+    const N = P.ex.mres;
+    const st = stateNow(); const pk = packObjects(st.objects, SDF, st.t, st.motion.loop);
+    let mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+    for(let i = 0; i < pk.n; i++){ const b = UB.bnd.subarray(i*4, i*4 + 4); for(let k = 0; k < 3; k++){ mn[k] = Math.min(mn[k], b[k] - b[3]); mx[k] = Math.max(mx[k], b[k] + b[3]); } }
+    const span = Math.max(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2])*1.04; const c = mn.map((v, k) => (v + mx[k])/2);
+    const step = span/(N - 1); const g0 = c.map(v => v - span/2);
+    const cols = Math.ceil(Math.sqrt(N)), rows = Math.ceil(N/cols), TW = cols*N, TH = rows*N;
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32F, TW, TH);
+    const fb = fbo([tex]);
+    const fake = { w:TW, h:TH };
+    sceneUniforms(PR_GRID, st, fake, SDF, ENV, { q:2, camExtra:{ yaw:0, pitch:0 } });
+    const U = PR_GRID.U;
+    gl.uniform3fv(U.uGMin, g0); gl.uniform3f(U.uGStep, step, step, step); gl.uniform1f(U.uGN, N); gl.uniform1f(U.uGCols, cols);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb); gl.viewport(0, 0, TW, TH); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    const data = new Float32Array(TW*TH*4); gl.readPixels(0, 0, TW, TH, gl.RGBA, gl.FLOAT, data);
+    gl.deleteFramebuffer(fb); gl.deleteTexture(tex);
+    status("Полігони…", true); await new Promise(r => setTimeout(r, 0));
+    const V = (x, y, z) => { const i = ((Math.floor(z/cols)*N + y)*TW + (z % cols)*N + x)*4; return i; };
+    const D = new Float32Array(N*N*N), ID = new Uint8Array(N*N*N);
+    for(let z = 0; z < N; z++) for(let y = 0; y < N; y++) for(let x = 0; x < N; x++){ const i = V(x, y, z), g = x + y*N + z*N*N; D[g] = data[i]; ID[g] = data[i + 1]; }
+    const mesh = marchTets(D, ID, N, g0, step);
+    if(!mesh.idx.length) throw new Error("порожня сітка");
+    status("Файл…", true);
+    if(kind === "stl") download(new Blob([writeSTL(mesh)], { type:"model/stl" }), fname("stl"));
+    else download(new Blob([writeGLB(mesh, pk.vis)], { type:"model/gltf-binary" }), fname("glb"));
+  }catch(e){ alert("Помилка 3D-експорту: " + (e.message || e)); }
+  busy = false; dirty = true; status("");
+}
+function marchTets(D, ID, N, g0, s){
+  const CO = [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]];
+  const TETS = [[0, 5, 1, 6], [0, 1, 2, 6], [0, 2, 3, 6], [0, 3, 7, 6], [0, 7, 4, 6], [0, 4, 5, 6]];
+  const pos = [], nor = [], vid = [], idx = []; const emap = new Map();
+  const NN = N*N;
+  const gidx = (x, y, z) => x + y*N + z*NN;
+  const grad = g => { const z = Math.floor(g/NN), y = Math.floor((g - z*NN)/N), x = g - z*NN - y*N;
+    const f = (a, b, c) => D[gidx(clamp(a, 0, N - 1), clamp(b, 0, N - 1), clamp(c, 0, N - 1))];
+    return [f(x + 1, y, z) - f(x - 1, y, z), f(x, y + 1, z) - f(x, y - 1, z), f(x, y, z + 1) - f(x, y, z - 1)]; };
+  const vert = (a, b) => {
+    const key = a < b ? a*NN*N + b : b*NN*N + a; let v = emap.get(key); if(v != null) return v;
+    const da = D[a], db = D[b]; const t = clamp(da/(da - db), 0, 1);
+    const ca = [a % N, Math.floor(a/N) % N, Math.floor(a/NN)], cb = [b % N, Math.floor(b/N) % N, Math.floor(b/NN)];
+    for(let k = 0; k < 3; k++) pos.push(g0[k] + (ca[k] + (cb[k] - ca[k])*t)*s);
+    const ga = grad(a), gb = grad(b); const n = [0, 1, 2].map(k => ga[k] + (gb[k] - ga[k])*t); const l = Math.hypot(...n) || 1;
+    nor.push(n[0]/l, n[1]/l, n[2]/l);
+    vid.push(da < 0 ? (ID[a] || ID[b]) : (ID[b] || ID[a]));
+    v = pos.length/3 - 1; emap.set(key, v); return v;
+  };
+  const tri = (a, b, c) => {
+    const pa = a*3, pb = b*3, pc = c*3;
+    const u = [pos[pb] - pos[pa], pos[pb + 1] - pos[pa + 1], pos[pb + 2] - pos[pa + 2]], w = [pos[pc] - pos[pa], pos[pc + 1] - pos[pa + 1], pos[pc + 2] - pos[pa + 2]];
+    const n = [u[1]*w[2] - u[2]*w[1], u[2]*w[0] - u[0]*w[2], u[0]*w[1] - u[1]*w[0]];
+    const g = [nor[pa] + nor[pb] + nor[pc], nor[pa + 1] + nor[pb + 1] + nor[pc + 1], nor[pa + 2] + nor[pb + 2] + nor[pc + 2]];
+    if(n[0]*g[0] + n[1]*g[1] + n[2]*g[2] < 0) idx.push(a, c, b); else idx.push(a, b, c);
+  };
+  const cg = new Int32Array(8);
+  for(let z = 0; z < N - 1; z++) for(let y = 0; y < N - 1; y++) for(let x = 0; x < N - 1; x++){
+    let anyIn = false, anyOut = false;
+    for(let k = 0; k < 8; k++){ const g = gidx(x + CO[k][0], y + CO[k][1], z + CO[k][2]); cg[k] = g; if(D[g] < 0) anyIn = true; else anyOut = true; }
+    if(!anyIn || !anyOut) continue;
+    for(const t of TETS){
+      const g = t.map(k => cg[k]); const ins = g.filter(q => D[q] < 0), outs = g.filter(q => D[q] >= 0);
+      if(ins.length === 0 || ins.length === 4) continue;
+      if(ins.length === 1 || ins.length === 3){ const [a, rest] = ins.length === 1 ? [ins[0], outs] : [outs[0], ins]; tri(vert(a, rest[0]), vert(a, rest[1]), vert(a, rest[2])); }
+      else { const [a, b] = ins, [c2, d] = outs; const v1 = vert(a, c2), v2 = vert(a, d), v3 = vert(b, d), v4 = vert(b, c2); tri(v1, v2, v3); tri(v1, v3, v4); }
+    }
+  }
+  return { pos:new Float32Array(pos), nor:new Float32Array(nor), vid:new Uint8Array(vid), idx:new Uint32Array(idx) };
+}
+function writeSTL(m){
+  const nt = m.idx.length/3, buf = new ArrayBuffer(84 + nt*50), dv = new DataView(buf);
+  dv.setUint32(80, nt, true); let o = 84;
+  for(let t = 0; t < nt; t++){
+    const a = m.idx[t*3]*3, b = m.idx[t*3 + 1]*3, c = m.idx[t*3 + 2]*3;
+    const u = [m.pos[b] - m.pos[a], m.pos[b + 1] - m.pos[a + 1], m.pos[b + 2] - m.pos[a + 2]], w = [m.pos[c] - m.pos[a], m.pos[c + 1] - m.pos[a + 1], m.pos[c + 2] - m.pos[a + 2]];
+    const n = [u[1]*w[2] - u[2]*w[1], u[2]*w[0] - u[0]*w[2], u[0]*w[1] - u[1]*w[0]]; const l = Math.hypot(...n) || 1;
+    [n[0]/l, n[1]/l, n[2]/l].forEach(v => { dv.setFloat32(o, v, true); o += 4; });
+    [a, b, c].forEach(q => { for(let k = 0; k < 3; k++){ dv.setFloat32(o, m.pos[q + k], true); o += 4; } });
+    dv.setUint16(o, 0, true); o += 2;
+  }
+  return buf;
+}
+function writeGLB(m, vis){
+  const groups = {};
+  for(let t = 0; t < m.idx.length/3; t++){ const a = m.idx[t*3]; const id = Math.max(1, m.vid[a]); (groups[id] = groups[id] || []).push(m.idx[t*3], m.idx[t*3 + 1], m.idx[t*3 + 2]); }
+  const ids = Object.keys(groups).map(Number);
+  const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+  for(let i = 0; i < m.pos.length; i += 3) for(let k = 0; k < 3; k++){ mn[k] = Math.min(mn[k], m.pos[i + k]); mx[k] = Math.max(mx[k], m.pos[i + k]); }
+  const parts = [m.pos.buffer, m.nor.buffer, ...ids.map(id => new Uint32Array(groups[id]).buffer)];
+  let off = 0; const views = parts.map((p, i) => { const v = { buffer:0, byteOffset:off, byteLength:p.byteLength, target:i < 2 ? 34962 : 34963 }; off += Math.ceil(p.byteLength/4)*4; return v; });
+  const nv = m.pos.length/3;
+  const accessors = [
+    { bufferView:0, componentType:5126, count:nv, type:"VEC3", min:mn, max:mx },
+    { bufferView:1, componentType:5126, count:nv, type:"VEC3" },
+    ...ids.map((id, i) => ({ bufferView:2 + i, componentType:5125, count:groups[id].length, type:"SCALAR" })),
+  ];
+  const ext = new Set();
+  const materials = ids.map(id => {
+    const o = vis[id - 1] || vis[0]; const mt = o.mat; const c = lin(hex2rgb(mt.col));
+    const mat = { name:objLabel(o), pbrMetallicRoughness:{ baseColorFactor:[...c, 1], metallicFactor:mt.metal, roughnessFactor:Math.max(mt.rough, .02) } };
+    if(mt.emiS > 0){ const e = lin(hex2rgb(mt.emi)); mat.emissiveFactor = e; if(mt.emiS > 1){ mat.extensions = Object.assign(mat.extensions || {}, { KHR_materials_emissive_strength:{ emissiveStrength:mt.emiS } }); ext.add("KHR_materials_emissive_strength"); } }
+    if(mt.trans > 0){ mat.extensions = Object.assign(mat.extensions || {}, { KHR_materials_transmission:{ transmissionFactor:mt.trans }, KHR_materials_ior:{ ior:mt.ior } }); ext.add("KHR_materials_transmission"); ext.add("KHR_materials_ior");
+      if(mt.dens > 0){ mat.extensions.KHR_materials_volume = { thicknessFactor:.3, attenuationColor:lin(hex2rgb(mt.tint)), attenuationDistance:1/Math.max(mt.dens, .01) }; ext.add("KHR_materials_volume"); } }
+    if(mt.coat > 0){ mat.extensions = Object.assign(mat.extensions || {}, { KHR_materials_clearcoat:{ clearcoatFactor:mt.coat, clearcoatRoughnessFactor:.04 } }); ext.add("KHR_materials_clearcoat"); }
+    if(mt.irid > 0){ mat.extensions = Object.assign(mat.extensions || {}, { KHR_materials_iridescence:{ iridescenceFactor:mt.irid } }); ext.add("KHR_materials_iridescence"); }
+    return mat;
+  });
+  const json = { asset:{ version:"2.0", generator:"Klik Volume Studio" }, scene:0, scenes:[{ nodes:[0] }], nodes:[{ mesh:0, name:"Volume" }],
+    meshes:[{ primitives:ids.map((id, i) => ({ attributes:{ POSITION:0, NORMAL:1 }, indices:2 + i, material:i })) }],
+    materials, accessors, bufferViews:views, buffers:[{ byteLength:off }] };
+  if(ext.size) json.extensionsUsed = [...ext];
+  let js = new TextEncoder().encode(JSON.stringify(json)); const jl = Math.ceil(js.length/4)*4;
+  const total = 12 + 8 + jl + 8 + off; const buf = new ArrayBuffer(total); const dv = new DataView(buf); const u8 = new Uint8Array(buf);
+  dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
+  dv.setUint32(12, jl, true); dv.setUint32(16, 0x4E4F534A, true); u8.set(js, 20); for(let i = 20 + js.length; i < 20 + jl; i++) u8[i] = 32;
+  let o = 20 + jl; dv.setUint32(o, off, true); dv.setUint32(o + 4, 0x004E4942, true); o += 8;
+  parts.forEach((p, i) => u8.set(new Uint8Array(p), o + views[i].byteOffset));
+  return buf;
+}
+
+/* ---------- project files / share ---------- */
+function saveJson(){ download(new Blob([JSON.stringify({ app:"klik-volume-studio", v:1, s:JSON.parse(snap()), b:usedBlobs() }, null, 1)], { type:"application/json" }), fname("json")); }
+function loadProject(txt){
+  try{ const d = JSON.parse(txt); Object.assign(BLOBS, d.b || {}); restore(JSON.stringify(d.s || d)); pushHist(); scheduleSave(); }
+  catch(e){ alert("Не вдалося відкрити файл: " + e.message); }
+}
+const b64u = u8 => { let s = ""; for(let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const ub64 = s => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while(s.length % 4) s += "="; const b = atob(s); const u = new Uint8Array(b.length); for(let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+async function packScene(){
+  const raw = new TextEncoder().encode(JSON.stringify({ s:JSON.parse(snap()), b:usedBlobs() }));
+  if(window.CompressionStream){ const cs = new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw")); return "z" + b64u(new Uint8Array(await new Response(cs).arrayBuffer())); }
+  return "j" + b64u(raw);
+}
+async function unpackScene(code){
+  const u = ub64(code.slice(1));
+  if(code[0] === "z"){ const ds = new Blob([u]).stream().pipeThrough(new DecompressionStream("deflate-raw")); return JSON.parse(await new Response(ds).text()); }
+  return JSON.parse(new TextDecoder().decode(u));
+}
+async function openShare(){
+  const code = await packScene();
+  const base = location.href.split("#")[0];
+  $("shareLink").value = base + "#s=" + code;
+  const [w, h] = baseSize();
+  $("shareEmbed").value = `<iframe src="${base}#embed=1&s=${code}" width="${Math.round(w/2)}" height="${Math.round(h/2)}" style="border:0;border-radius:12px" loading="lazy" allowtransparency="true"></iframe>`;
+  $("shareModal").classList.add("open");
+  status(code.length > 60000 ? "Довге посилання: " + Math.round(code.length/1024) + " КБ" : "");
+}
+
+/* ================= boot ================= */
+function bindUi(){
+  document.querySelectorAll("#tabs .tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll("#tabs .tab").forEach(x => x.classList.toggle("active", x === t));
+    Object.entries(PANES).forEach(([k, p]) => p.classList.toggle("active", k === t.dataset.tab));
+  }));
+  $("addText").addEventListener("click", () => addLayer(newObj("text", { text:"TYPE", mat:curObj() ? curObj().mat.preset : "chrome" })));
+  $("addShape").addEventListener("click", () => addLayer(newObj("shape")));
+  $("addPrim").addEventListener("click", () => addLayer(newObj("prim", { prim:"torus", pa:PRIM_DEF.torus.slice() })));
+  $("addImage").addEventListener("click", () => { replaceTarget = null; $("fileImg").click(); });
+  $("playBtn").addEventListener("click", () => setPlaying(!playing));
+  $("toolOrbit").addEventListener("click", () => setTool("orbit"));
+  $("toolMove").addEventListener("click", () => setTool("move"));
+  $("viewReset").addEventListener("click", () => { Object.assign(P.scene.cam, { yaw:0, pitch:6, dist:6.2, fov:30, tx:0, ty:0, tz:0 }); syncAll(); dirty = true; scheduleHist(); });
+  $("previewBtn").addEventListener("click", () => { preview = !preview; $("previewBtn").classList.toggle("on", preview); IA.yaw = IA.pitch = 0; dirty = true; });
+  $("qualitySel").addEventListener("change", e => { quality = +e.target.value; resize(); });
+  $("undoBtn").addEventListener("click", undo); $("redoBtn").addEventListener("click", redo);
+  $("openBtn").addEventListener("click", () => $("fileJson").click());
+  $("saveBtn").addEventListener("click", saveJson);
+  $("shareBtn").addEventListener("click", openShare);
+  $("pngBtn").addEventListener("click", () => exportPng(false));
+  $("shareClose").addEventListener("click", () => $("shareModal").classList.remove("open"));
+  $("shareModal").addEventListener("click", e => { if(e.target === $("shareModal")) $("shareModal").classList.remove("open"); });
+  const copy = id => { const v = $(id).value; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).catch(() => { $(id).select(); document.execCommand("copy"); }); status("Скопійовано"); setTimeout(() => status(""), 1400); };
+  $("copyLink").addEventListener("click", () => copy("shareLink")); $("copyEmbed").addEventListener("click", () => copy("shareEmbed"));
+  window.addEventListener("keydown", e => {
+    const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== "range" && document.activeElement.type !== "checkbox";
+    const mod = e.metaKey || e.ctrlKey;
+    if(mod && e.key.toLowerCase() === "z" && !typing){ e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if(typing) return;
+    if(mod && e.key.toLowerCase() === "d"){ e.preventDefault(); if(curObj()){ dupLayer(P.sel); renderLayers(); syncAll(); scheduleHist(); scheduleSave(); } return; }
+    if((e.key === "Delete" || e.key === "Backspace") && curObj()){ e.preventDefault(); delLayer(P.sel); renderLayers(); syncAll(); dirty = true; scheduleHist(); scheduleSave(); return; }
+    if(e.key === " "){ e.preventDefault(); setPlaying(!playing); }
+    if(e.key === "v" || e.key === "m") setTool(e.key === "v" ? "orbit" : "move");
+  });
+}
+async function boot(){
+  const hash = new URLSearchParams(location.hash.slice(1));
+  isEmbed = hash.get("embed") === "1";
+  if(isEmbed) document.body.classList.add("embed");
+  buildPanes(); renderTemplates(); bindUi(); bindStage(); bindFiles();
+  let loaded = false;
+  if(hash.get("s")){
+    try{ const d = await unpackScene(hash.get("s")); Object.assign(BLOBS, d.b || {}); restore(JSON.stringify(d.s)); loaded = true; }
+    catch(e){ console.warn("bad scene link", e); }
+  }
+  if(!loaded && !isEmbed){
+    try{ const sv = JSON.parse(localStorage.getItem("volumeStudio") || "null"); if(sv && sv.s){ Object.assign(BLOBS, sv.b || {}); restore(sv.s); loaded = P.objects.length > 0 || true; } }catch(e){}
+  }
+  if(!loaded) applyTemplate(0);
+  if(isEmbed){ quality = 1; preview = true; }
+  resize(); fitCanvas(); syncAll(); renderLayers(); renderFx(); pushHist();
+  setPlaying(true);
+  if(!isEmbed) setTimeout(() => makeThumbs().catch(e => console.warn(e)), 400);
+}
+window.VOLUME = { get P(){ return P; }, setK, syncAll, applyTemplate, renderLayers, renderFx, newObj, newFx, addLayer, select, get T(){ return T; },
+  set quality(v){ quality = v; resize(); }, get dirty(){ return dirty; }, set dirty(v){ dirty = v; }, set envDirty(v){ envDirty = v; }, scheduleMasks, SDF, FX, MATS, renderImage, setPlaying, bench(n){ const px = new Uint8Array(4); renderMain(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); const t = performance.now(); for(let i = 0; i < n; i++){ curT = (curT + .033) % P.motion.loop; renderMain(); } gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return (performance.now() - t)/n; }, handleFile, exportPng, exportMp4, export3d, openShare, packScene, get curT(){ return curT; }, set curT(v){ curT = v; dirty = true; } };
+boot();
+
+})();
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>
