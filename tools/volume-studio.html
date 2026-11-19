@@ -139,8 +139,9 @@
           <button class="btn" id="addShape">★&nbsp;Форма 2D</button>
           <button class="btn" id="addPrim">◆&nbsp;3D-фігура</button>
           <button class="btn" id="addImage">⬒&nbsp;Лого / фото</button>
+          <button class="btn full" id="addSvgCode" style="grid-column:1/-1">&lt;/&gt;&nbsp;Вставити SVG-код</button>
         </div>
-        <div class="note">SVG, PNG з прозорістю або фото — перетягни файл на превʼю. Максимум 6 шарів.</div>
+        <div class="note">Свою фігуру — SVG, PNG з прозорістю або фото — перетягни на превʼю чи встав SVG-код з Figma (⌘V). Максимум 6 шарів.</div>
       </div>
       <div class="group">
         <h2>Шаблони</h2>
@@ -203,6 +204,18 @@
   </div>
 </div>
 
+<div class="modal" id="svgModal">
+  <div class="box">
+    <h3>Вставити SVG-код</h3>
+    <div class="note" style="margin:0 0 10px">У Figma: правий клік по фігурі → Copy/Paste as → Copy as SVG. Колір не важливий — береться силует, обʼєм і матеріал задаються тут.</div>
+    <textarea id="svgCode" style="height:180px" placeholder="&lt;svg viewBox=&quot;0 0 100 100&quot;&gt;…&lt;/svg&gt;"></textarea>
+    <div class="btns-grid">
+      <button class="btn" id="svgCancel">Скасувати</button>
+      <button class="btn primary" id="svgAdd">Додати</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="fileImg" accept="image/*,.svg" hidden>
 <input type="file" id="fileEnv" accept=".hdr,image/*" hidden>
 <input type="file" id="fileBg" accept="image/*" hidden>
@@ -259,7 +272,7 @@ uniform vec2 uFloorC;
 uniform vec3 uFloorCol;
 uniform int uBgMode;
 uniform vec3 uBg1, uBg2;
-uniform float uBgAng, uBgBlur;
+uniform float uBgAng, uBgBlur, uBgScale;
 uniform sampler2D uBgImg;
 uniform vec4 uBgFit;
 uniform float uExpo; uniform int uTone; uniform int uQ; uniform float uTransp; uniform float uRefrEnv; uniform float uSeed;
@@ -310,6 +323,7 @@ float sdBase(int i, vec3 p){
   vec4 g = uG2[i];
   float r = uG0[i].w;
   if(k == 0){
+    if(g.y > .5){ vec2 q = vec2(length(p.xz) + g.z, p.y); return sd2(i, q); } // revolve the silhouette (lathe)
     float h = uG0[i].z;
     float d2 = sd2(i, p.xy);
     float hz = h;
@@ -565,6 +579,13 @@ vec3 bgDisp(vec2 suv, vec3 rd, float lod){
   if(uBgMode == 2){ float asp = uRes.x/uRes.y; vec2 q = (suv - .5)*vec2(asp, 1.); float t = clamp(length(q)/(.5*length(vec2(asp, 1.))), 0., 1.); return mix(uBg1, uBg2, t); }
   if(uBgMode == 3) return tonemap(envL(rd, max(uBgBlur*(uEnvMax - 1.), lod))*uExpo);
   if(uBgMode == 4){ vec2 u = (suv - .5)*uBgFit.xy + .5; u.y = 1. - u.y; return textureLod(uBgImg, u, lod*.7).rgb; }
+  if(uBgMode == 6 || uBgMode == 7){
+    vec2 q = (suv - .5)*vec2(uRes.x/uRes.y, 1.)*uBgScale;
+    float w = 2.*uBgScale/uRes.y + lod*.06;
+    if(uBgMode == 6){ vec2 dir = vec2(cos(uBgAng), sin(uBgAng)); float tr = abs(fract(dot(q, dir)) - .5)*2.; return mix(uBg1, uBg2, smoothstep(.5 - w, .5 + w, tr)); }
+    vec2 tr = abs(fract(q*.5) - .5)*2.; float a = smoothstep(.5 - w, .5 + w, tr.x), c = smoothstep(.5 - w, .5 + w, tr.y);
+    return mix(uBg1, uBg2, a + c - 2.*a*c);
+  }
   return uBg1;
 }
 vec3 bgDir(vec3 dir, float lod){
@@ -1167,29 +1188,68 @@ async function fontReady(fam, w, text){
 const MB = { col:"#ffffff", col2:"#222222", metal:0, rough:.3, trans:0, ior:1.5, disp:0, tint:"#ffffff", dens:0, coat:0, irid:0, film:.5, emi:"#ffffff", emiS:0, pat:0, patS:1, toon:0, sss:0, img:true };
 const MATS = [
   ["chrome", "Хром", "Метал", { col:"#f4f6f8", metal:1, rough:.03 }],
+  ["mirror", "Дзеркало", "Метал", { col:"#ffffff", metal:1, rough:0 }],
   ["blackchrome", "Чорний хром", "Метал", { col:"#34353b", metal:1, rough:.07 }],
+  ["gunmetal", "Гунметал", "Метал", { col:"#4d5059", metal:1, rough:.24 }],
   ["gold", "Золото", "Метал", { col:"#ffc35a", metal:1, rough:.1 }],
   ["rosegold", "Рожеве золото", "Метал", { col:"#f3ad98", metal:1, rough:.16 }],
+  ["brass", "Латунь", "Метал", { col:"#dcb65c", metal:1, rough:.26 }],
   ["copper", "Мідь", "Метал", { col:"#ea8556", metal:1, rough:.2 }],
   ["alu", "Алюміній", "Метал", { col:"#d7d9de", metal:1, rough:.36 }],
+  ["satin", "Сатин", "Метал", { col:"#e6e8ec", metal:1, rough:.55 }],
+  ["titan", "Титан", "Метал", { col:"#9aa3ff", metal:1, rough:.16, irid:.8, film:.35 }],
+  ["foil", "Фольга", "Метал", { col:"#ff7ccf", metal:1, rough:.2, coat:.3 }],
   ["holo", "Голограма", "Метал", { col:"#ffffff", metal:1, rough:.12, irid:1, film:.7 }],
   ["rainbow", "Веселка", "Метал", { col:"#ffffff", metal:1, rough:.1, pat:9, patS:1.2 }],
   ["glass", "Скло", "Скло", { trans:1, ior:1.5, rough:0, disp:.25 }],
-  ["liquid", "Рідке скло", "Скло", { trans:1, ior:1.8, rough:0, disp:.8, coat:.4 }],
   ["frosted", "Матове скло", "Скло", { trans:1, ior:1.45, rough:.32, tint:"#e8f1ff", dens:.3 }],
   ["tinted", "Кольорове скло", "Скло", { trans:1, ior:1.5, rough:0, tint:"#ff4fa3", dens:1.4, disp:.2 }],
-  ["ice", "Лід", "Скло", { trans:.95, ior:1.31, rough:.1, tint:"#b9e2ff", dens:.7, col:"#dff2ff" }],
+  ["smoke", "Димчасте скло", "Скло", { trans:1, ior:1.5, rough:0, tint:"#5a5c6a", dens:.9, disp:.15 }],
+  ["crystal", "Кришталь", "Скло", { trans:1, ior:2, rough:0, disp:.7 }],
   ["diamond", "Діамант", "Скло", { trans:1, ior:2.42, rough:0, disp:1 }],
+  ["emerald", "Смарагд", "Скло", { trans:1, ior:1.58, rough:0, tint:"#1fd18a", dens:2.4, disp:.3 }],
+  ["ruby", "Рубін", "Скло", { trans:1, ior:1.77, rough:0, tint:"#ff2a55", dens:2.6, disp:.3 }],
+  ["sapphire", "Сапфір", "Скло", { trans:1, ior:1.77, rough:0, tint:"#2a5bff", dens:2.6, disp:.3 }],
+  ["amber", "Бурштин", "Скло", { trans:.95, ior:1.55, rough:.05, tint:"#ffa31a", dens:2, sss:.2, col:"#ffb24a" }],
+  ["ice", "Лід", "Скло", { trans:.95, ior:1.31, rough:.1, tint:"#b9e2ff", dens:.7, col:"#dff2ff" }],
   ["soap", "Мильна плівка", "Скло", { trans:1, ior:1.08, rough:0, irid:1, film:.45 }],
+  ["liquid", "Рідке скло", "Рідке скло", { trans:1, ior:1.8, rough:0, disp:.8, coat:.4 }],
+  ["lq_clear", "Прозоре", "Рідке скло", { trans:1, ior:1.35, rough:0, disp:.45, coat:.6 }],
+  ["lq_frost", "Матове", "Рідке скло", { trans:1, ior:1.38, rough:.14, disp:.3, tint:"#f4f7ff", dens:.2, coat:.6 }],
+  ["lq_prism", "Призма", "Рідке скло", { trans:1, ior:1.7, rough:0, disp:1.5, coat:.4 }],
+  ["lq_pink", "Рожеве", "Рідке скло", { trans:1, ior:1.45, rough:0, disp:.5, tint:"#ff7ad1", dens:.9, coat:.5 }],
+  ["lq_blue", "Блакитне", "Рідке скло", { trans:1, ior:1.45, rough:0, disp:.5, tint:"#6fb8ff", dens:.9, coat:.5 }],
+  ["lq_lime", "Лайм", "Рідке скло", { trans:1, ior:1.45, rough:0, disp:.5, tint:"#c8ff4a", dens:.9, coat:.5 }],
+  ["lq_gold", "Золотаве", "Рідке скло", { trans:1, ior:1.45, rough:0, disp:.5, tint:"#ffc966", dens:.9, coat:.5 }],
+  ["lq_irid", "Райдужне", "Рідке скло", { trans:1, ior:1.4, rough:0, disp:.6, irid:.6, film:.4, coat:.4 }],
+  ["lq_dark", "Графіт", "Рідке скло", { trans:1, ior:1.5, rough:0, disp:.4, tint:"#6a7080", dens:.7, coat:.6 }],
+  ["lq_thick", "Густе", "Рідке скло", { trans:1, ior:2.1, rough:0, disp:.9, coat:.5 }],
+  ["lq_milk", "Молочне", "Рідке скло", { trans:.85, ior:1.4, rough:.08, disp:.3, tint:"#ffffff", dens:.5, sss:.5, col:"#f4f4f8", coat:.6 }],
   ["plastic", "Пластик", "Пластик", { col:"#ff4a26", rough:.24, coat:.3 }],
-  ["candy", "Цукерка", "Пластик", { col:"#ff58b6", rough:.1, coat:1, sss:.35 }],
+  ["matte", "Матовий", "Пластик", { col:"#9fb4ff", rough:.72 }],
+  ["glossblack", "Глянцевий чорний", "Пластик", { col:"#0d0d10", rough:.05, coat:1 }],
+  ["ceramic", "Кераміка", "Пластик", { col:"#f4f1ec", rough:.35, coat:.9 }],
+  ["softtouch", "Софт-тач", "Пластик", { col:"#c7a6ff", rough:.55, sss:.25 }],
   ["balloon", "Надувний", "Пластик", { col:"#3f6dff", rough:.16, coat:.85 }],
+  ["latex", "Латекс", "Пластик", { col:"#ff3355", rough:.12, coat:.5, sss:.15 }],
   ["clay", "Глина", "Пластик", { col:"#e9d6c2", rough:.85 }],
   ["rubber", "Гума", "Пластик", { col:"#2a2a2f", rough:.62 }],
   ["pearl", "Перламутр", "Пластик", { col:"#f3ebe3", rough:.22, irid:.55, film:.3, coat:.7 }],
-  ["jelly", "Желе", "Пластик", { col:"#ff8a2b", rough:.08, trans:.55, tint:"#ff7a1a", dens:1.6, ior:1.35, sss:.6 }],
+  ["candy", "Цукерка", "Солодощі", { col:"#ff58b6", rough:.1, coat:1, sss:.35 }],
+  ["jelly", "Желе", "Солодощі", { col:"#ff8a2b", rough:.08, trans:.55, tint:"#ff7a1a", dens:1.6, ior:1.35, sss:.6 }],
+  ["gummy", "Мармеладка", "Солодощі", { col:"#4dff7a", rough:.12, trans:.6, tint:"#4dff7a", dens:2, ior:1.4, sss:.6 }],
+  ["lollipop", "Льодяник", "Солодощі", { col:"#ff3b6b", rough:.02, trans:.85, tint:"#ff3b6b", dens:1.2, ior:1.5, coat:.5 }],
+  ["caramel", "Карамель", "Солодощі", { col:"#d98a2b", rough:.1, trans:.3, tint:"#e08a2a", dens:2, ior:1.45, sss:.5 }],
+  ["chocolate", "Шоколад", "Солодощі", { col:"#5a3420", rough:.3, coat:.5 }],
+  ["marshmallow", "Маршмелоу", "Солодощі", { col:"#fff0f5", rough:.8, sss:.7 }],
   ["neon", "Неон", "Особливі", { col:"#141414", emi:"#ff2bd6", emiS:3.2, rough:.4 }],
+  ["neonblue", "Неон блакитний", "Особливі", { col:"#141414", emi:"#2bd8ff", emiS:3.2, rough:.4 }],
+  ["lava", "Лава", "Особливі", { col:"#1a0a05", col2:"#ff5a1a", pat:6, patS:2.2, emi:"#ff4a10", emiS:.6, rough:.7 }],
   ["toon", "Тун", "Особливі", { col:"#ffd23f", toon:3, rough:.5 }],
+  ["toonpink", "Тун рожевий", "Особливі", { col:"#ff7ad9", toon:3, rough:.5 }],
+  ["gradient", "Градієнт", "Особливі", { col:"#ff5ab8", col2:"#5a7bff", pat:1, patS:1, rough:.2, coat:.7 }],
+  ["checker", "Шахи", "Особливі", { col:"#ffffff", col2:"#111114", pat:3, patS:2, rough:.3, coat:.5 }],
+  ["dots", "Горох", "Особливі", { col:"#ffd23f", col2:"#ff3d2e", pat:4, patS:3, rough:.3 }],
   ["carbon", "Карбон", "Особливі", { col:"#17171b", col2:"#3a3b44", pat:8, patS:6, metal:.25, rough:.3, coat:1 }],
   ["marble", "Мармур", "Особливі", { col:"#f2f0ea", col2:"#7d7f88", pat:5, patS:1.6, rough:.18, coat:.5 }],
   ["wood", "Дерево", "Особливі", { col:"#a8693b", col2:"#5a341a", pat:7, patS:1.6, rough:.55 }],
@@ -1210,7 +1270,7 @@ function newObj(kind, ex){
     text:"KLIK", font:"Archivo Black", weight:400, tracking:0, leading:1, align:"center",
     shape:"star", points:5, inner:.45,
     prim:"sphere", pa:[.8, .8, .8],
-    src:null, srcName:"", maskMode:0, thr:.5,
+    src:null, srcName:"", maskMode:0, thr:.5, revolve:0, revOff:0,
     depth:.16, bevel:.035, bevelStyle:0, inflate:0, infSoft:.8,
     pos:[0, 0, 0], rot:[0, 0, 0], scale:1.6,
     def:{ twist:0, bend:0, taper:0, melt:0, wave:0, waveF:3, noise:0, noiseF:2.5 },
@@ -1250,7 +1310,7 @@ function objLabel(o){
 /* ---------- scene defaults ---------- */
 const DEF_SCENE = {
   aspect:"1:1",
-  bg:{ mode:1, c1:"#16161c", c2:"#050507", ang:90, blur:.45 },
+  bg:{ mode:1, c1:"#16161c", c2:"#050507", ang:90, blur:.45, scale:10 },
   env:{ preset:0, int:1, rot:0, sat:1, tint:"#ffffff", c1:"#ffd1e6", c2:"#3a3dff" },
   key:{ az:35, el:42, int:1.1, col:"#ffffff", soft:10 },
   floor:{ mode:1, y:-1.05, col:"#16161c", refl:.35, shadow:.6, fade:7 },
@@ -1651,7 +1711,7 @@ function localRadius(o, info){
     if(o.prim === "blob") r += .25;
   } else {
     const hx = info ? info.hx : .84, hy = info ? info.hy : .84;
-    r = Math.hypot(hx, hy, o.depth*1.05);
+    r = o.revolve ? Math.hypot(hx + Math.abs(o.revOff || 0), hy) : Math.hypot(hx, hy, o.depth*1.05);
   }
   const d = o.def; r *= 1 + Math.abs(d.taper)*.6; r += Math.abs(d.wave) + Math.abs(d.noise) + Math.abs(d.melt)*1.4;
   if(Math.abs(d.bend) > 0) r *= 1 + Math.abs(d.bend)*.25;
@@ -1676,7 +1736,10 @@ function localBox(o, info){
       case "gem": hx = hy = hz = pa[0] + o.bevel; break;
       default: hx = hy = hz = pa[0] + (o.prim === "blob" ? .25 : 0);
     }
-  } else { hx = info ? info.hx : .84; hy = info ? info.hy : .84; hz = o.depth*1.02; hx += .01; hy += .01; }
+  } else {
+    hx = info ? info.hx : .84; hy = info ? info.hy : .84; hz = o.depth*1.02; hx += .01; hy += .01;
+    if(o.revolve){ hx = hz = hx + Math.abs(o.revOff || 0); }
+  }
   const d = o.def, m = o.motion;
   const xz = () => { const r = Math.hypot(hx, hz); hx = hz = r; }, xy = () => { const r = Math.hypot(hx, hy); hx = hy = r; }, yz = () => { const r = Math.hypot(hy, hz); hy = hz = r; };
   if(d.taper) hx *= 1 + Math.abs(d.taper)*hy;
@@ -1719,7 +1782,7 @@ function packObjects(objs, store, t, loop){
     UB.g1.set([o.inflate, o.bevelStyle, 1, s], i*4);
     const pa = o.pa || [.8, .8, .8];
     const infR = Math.max(o.infSoft, .05);
-    UB.g2.set(o.kind === "prim" ? [pa[0], pa[1], pa[2], 0] : [infR, 0, 0, 0], i*4);
+    UB.g2.set(o.kind === "prim" ? [pa[0], pa[1], pa[2], 0] : [infR, o.revolve ? 1 : 0, o.revOff || 0, 0], i*4);
     const d = o.def;
     UB.d0.set([d.twist, d.bend, d.taper, d.melt], i*4);
     const nAmt = (o.kind === "prim" && o.prim === "blob" && !d.noise) ? .2 : d.noise;
@@ -1745,7 +1808,7 @@ function packObjects(objs, store, t, loop){
     UB.m[3].set([m.coat, m.irid, m.film, 0], i*4);
     UB.m[4].set([...emi, m.emiS], i*4);
     UB.m[5].set([m.pat, m.patS, m.toon, m.sss], i*4);
-    UB.m[6].set([...col2, (m.img && info && info.img) ? 1 : 0], i*4);
+    UB.m[6].set([...col2, (m.img && info && info.img && !o.revolve) ? 1 : 0], i*4);
     // marching step safety
     const lip = 1 + Math.abs(d.twist)*rad/s + Math.abs(d.bend)*1.2 + Math.abs(d.wave*d.waveF)*.8 + Math.abs(nAmt*d.noiseF)*1.2 + Math.abs(d.melt)*2.2 + Math.abs(d.taper)*.8 + (o.kind === "prim" ? 0 : o.inflate*o.depth/Math.max(maxIn*infR, .02)*.6) + (mo.type === 7 ? mo.amt : 0);
     stepK = Math.min(stepK, .9/lip);
@@ -1785,7 +1848,7 @@ function sceneUniforms(prog, st, T, store, E, opts){
   const bgm = sc.bg.mode === 4 && !(opts.bgTex || bgTex) ? 0 : sc.bg.mode;
   gl.uniform1i(U.uBgMode, bgm === 5 ? 0 : bgm);
   gl.uniform3fv(U.uBg1, hex2rgb(sc.bg.c1)); gl.uniform3fv(U.uBg2, hex2rgb(sc.bg.c2));
-  gl.uniform1f(U.uBgAng, sc.bg.ang*DEG); gl.uniform1f(U.uBgBlur, sc.bg.blur);
+  gl.uniform1f(U.uBgAng, sc.bg.ang*DEG); gl.uniform1f(U.uBgBlur, sc.bg.blur); gl.uniform1f(U.uBgScale, sc.bg.scale || 10);
   setTex(3, gl.TEXTURE_2D, bgTex || blackTex, U, "uBgImg");
   const ca = T.w/T.h; const fitx = ca > bgAsp ? 1 : ca/bgAsp, fity = ca > bgAsp ? bgAsp/ca : 1;
   gl.uniform4f(U.uBgFit, fitx, fity, 0, 0);
@@ -1859,6 +1922,11 @@ const TPLS = [
     objects:[["text", { text:"KLIK", font:"Archivo Black", depth:.2, bevel:.05, mat:"chrome", motion:{ type:4, amt:.45 } }]], fx:[["bloom", { thr:.7, int:.35 }]] }],
   ["Рідке скло", { scene:{ bg:{ mode:1, c1:"#ff5ea8", c2:"#2b2bff", ang:120 }, env:{ preset:4 }, floor:{ mode:0 }, refrEnv:.2 }, motion:{ loop:6 },
     objects:[["text", { text:"flow", font:"Unbounded", weight:900, depth:.24, bevel:.05, inflate:.85, infSoft:.85, mat:"liquid", motion:{ type:5, amt:.12 } }]] }],
+  ["Скло на смугах", { scene:{ bg:{ mode:6, c1:"#f3efe6", c2:"#3d5afe", ang:62, scale:6 }, env:{ preset:0 }, floor:{ mode:0 }, refrEnv:.1 }, motion:{ loop:6 },
+    objects:[["text", { text:"glass", font:"Unbounded", weight:900, scale:1.6, depth:.3, bevel:.05, inflate:.9, infSoft:.85, mat:{ preset:"lq_clear", disp:.25 }, motion:{ type:4, amt:.3 } }]] }],
+  ["Ваза з SVG", { scene:{ bg:{ mode:2, c1:"#efe9e1", c2:"#cfc5b8" }, env:{ preset:5 }, floor:{ mode:1, shadow:.55, y:-1.3 }, cam:{ pitch:16, dist:6.4 } }, motion:{ loop:8 },
+    objects:[["image", { src:"tpl-vase", srcName:"vase.svg", revolve:1, scale:1.5, pos:[-.75, 0, 0], mat:"ceramic", motion:{ type:1 } }],
+             ["image", { src:"tpl-vase", srcName:"vase.svg", revolve:1, revOff:.05, scale:1.05, pos:[.95, -.37, .3], mat:"lq_blue" }]] }],
   ["Надувні літери", { scene:{ bg:{ mode:2, c1:"#ffe6f3", c2:"#ffb3d9" }, env:{ preset:4, int:1.1 }, floor:{ mode:1, shadow:.35, y:-1 }, key:{ el:60 } }, motion:{ loop:4 },
     objects:[["text", { text:"PUFF", font:"Rubik", weight:900, depth:.36, bevel:.05, inflate:1, infSoft:.75, mat:{ preset:"balloon", col:"#ff5fc8" }, motion:{ type:6, amt:.22 } }]] }],
   ["Голо-блоб", { scene:{ bg:{ mode:2, c1:"#14101f", c2:"#030305" }, env:{ preset:3, int:1.2 }, floor:{ mode:0 } }, motion:{ loop:8 },
@@ -1891,6 +1959,7 @@ const TPLS = [
   ["Дизер", { scene:{ bg:{ mode:2, c1:"#2b2b33", c2:"#050506" }, env:{ preset:0, int:1.3 }, floor:{ mode:1, shadow:.7 } }, motion:{ loop:6 },
     objects:[["text", { text:"KLIK", font:"Unbounded", weight:900, depth:.22, bevel:.07, mat:{ preset:"plastic", col:"#d8d8d8" }, motion:{ type:4, amt:.5 } }]], fx:[["dither", { size:2 }]] }],
 ];
+BLOBS["tpl-vase"] = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="684" height="1024" viewBox="0 0 200 300"><path fill="#000" d="M76 8h48v14c0 12-12 18-12 40 0 26 64 46 64 126 0 64-34 104-76 104s-76-40-76-104c0-80 64-100 64-126 0-22-12-28-12-40z"/></svg>');
 function buildTemplate(def){
   return {
     scene:deepAssign(clone(DEF_SCENE), def.scene || {}),
@@ -1961,7 +2030,7 @@ function restore(s, keepHist){
 }
 function undo(){ if(HIST.idx > 0){ HIST.idx--; restore(HIST.stack[HIST.idx]); scheduleSave(); } }
 function redo(){ if(HIST.idx < HIST.stack.length - 1){ HIST.idx++; restore(HIST.stack[HIST.idx]); scheduleSave(); } }
-function usedBlobs(){ const b = {}; P.objects.forEach(o => { if(o.src && BLOBS[o.src]) b[o.src] = BLOBS[o.src]; }); return b; }
+function usedBlobs(){ const b = {}; P.objects.forEach(o => { if(o.src && BLOBS[o.src] && !o.src.startsWith("tpl-")) b[o.src] = BLOBS[o.src]; }); return b; }
 function scheduleSave(){ if(isEmbed) return; clearTimeout(saveTimer); saveTimer = setTimeout(() => { try{ localStorage.setItem("volumeStudio", JSON.stringify({ s:snap(), b:usedBlobs() })); }catch(e){ try{ localStorage.setItem("volumeStudio", JSON.stringify({ s:snap(), b:{} })); }catch(_){} } }, 800); }
 
 /* ================= schema UI ================= */
@@ -2040,6 +2109,7 @@ function onChange(k){
   dirty = true;
   const o = curObj();
   if(/^o\.(text|font|weight|tracking|leading|align|shape|points|inner|maskMode|thr|src)$/.test(k)) scheduleMasks(k === "o.text" ? 140 : 60);
+  if(k === "o.revolve" && o && o.revolve && o.rot[0] === 0 && o.rot[1] === 0 && o.rot[2] === 0 && P.scene.cam.pitch < 12){ P.scene.cam.pitch = 16; }
   if(/^s\.(env|key\.az|key\.el)/.test(k)) envDirty = true;
   if(k === "s.aspect"){ resize(); }
   if(k === "s.bg.mode" && P.scene.bg.mode === 4 && !bgTex) $("fileBg").click();
@@ -2061,8 +2131,10 @@ function buildPanes(){
   const ta = el("textarea", "txt"); ta.rows = 2; ta.addEventListener("input", () => setK("o.text", ta.value));
   reg({ el:ta, sync(){ const o = curObj(); if(o && document.activeElement !== ta) ta.value = o.text; } });
   const shapeGrid = el("div", "presets c4"); SHAPES.forEach(([k, l]) => { const b = el("div", "preset sm", l); b.dataset.v = k; b.addEventListener("click", () => { setK("o.shape", k); syncAll(); }); shapeGrid.appendChild(b); });
+  { const b = el("div", "preset sm", "Своя SVG…"); b.style.borderStyle = "dashed"; b.addEventListener("click", () => openSvgPicker("shape")); shapeGrid.appendChild(b); }
   reg({ el:shapeGrid, sync(){ const v = getK("o.shape"); shapeGrid.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", b.dataset.v === v)); } });
   const primGrid = el("div", "presets c3"); PRIMS.forEach(([k, l]) => { const b = el("div", "preset sm", l); b.dataset.v = k; b.addEventListener("click", () => { const o = curObj(); o.prim = k; o.pa = PRIM_DEF[k].slice(); if(k === "blob" && !o.def.noise) o.def.noise = 0; onChange("o.prim"); syncAll(); }); primGrid.appendChild(b); });
+  { const b = el("div", "preset sm", "З SVG…"); b.style.borderStyle = "dashed"; b.title = "Свій силует, обертання навколо осі"; b.addEventListener("click", () => openSvgPicker("revolve")); primGrid.appendChild(b); }
   reg({ el:primGrid, sync(){ const v = getK("o.prim"); primGrid.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", b.dataset.v === v)); } });
   const PL = { sphere:["Радіус"], blob:["Радіус"], gem:["Розмір"], box:["Ширина", "Висота", "Глибина"], torus:["Радіус", "Товщина"], ring:["Радіус", "Товщина"], capsule:["Довжина", "Радіус"], cyl:["Радіус", "Висота"], cone:["Низ", "Верх", "Висота"] };
   const paR = i => { const w = cRange("o.pa." + i, "", .02, 2, .01, { show:() => { const o = curObj(); return !!o && o.kind === "prim" && PL[o.prim].length > i; } }); const c = CTL[CTL.length - 1]; const s0 = c.sync; c.sync = () => { s0(); const o = curObj(); if(o && o.kind === "prim") w.querySelector(".lbl").textContent = PL[o.prim][i] || ""; }; return w; };
@@ -2077,17 +2149,21 @@ function buildPanes(){
       cRange("o.points", "Променів / кутів", 3, 14, 1, { show:() => ["star", "poly", "flower"].includes(getK("o.shape")) }),
       cRange("o.inner", "Внутрішній радіус", .1, .95, .01, { show:() => ["star", "ring", "cross", "arrow", "flower", "squircle", "moon"].includes(getK("o.shape")) }),
     ], isK("shape")),
-    group("3D-фігура", [primGrid, paR(0), paR(1), paR(2), cRange("o.bevel", "Заокруглення", 0, .5, .005, { show:prim("box", "cyl", "gem") })], isK("prim")),
+    group("3D-фігура", [primGrid, paR(0), paR(1), paR(2), cRange("o.bevel", "Заокруглення", 0, .5, .005, { show:prim("box", "cyl", "gem") }),
+      el("div", "note", "«З SVG…» — завантаж свій силует: він стане тілом обертання (ваза, пляшка, келих) або видавленою формою.")], isK("prim")),
     group("Зображення", [
-      cBtns([["Замінити файл", () => { replaceTarget = curObj(); $("fileImg").click(); }, "full"]], ""),
+      cBtns([["Замінити файл", () => openSvgPicker("replace")], ["Вставити SVG-код", () => openSvgModal("replace")]], ""),
       cSeg("o.maskMode", "Форма з", [["Прозорості", 0], ["Темного", 1], ["Світлого", 2]], 3),
       cRange("o.thr", "Поріг", .02, .98, .01, { show:() => getK("o.maskMode") > 0 }),
-      cSwitch("o.mat.img", "Кольори з картинки на фасаді"),
+      cSwitch("o.mat.img", "Кольори з картинки на фасаді", { show:() => !getK("o.revolve") }),
     ], isK("image")),
     group("Обʼєм", [
-      cWrap("two", [cRange("o.depth", "Глибина", .01, .9, .005, { def:.16 }), cRange("o.bevel", "Радіус фаски", 0, .3, .002, { def:.035 })]),
-      cSeg("o.bevelStyle", "Профіль фаски", [["Кругла", 0], ["Скіс", 1]], 2),
-      cWrap("two", [cRange("o.inflate", "Надування", 0, 1, .01, { def:0 }), cRange("o.infSoft", "Ширина надування", .1, 1.5, .01, { def:.8, show:() => getK("o.inflate") > 0 })]),
+      cSeg("o.revolve", "Як надати обʼєм", [["Видавлення", 0], ["Обертання", 1]], 2),
+      cWrap("two", [cRange("o.depth", "Глибина", .01, .9, .005, { def:.16 }), cRange("o.bevel", "Радіус фаски", 0, .3, .002, { def:.035 })], { show:() => !getK("o.revolve") }),
+      cSeg("o.bevelStyle", "Профіль фаски", [["Кругла", 0], ["Скіс", 1]], 2, { show:() => !getK("o.revolve") }),
+      cWrap("two", [cRange("o.inflate", "Надування", 0, 1, .01, { def:0 }), cRange("o.infSoft", "Ширина надування", .1, 1.5, .01, { def:.8, show:() => getK("o.inflate") > 0 })], { show:() => !getK("o.revolve") }),
+      cRange("o.revOff", "Зсув осі", -.8, .8, .005, { def:0, show:() => !!getK("o.revolve") }),
+      cWrap("note", [document.createTextNode("Обертається права половина силуету навколо вертикальної осі — малюй профіль вази, пляшки, келиха.")], { show:() => !!getK("o.revolve") }),
     ], isK("text", "shape", "image")),
     group("Трансформація", [
       cWrap("three", [cRange("o.pos.0", "X", -4, 4, .01, { def:0 }), cRange("o.pos.1", "Y", -4, 4, .01, { def:0 }), cRange("o.pos.2", "Z", -4, 4, .01, { def:0 })]),
@@ -2164,9 +2240,11 @@ function buildPanes(){
   pane("scene", [
     group("Полотно", [cSeg("s.aspect", null, Object.keys(ASPECTS).map(a => [a, a]), 6)]),
     group("Фон", [
-      cSeg("s.bg.mode", null, [["Колір", 0], ["Градієнт", 1], ["Радіал", 2], ["Оточення", 3], ["Фото", 4], ["Прозорий", 5]], 3),
-      cColors([["s.bg.c1", "Колір 1"], ["s.bg.c2", "Колір 2"]], { show:() => [0, 1, 2].includes(P.scene.bg.mode) }),
-      cRange("s.bg.ang", "Кут градієнта", 0, 360, 1, { show:() => P.scene.bg.mode === 1, fmt:v => v + "°" }),
+      cSeg("s.bg.mode", null, [["Колір", 0], ["Градієнт", 1], ["Радіал", 2], ["Смуги", 6], ["Шахи", 7], ["Оточення", 3], ["Фото", 4], ["Прозорий", 5]], 4),
+      cColors([["s.bg.c1", "Колір 1"], ["s.bg.c2", "Колір 2"]], { show:() => [0, 1, 2, 6, 7].includes(P.scene.bg.mode) }),
+      cRange("s.bg.ang", "Кут", 0, 360, 1, { show:() => [1, 6].includes(P.scene.bg.mode), fmt:v => v + "°" }),
+      cRange("s.bg.scale", "Кількість смуг / клітинок", 2, 40, .5, { show:() => [6, 7].includes(P.scene.bg.mode) }),
+      el("div", "note", "Смуги й шахи за склом найкраще показують заломлення."),
       cRange("s.bg.blur", "Розмиття оточення", 0, 1, .01, { show:() => P.scene.bg.mode === 3 }),
       cBtns([["Вибрати фото", () => $("fileBg").click(), "full"]], "", { show:() => P.scene.bg.mode === 4 }),
     ]),
@@ -2292,7 +2370,15 @@ function renderFx(){
 function cSwitchRaw(l, v, on){ const w = el("div", "switch-row"); w.innerHTML = `<span class="lbl">${l}</span><label class="switch"><input type="checkbox" ${v ? "checked" : ""}><span class="track"></span></label>`; w.querySelector("input").addEventListener("change", e => on(e.target.checked)); return w; }
 
 /* ---------- layers ---------- */
-let replaceTarget = null;
+let replaceTarget = null, fileMode = "add";
+function openSvgPicker(mode){ fileMode = mode; replaceTarget = mode === "add" ? null : curObj(); $("fileImg").click(); }
+let svgModalMode = "add";
+function openSvgModal(mode){ svgModalMode = mode; $("svgCode").value = ""; $("svgModal").classList.add("open"); setTimeout(() => $("svgCode").focus(), 30); }
+function addSvgCode(txt, mode){
+  if(!/<svg[\s>]/i.test(txt || "")){ alert("Це не схоже на SVG-код."); return; }
+  fileMode = mode || "add"; replaceTarget = fileMode === "add" ? null : curObj();
+  handleFile(new File([txt.trim()], "svg-code.svg", { type:"image/svg+xml" }));
+}
 function renderLayers(){
   const box = $("layers"); box.innerHTML = "";
   if(!P.objects.length) box.appendChild(el("div", "note", "Сцена порожня."));
@@ -2356,8 +2442,9 @@ function applyTemplate(i){
 }
 async function makeThumbs(){
   const matScene = deepAssign(clone(DEF_SCENE), { bg:{ mode:2, c1:"#26262e", c2:"#101014" }, floor:{ mode:0 }, cam:{ dist:3.2, pitch:8 }, key:{ az:30, el:40 } });
+  const glassScene = deepAssign(clone(matScene), { bg:{ mode:6, c1:"#f2f2f5", c2:"#15151b", ang:35, scale:7 }, refrEnv:.15 });
   for(const [k] of MATS){
-    const st = { scene:matScene, motion:DEF_MOTION, fx:[], t:0, frame:0, objects:[newObj("prim", { prim:"sphere", pa:[.95, 0, 0], scale:1, mat:k })] };
+    const st = { scene:(MAT[k][3].trans || 0) > .3 ? glassScene : matScene, motion:DEF_MOTION, fx:[], t:0, frame:0, objects:[newObj("prim", { prim:"sphere", pa:[.95, 0, 0], scale:1, mat:k })] };
     const url = await thumbRender(st, 96, 96, 1);
     const b = document.querySelector(`.mat[data-k="${k}"] .ball`); if(b) b.innerHTML = `<img src="${url}" alt="">`;
     await new Promise(r => setTimeout(r, 0));
@@ -2464,8 +2551,19 @@ function bindStage(){
   // drop / paste
   st.addEventListener("dragover", e => { e.preventDefault(); st.classList.add("dragging"); });
   st.addEventListener("dragleave", () => st.classList.remove("dragging"));
-  st.addEventListener("drop", e => { e.preventDefault(); st.classList.remove("dragging"); const f = e.dataTransfer.files[0]; if(f) handleFile(f); });
-  window.addEventListener("paste", e => { const f = [...(e.clipboardData || {}).files || []][0]; if(f && f.type.startsWith("image/")) handleFile(f); });
+  st.addEventListener("drop", e => {
+    e.preventDefault(); st.classList.remove("dragging"); fileMode = "add"; replaceTarget = null;
+    const f = e.dataTransfer.files[0]; if(f){ handleFile(f); return; }
+    const t = e.dataTransfer.getData("text/plain"); if(/<svg[\s>]/i.test(t)) addSvgCode(t, "add");
+  });
+  window.addEventListener("paste", e => {
+    const ae = document.activeElement; if(ae && /INPUT|TEXTAREA/.test(ae.tagName)) return;
+    const cd = e.clipboardData; if(!cd) return;
+    const f = [...(cd.files || [])][0];
+    if(f && (f.type.startsWith("image/") || /\.svg$/i.test(f.name))){ e.preventDefault(); fileMode = "add"; replaceTarget = null; handleFile(f); return; }
+    const t = cd.getData("image/svg+xml") || cd.getData("text/plain") || "";
+    if(/<svg[\s>]/i.test(t)){ e.preventDefault(); addSvgCode(t, "add"); }
+  });
   window.addEventListener("resize", fitCanvas);
   new ResizeObserver(fitCanvas).observe(st);
 }
@@ -2474,8 +2572,10 @@ function bindStage(){
 const readAs = (f, how) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r[how](f); });
 async function imageToBlob(f){
   if(f.type === "image/svg+xml" || /\.svg$/i.test(f.name)){
-    let txt = await readAs(f, "readAsText");
+    let txt = (await readAs(f, "readAsText")).trim().replace(/^[\s\S]*?(<svg[\s>])/i, "$1");
+    if(!/<svg[^>]*\sxmlns=/i.test(txt)) txt = txt.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
     const doc = new DOMParser().parseFromString(txt, "image/svg+xml"); const svg = doc.documentElement;
+    if(doc.querySelector("parsererror") || svg.nodeName.toLowerCase() !== "svg") throw new Error("SVG");
     const vb = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
     let w = parseFloat(svg.getAttribute("width")), h = parseFloat(svg.getAttribute("height"));
     if(vb.length === 4 && vb[2] > 0){ const k = 1024/Math.max(vb[2], vb[3]); w = vb[2]*k; h = vb[3]*k; }
@@ -2505,8 +2605,17 @@ async function handleFile(f){
       status("Зображення…", true);
       const url = await imageToBlob(f); const id = "b" + Date.now().toString(36); BLOBS[id] = url;
       const alpha = await hasAlpha(url);
-      if(replaceTarget && P.objects.includes(replaceTarget)){ replaceTarget.src = id; replaceTarget.srcName = f.name; replaceTarget.maskMode = alpha ? 0 : replaceTarget.maskMode; replaceTarget = null; scheduleMasks(0); renderLayers(); syncAll(); }
-      else addLayer(newObj("image", { src:id, srcName:f.name, maskMode:0, depth:alpha ? .12 : .05, bevel:alpha ? .025 : .012 }));
+      const mode = fileMode; fileMode = "add";
+      const tg = replaceTarget && P.objects.includes(replaceTarget) ? replaceTarget : null; replaceTarget = null;
+      const svgLike = /svg/i.test(f.type) || /\.svg$/i.test(f.name);
+      if(tg && mode !== "add"){
+        const wasPrim = tg.kind !== "image" && tg.kind !== "text" && tg.kind !== "shape";
+        tg.kind = "image"; tg.src = id; tg.srcName = f.name; tg.maskMode = alpha ? 0 : tg.maskMode;
+        if(mode === "shape" || mode === "revolve"){ tg.mat.img = false; tg.revolve = mode === "revolve" ? 1 : 0; tg.revOff = 0; }
+        if(wasPrim){ tg.scale = mode === "revolve" ? 1.5 : 1.4; tg.depth = .16; tg.bevel = .035; }
+        scheduleMasks(0); renderLayers(); syncAll(); scheduleHist(); scheduleSave();
+      }
+      else addLayer(newObj("image", { src:id, srcName:f.name, maskMode:0, depth:alpha ? (svgLike ? .16 : .12) : .05, bevel:alpha ? (svgLike ? .035 : .025) : .012 }));
       status("");
     }
   }catch(e){ alert("Не вдалося відкрити файл: " + (e.message || e)); status(""); }
@@ -2539,7 +2648,8 @@ async function loadBgFile(f){
   bgAsp = im.naturalWidth/im.naturalHeight; P.scene.bg.mode = 4; dirty = true; syncAll();
 }
 function bindFiles(){
-  $("fileImg").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if(f) handleFile(f); else replaceTarget = null; });
+  $("fileImg").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if(f) handleFile(f); else { replaceTarget = null; fileMode = "add"; } });
+  $("fileImg").addEventListener("cancel", () => { replaceTarget = null; fileMode = "add"; });
   $("fileEnv").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if(f) loadEnvFile(f).catch(er => alert("Не вдалося відкрити файл: " + er.message)); });
   $("fileBg").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if(f) loadBgFile(f); });
   $("fileJson").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if(f) loadProject(await readAs(f, "readAsText")); });
@@ -2804,7 +2914,11 @@ function bindUi(){
   $("addText").addEventListener("click", () => addLayer(newObj("text", { text:"TYPE", mat:curObj() ? curObj().mat.preset : "chrome" })));
   $("addShape").addEventListener("click", () => addLayer(newObj("shape")));
   $("addPrim").addEventListener("click", () => addLayer(newObj("prim", { prim:"torus", pa:PRIM_DEF.torus.slice() })));
-  $("addImage").addEventListener("click", () => { replaceTarget = null; $("fileImg").click(); });
+  $("addImage").addEventListener("click", () => openSvgPicker("add"));
+  $("addSvgCode").addEventListener("click", () => openSvgModal("add"));
+  $("svgAdd").addEventListener("click", () => { const t = $("svgCode").value; $("svgModal").classList.remove("open"); addSvgCode(t, svgModalMode); });
+  $("svgCancel").addEventListener("click", () => $("svgModal").classList.remove("open"));
+  $("svgModal").addEventListener("click", e => { if(e.target === $("svgModal")) $("svgModal").classList.remove("open"); });
   $("playBtn").addEventListener("click", () => setPlaying(!playing));
   $("toolOrbit").addEventListener("click", () => setTool("orbit"));
   $("toolMove").addEventListener("click", () => setTool("move"));
