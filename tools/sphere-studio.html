@@ -80,27 +80,27 @@ aside.hidden{transform:translateX(100%)}
 .sec-head.closed .chev{transform:rotate(-90deg)}
 .sec-body{padding:.2rem .95rem .75rem}
 
-.row{display:flex;align-items:center;gap:.6rem;padding:.28rem 0;min-height:30px}
-.row label{flex:1;font-size:.74rem;color:hsl(var(--fg)/.85)}
-.row input[type=range]{flex:1.3;-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;
-  background:hsl(var(--border));outline:none}
-.row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
-  background:hsl(var(--fg));cursor:pointer;box-shadow:0 0 0 3px hsl(var(--card))}
-.row .val{width:42px;text-align:right;font-family:var(--mono);font-size:.68rem;color:hsl(var(--muted))}
-.row input[type=color]{width:34px;height:24px;padding:0;border:1px solid hsl(var(--border));
-  border-radius:6px;background:transparent;cursor:pointer}
-.row input[type=text]{flex:1.3;background:hsl(var(--panel));border:1px solid hsl(var(--border));
-  border-radius:6px;color:hsl(var(--fg));font-size:.74rem;padding:.3rem .5rem;outline:none}
-.row select{flex:1.3;background:hsl(var(--panel));border:1px solid hsl(var(--border));
-  border-radius:6px;color:hsl(var(--fg));font-size:.74rem;padding:.32rem .4rem;outline:none}
+.row{display:flex;align-items:center;gap:.6rem;min-height:38px;margin-top:6px;padding:0 10px 0 14px;
+  border-radius:10px;background:rgba(255,255,255,.055);transition:background .12s}
+.row:hover{background:rgba(255,255,255,.085)}
+.row label{flex:1;min-width:0;font-size:13px;font-weight:500;color:rgba(255,255,255,.94)}
+.row .val{font-family:var(--mono);font-size:12px;color:hsl(var(--fg))}
+.row input[type=color]{flex:none;width:30px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;cursor:pointer}
+.row input[type=text]{flex:1.3;min-width:0;background:transparent;border:0;border-radius:6px;color:hsl(var(--fg));
+  font-size:13px;font-weight:500;text-align:right;padding:.3rem .2rem;outline:none}
+.row input[type=text]::placeholder{color:rgba(255,255,255,.4)}
+.row select{flex:1.3;min-width:0;background-color:transparent;border:0;border-radius:6px;color:hsl(var(--fg));
+  font-size:13px;font-weight:500;text-align:right;text-align-last:right;padding:.4rem 1.4rem .4rem .2rem;
+  background-position:right 2px center;outline:none}
 
 /* switch */
-.sw{position:relative;width:38px;height:21px;flex:none}
+.sw,.row label.sw{position:relative;width:34px;height:20px;flex:none}
 .sw input{opacity:0;width:0;height:0}
-.sw span{position:absolute;inset:0;background:hsl(var(--border));border-radius:99px;transition:.18s;cursor:pointer}
-.sw span:before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s}
-.sw input:checked+span{background:hsl(var(--primary))}
-.sw input:checked+span:before{transform:translateX(17px);background:#101014}
+.sw span{position:absolute;inset:0;background:rgba(255,255,255,.14);border-radius:99px;transition:.18s;cursor:pointer}
+.sw span:before{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;background:rgba(255,255,255,.62);border-radius:50%;transition:.18s}
+.sw input:checked+span{background:#fff}
+.sw input:checked+span:before{transform:translateX(14px);background:#0c0c0f}
+.sw input:focus-visible+span{box-shadow:0 0 0 2px rgba(255,255,255,.5)}
 
 .btn{
   display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;
@@ -127,6 +127,7 @@ aside.hidden{transform:translateX(100%)}
   background:#000;color:#f87171;font-family:var(--mono);font-size:.85rem;padding:2rem;text-align:center}
 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 </style>
+<link rel="stylesheet" href="ui.css">
 </head>
 <body>
 <div id="checker"></div>
@@ -911,5 +912,6 @@ requestAnimationFrame(loop);
 </script>
 <script src="postfx.js"></script>
 <script src="i18n.js"></script>
+<script src="ui.js"></script>
 </body>
 </html>

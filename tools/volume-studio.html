@@ -170,18 +170,14 @@
   .fmenu button:hover{background:rgba(255,255,255,.08)}
   .fmenu button b{width:18px;text-align:center;color:hsl(var(--muted-foreground))}
   /* slider bars (label inside, fill = value) */
-  body.ui-float .fpb .prm.rng{position:relative;margin-top:6px}
-  body.ui-float .fpb .prm.rng .row{position:absolute;left:11px;right:11px;top:0;height:34px;margin:0;pointer-events:none;z-index:1}
-  body.ui-float .fpb .prm.rng .lbl{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  body.ui-float .fpb .prm.rng .val{background:none;padding:0;min-width:0;color:rgba(255,255,255,.5);font-size:11.5px}
-  body.ui-float .fpb .prm.rng input[type=range]{height:34px;margin:0;border-radius:9px;display:block;
-    background:linear-gradient(90deg,rgba(255,255,255,.17) 0,rgba(255,255,255,.17) var(--p,50%),rgba(255,255,255,.05) var(--p,50%))}
-  body.ui-float .fpb .prm.rng input[type=range]::-webkit-slider-thumb{width:1px;height:34px;border-radius:0;background:transparent;border:0;box-shadow:none}
-  body.ui-float .fpb .prm.rng input[type=range]::-moz-range-thumb{width:1px;height:34px;border-radius:0;background:transparent;border:0}
   #fp-matlib .group>h2,#fp-matprops .group>h2,#fp-layers .group>h2,#fp-templates .group>h2{display:none}
-  body.ui-float .fpb .prm.rng input[type=range]:hover{background:linear-gradient(90deg,rgba(255,255,255,.22) 0,rgba(255,255,255,.22) var(--p,50%),rgba(255,255,255,.08) var(--p,50%))}
+  /* slider rows are drawn by the shared ui.css / ui.js layer */
+  .prm.rng{margin-top:0}
+  .three .ui-sl-row{padding:0 8px 0 10px}
+  .three .ui-sl-row > .ui-lbl{font-size:11.5px}
+  .three .ui-sl-row > .ui-val{font-size:11px;padding:3px 2px}
+  .three .ui-sl-row > .ui-rst{display:none}
   body.ui-float .fpb .two{grid-template-columns:1fr;gap:0}
-  body.ui-float .fpb .three .prm.rng .lbl{font-size:11px}
   body.ui-float .fpb .three{gap:4px 6px}
   body.ui-float .fpb .preset{background:rgba(255,255,255,.05);border-color:transparent}
   body.ui-float .fpb .preset.active{background:rgba(255,255,255,.16);border-color:transparent}
@@ -219,6 +215,7 @@
   body.ui-float .fpb .thumbs{grid-template-columns:1fr 1fr}
   @media (max-width:760px){ .fhint{display:none} .fp-left,.fp-right,#fp-matprops{left:10px;right:10px;width:auto;top:70px;max-height:calc(100vh - 150px)} #fp-matprops{top:auto;bottom:74px;max-height:40vh} .ftc{top:auto;bottom:70px} }
 </style>
+<link rel="stylesheet" href="ui.css">
 </head>
 <body>
 <div class="app">
@@ -3354,5 +3351,6 @@ boot();
 })();
 </script>
 <script src="i18n.js"></script>
+<script src="ui.js"></script>
 </body>
 </html>

@@ -38,6 +38,7 @@
   .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
   .glerr{max-width:420px;text-align:center;color:hsl(var(--muted-foreground));font-size:13px;line-height:1.55}
 </style>
+<link rel="stylesheet" href="ui.css">
 </head>
 <body>
 <div class="app">
@@ -1511,5 +1512,6 @@ void main(){ o = vec4(clamp(paperTex(vUv*uRes), 0., 2.)*.5, 0., 0., 1.); }`;
 </script>
 <script src="postfx.js"></script>
 <script src="i18n.js"></script>
+<script src="ui.js"></script>
 </body>
 </html>

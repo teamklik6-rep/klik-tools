@@ -29,6 +29,7 @@
   .mode-hint{margin-top:10px}
   #out{cursor:crosshair}
 </style>
+<link rel="stylesheet" href="ui.css">
 </head>
 <body>
 <div class="app">
@@ -101,6 +102,10 @@
     flN:0, flProf:0, flAng:0, flRefr:0.5, flShift:0, flStep:0, flShade:0.35, flEdge:0.2, flChroma:0, flWave:0,
     stAmt:0, stAng:0, stJit:50, stLine:0,
     dot:0, dotMode:0, dotSize:6, dotPaper:0.7, paper:"#ffffff", ca:0,
+    /* форма ребер, сходинки, ряди пелюсток, плитки-перевертні */
+    flGeo:0, flBend:0.8, flCx:0, flCy:0, flPat:0, flJit:0, rows:0,
+    tlCols:0, tlRows:12, tlShape:0, tlAxis:0, tlBand:0.22, tlGap:1, tlGloss:0.4, tlX:0, tlY:0,
+    colorsB:["#ffd3ee","#ff3d7f","#d4104e","#ff86dc","#4a0030"], bgB:"#2a0018",
   };
   /* база «класичних» пресетів = старий дефолт Flux (Magnetic Silk) */
   const LEGACY_BASE = Object.assign({}, NEUTRAL, {
@@ -200,7 +205,27 @@
                  colorama:true, palette:"toxic", reps:2, contrast:1.2, gamma:1, poster:9,
                  sat:1.1, grain:0.1, vignette:0.25, gloss:0, heat:0 },
   };
+  /* градієнтні дослідження: талія з гіперболічних ребер, віяло, нерівні рифлі, плитки-перевертні */
+  const LAB_PRESETS = {
+    "Blue Waist":  { mode:7, angle:90, size:92, soft:150, scroll:1, period:8,
+                     colors:["#1226e8","#02030f","#f1f6ff","#52c4ff","#0f8cff"], bgColor:"#02030f",
+                     flN:11, flGeo:1, flBend:0.9, flCy:-6, flProf:2, flRefr:0, flStep:1.3, flPat:1, flShade:0, flEdge:0,
+                     blurMix:0.3, blurRad:9, grain:0.04, sat:1.08 },
+    "Blue Fan":    { mode:7, angle:45, size:120, soft:90,
+                     colors:["#f4f8ff","#cfeaff","#35b4ff","#1230f2","#000005"], bgColor:"#000005",
+                     flN:26, flGeo:2, flCx:104, flCy:104, flAng:-135, flProf:2, flRefr:1, flStep:-1.05, flPat:1,
+                     flShade:0.55, flEdge:0, flWave:0.1, blurMix:0.25, blurRad:8, grain:0.04 },
+    "Lime Flutes": { mode:7, angle:0, size:92, soft:200, scroll:1, rows:2.2, period:8,
+                     colors:["#021203","#0b4a0e","#3f9a12","#d6e61a","#fff21f"], bgColor:"#021203",
+                     flN:18, flProf:0, flRefr:0.5, flJit:0.85, flShade:0.1, flEdge:0.04,
+                     blurMix:0.3, blurRad:16, grain:0.05 },
+    "Flip Tiles":  { mode:7, angle:72, size:104, soft:120, offY:4, ampX:46, lamX:190, spdX:1, harm:0.25, period:6,
+                     colors:["#b7b01a","#8a9616","#0c5a3c","#1d6a47","#cfc6a0"], bgColor:"#0c5a3c",
+                     tlCols:30, tlRows:13, tlShape:0, tlBand:0.22, tlGap:1, tlGloss:0.5,
+                     colorsB:["#5a0638","#f05fc0","#e8104e","#ff4f9a","#ffb4e6"], bgB:"#e8104e", grain:0.04 },
+  };
   const PRESET_GROUPS = [
+    { title:"Градієнтні дослідження", base:NEW_BASE, list:LAB_PRESETS },
     { title:"Mosta · референси", base:NEW_BASE, list:NEW_PRESETS },
     { title:"Класика Flux", base:LEGACY_BASE, list:LEGACY_PRESETS },
   ];
@@ -272,16 +297,19 @@ void main(){vec2 v[3]=vec2[3](vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));gl_Positi
     "mScale","mStretch","mDisp","mCycles","mC3",
     "lnRim","lnChroma","lnRings","lnDust","lnGlow","lnAng",
     "flN","flAng","flRefr","flShift","flStep","flShade","flEdge","flChroma","flWave",
+    "flBend","flCx","flCy","flJit","rows",
+    "tlCols","tlRows","tlBand","tlGap","tlGloss","tlX","tlY",
     "stAmt","stAng","stJit","stLine",
     "phase","reps","cycleK","contrast","gamma","poster","sat","hue","bright",
     "glCount","glSize","glRefr","glRim","glOrbK","glRotK"];
-  const IKEYS=["mode","mirror","mMask","mBlend","flProf","glType"];
+  const IKEYS=["mode","mirror","mMask","mBlend","flProf","glType","flGeo","flPat","tlShape","tlAxis"];
 
   const FS=`#version 300 es
 precision highp float;
 uniform vec2 u_res;
 uniform float u_t,u_rt,u_kScale,u_seed;
 uniform vec3 u_bg,u_c0,u_c1,u_c2,u_c3,u_c4;
+uniform vec3 u_bgB,u_d0,u_d1,u_d2,u_d3,u_d4;
 uniform vec2 u_pinchPos,u_off;
 uniform vec3 u_mag;
 ${FKEYS.map(k=>"uniform float u_"+k+";").join("\n")}
@@ -293,6 +321,12 @@ out vec4 outColor;
 const float TAU=6.28318530718;
 const float PI=3.14159265359;
 vec2 ASP;
+/* активна палітра: A (джерело) або B (зворотний бік плиток) */
+vec3 K0,K1,K2,K3,K4,KB;
+void usePal(bool b){
+  if(b){K0=u_d0;K1=u_d1;K2=u_d2;K3=u_d3;K4=u_d4;KB=u_bgB;}
+  else{K0=u_c0;K1=u_c1;K2=u_c2;K3=u_c3;K4=u_c4;KB=u_bg;}
+}
 #define ROTM(a) mat2(cos(a),-sin(a),sin(a),cos(a))
 
 float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
@@ -301,15 +335,15 @@ float h11(float x){return fract(sin(x*127.1+u_seed*7.13)*43758.5453);}
 float vn1(float x){float i=floor(x),f=fract(x);f=f*f*(3.0-2.0*f);return mix(h11(i),h11(i+1.0),f);}
 
 vec3 pickCol(int i){
-  if(i==0)return u_c0; if(i==1)return u_c1; if(i==2)return u_c2; if(i==3)return u_c3; return u_c4;
+  if(i==0)return K0; if(i==1)return K1; if(i==2)return K2; if(i==3)return K3; return K4;
 }
 vec3 pal5(float t){
   t=clamp(t,0.0,1.0)*4.0;
-  vec3 c=u_c0;
-  c=mix(c,u_c1,clamp(t,0.0,1.0));
-  c=mix(c,u_c2,clamp(t-1.0,0.0,1.0));
-  c=mix(c,u_c3,clamp(t-2.0,0.0,1.0));
-  c=mix(c,u_c4,clamp(t-3.0,0.0,1.0));
+  vec3 c=K0;
+  c=mix(c,K1,clamp(t,0.0,1.0));
+  c=mix(c,K2,clamp(t-1.0,0.0,1.0));
+  c=mix(c,K3,clamp(t-2.0,0.0,1.0));
+  c=mix(c,K4,clamp(t-3.0,0.0,1.0));
   return c;
 }
 
@@ -339,10 +373,10 @@ vec3 mostaField(vec2 p,vec2 stS){
   float x=noiseP(vec3(uv*ROTM(PI/4.0),T-0.4*uv.x));
   float y=noiseP(vec3(uv*ROTM(PI/4.0),-T-0.4*uv.x));
   vec2 q=vec2(x,y);
-  vec3 col=lin(u_bg);
-  col=blendM(col,lin(u_c0),smoothstep(0.0,1.0,1.0-length((q-0.5+vec2(-1.3,1.0)*0.3)*0.9)));
-  col=blendM(col,lin(u_c1),smoothstep(0.0,1.0,1.0-length((q-0.5-vec2(-1.3,1.0)*0.3)*0.9)));
-  if(u_mC3>0.001) col=blendM(col,lin(u_c2),u_mC3*smoothstep(0.0,1.0,1.0-length((q-0.5)*2.2)));
+  vec3 col=lin(KB);
+  col=blendM(col,lin(K0),smoothstep(0.0,1.0,1.0-length((q-0.5+vec2(-1.3,1.0)*0.3)*0.9)));
+  col=blendM(col,lin(K1),smoothstep(0.0,1.0,1.0-length((q-0.5-vec2(-1.3,1.0)*0.3)*0.9)));
+  if(u_mC3>0.001) col=blendM(col,lin(K2),u_mC3*smoothstep(0.0,1.0,1.0-length((q-0.5)*2.2)));
   col=pow(col,vec3(1.0/2.2));
   float yy=1.0-clamp(stS.y,0.0,1.0), mask=1.0;   /* як на сайті: «Верх» = колір угорі */
   if(u_mMask==1) mask=1.0-yy;
@@ -353,17 +387,17 @@ vec3 mostaField(vec2 p,vec2 stS){
     mask=1.0-smoothstep(1.45,2.0,length(uc));
     mask*=clamp((1.0-yy)*4.0,0.0,1.0);
   }
-  return mix(u_bg,col,mask);
+  return mix(KB,col,mask);
 }
 
 /* ---- лінза (Seed 1.8): світла куля, хроматичний обід, кільця, пил ---- */
 vec3 lensRamp(float x,vec3 inner){
   vec3 c=inner;
   c=mix(c,min(inner*1.04+0.04,vec3(1.0)),smoothstep(-1.0,0.0,x)*0.5);
-  c=mix(c,u_c3,smoothstep(-0.35,0.15,x));
-  c=mix(c,u_c0,smoothstep(0.05,0.45,x));
-  c=mix(c,u_bg,smoothstep(0.4,1.0,x));
-  c+=u_c2*exp(-pow((x-1.25)/0.35,2.0))*0.6;
+  c=mix(c,K3,smoothstep(-0.35,0.15,x));
+  c=mix(c,K0,smoothstep(0.05,0.45,x));
+  c=mix(c,KB,smoothstep(0.4,1.0,x));
+  c+=K2*exp(-pow((x-1.25)/0.35,2.0))*0.6;
   return c;
 }
 vec3 lensField(vec2 p){
@@ -374,7 +408,7 @@ vec3 lensField(vec2 p){
   float r=length(q*vec2(1.0,1.05));
   float a=atan(q.y,q.x);
   vec2 bq=q/R-vec2(0.22,0.28);
-  vec3 inner=mix(u_c4,u_c1,0.18+0.55*exp(-dot(bq,bq)*2.6));
+  vec3 inner=mix(K4,K1,0.18+0.55*exp(-dot(bq,bq)*2.6));
   float w=max(u_lnRim,0.02);
   float k=u_lnChroma*0.06;
   vec3 col;
@@ -383,9 +417,9 @@ vec3 lensField(vec2 p){
   col.b=lensRamp((r/R*(1.0+k)-1.0)/w,inner).b;
   float xo=(r/R-1.0)/w;
   float rimI=0.55+0.45*cos(a-radians(u_lnAng));
-  col=mix(col,mix(u_bg,col,rimI),smoothstep(0.05,0.45,xo));
+  col=mix(col,mix(KB,col,rimI),smoothstep(0.05,0.45,xo));
   float g=exp(-max(r/R-1.0,0.0)*2.5)*u_lnGlow*rimI;
-  col+=mix(u_c1,u_c2,0.6)*g*0.4*smoothstep(0.4,1.2,xo);
+  col+=mix(K1,K2,0.6)*g*0.4*smoothstep(0.4,1.2,xo);
   if(u_lnRings>0.5){
     for(int i=0;i<6;i++){
       if(float(i)>=u_lnRings)break;
@@ -459,6 +493,7 @@ vec3 field(vec2 uv){
     if(abs(u_scroll)>0.5){ float xx=t*0.5+u_scroll*u_t; t=1.0-abs(2.0*fract(xx)-1.0); }
     t=clamp(t,0.0,1.0);
     t=mix(t,smoothstep(0.0,1.0,t),clamp(u_soft/200.0,0.0,1.0));
+    if(u_rows>0.01) t*=pow(abs(sin(PI*(p.y/1.5+0.5)*u_rows)),0.75);   /* ряди пелюсток упоперек градієнта */
     return pal5(t);
   }
   if(u_mode==0){ /* плями — mesh-градієнт */
@@ -476,7 +511,7 @@ vec3 field(vec2 uv){
       acc+=pickCol(i-(i/5)*5)*w; wsum+=w;
     }
     vec3 c=acc/max(wsum,1e-5);
-    return mix(u_bg,c,clamp(wsum*0.35,0.0,1.0));
+    return mix(KB,c,clamp(wsum*0.35,0.0,1.0));
   }
   if(u_mode==1){ /* смуги */
     float t=fract((p.x+1.0)*0.5*max(u_count,1.0)*0.6+u_scroll*u_t);
@@ -492,7 +527,7 @@ vec3 field(vec2 uv){
   if(u_mode==3){ /* кільце */
     float r=u_size/100.0*pulse;
     float t=clamp(abs(length(p)-r)/max(r*0.6,0.02),0.0,1.0);
-    return mix(pal5(1.0-t),u_bg,t);
+    return mix(pal5(1.0-t),KB,t);
   }
   /* ШОВК — гіперболічні лінії потоку з глянцем */
   vec2 q=rot2(radians(u_fan))*(p-u_pinchPos/100.0);
@@ -505,7 +540,7 @@ vec3 field(vec2 uv){
   float body=0.5+0.5*s*fade;
   float band2=u_bandFreq*psi*0.5+u_flow*u_t;
   float slow=clamp(0.5+0.35*sin(TAU*band2)+0.25*q.y,0.0,1.0);
-  vec3 col=mix(u_bg,pal5(slow),pow(body,1.45));
+  vec3 col=mix(KB,pal5(slow),pow(body,1.45));
   float spec=pow(clamp(s,0.0,1.0),max(u_glossSharp,1.0))*u_gloss*fade;
   col+=spec*vec3(1.0);
   float heat=exp(-dot(q,q)*6.0)*u_heat;
@@ -540,7 +575,41 @@ float sdShape(vec2 p,float r,int t,float rot){
 
 void main(){
   ASP=u_res/min(u_res.x,u_res.y);
+  usePal(false);
   vec2 st=gl_FragCoord.xy/u_res;
+
+  /* плитки-перевертні: кожна плитка показує палітру A або B, хвиля перевороту йде двічі за луп */
+  bool tl=u_tlCols>0.5, tlHole=false;
+  float tlFlip=0.0, tlAcr=0.0, tlN=0.0, tlLine=0.0;
+  if(tl){
+    vec2 g=vec2(u_tlCols,max(u_tlRows,1.0));
+    vec2 gp=st*g, cell=floor(gp), lp=fract(gp)-0.5;
+    vec2 o=vec2(u_tlX,u_tlY)/100.0;
+    vec2 cc=(cell+0.5)/g-0.5-o;
+    float d, dmax=1.0+2.0*max(abs(o.x),abs(o.y));
+    if(u_tlShape==0) d=max(abs(cc.x),abs(cc.y))*2.0;
+    else if(u_tlShape==1) d=length(cc*ASP)*2.0/length(ASP);
+    else if(u_tlShape==2){ d=clamp((cc.x-cc.y)*0.5+0.5,0.0,1.0); dmax=1.0; }
+    else { d=hash21(cell+vec2(u_seed*0.7,3.3)); dmax=1.0; }
+    float bnd=max(u_tlBand,0.005);
+    float R=clamp(fract(u_t*2.0)/0.62,0.0,1.0)*(dmax+bnd);
+    float f=clamp((R-d)/bnd,0.0,1.0); f=f*f*(3.0-2.0*f);
+    tlFlip=u_t>=0.5?1.0-f:f;
+    float c=abs(cos(PI*tlFlip));
+    tlAcr=u_tlAxis==0?lp.x:lp.y;
+    if(abs(tlAcr)>0.5*c+1e-4) tlHole=true;
+    else {
+      tlN=tlAcr/max(c,1e-3);
+      if(u_tlAxis==0) st.x+=(tlN-tlAcr)/g.x; else st.y+=(tlN-tlAcr)/g.y;
+    }
+    if(u_tlGap>0.01){
+      vec2 ed=(0.5-abs(lp))/g*u_res;
+      float gw=u_tlGap*max(u_kScale,0.35)*0.5;
+      tlLine=1.0-smoothstep(gw,gw+1.0,min(ed.x,ed.y));
+    }
+    usePal(tlFlip>0.5);
+  }
+
   vec2 uvFull=(st-0.5)*ASP*1.5;
   vec2 stF=st;
   if(u_mirror==1)stF.x=0.5-abs(st.x-0.5);
@@ -558,7 +627,7 @@ void main(){
     uv=q*R;
   }
 
-  /* рифлене скло / панелі / сходинки */
+  /* рифлене скло / панелі / сходинки; форма ребер: прямі, талія (гіпербола), віяло, кільця */
   bool fl=u_flN>0.5;
   vec2 off=vec2(0.0), nrm=vec2(1.0,0.0);
   float flK=0.0, flC=0.0;
@@ -567,19 +636,46 @@ void main(){
     nrm=vec2(cos(a),sin(a));
     vec2 tng=vec2(-nrm.y,nrm.x);
     float span=1.5*dot(abs(nrm),ASP);
-    float w=span/u_flN;
-    float s=dot(uvFull,nrm);
-    if(u_flWave>0.001) s+=u_flWave*0.06*sin(dot(uvFull,tng)*5.0+TAU*u_t);
-    flK=s/w+u_flN*0.5;
+    float w=span/u_flN, wl=w, wa=PI/u_flN;
+    vec2 v=uvFull-vec2(u_flCx,u_flCy)/100.0*0.75*ASP;
+    float rr=max(length(v),1e-4);
+    float s=dot(v,nrm), along=dot(v,tng);
+    if(u_flGeo==1){
+      float k=sqrt(1.0+pow(along*abs(u_flBend)*2.4,2.0));
+      if(u_flBend<0.0) k=1.0/k;
+      s/=k; wl=w*k;
+    } else if(u_flGeo==2){
+      s=mod(atan(v.y,v.x)-a+PI,TAU)-PI; along=rr;
+    } else if(u_flGeo==3){
+      s=rr; along=atan(v.y,v.x)*0.5;
+    }
+    if(u_flWave>0.001) s+=u_flWave*0.06*sin(along*5.0+TAU*u_t);
+    flK=u_flGeo==2?s/wa:(u_flGeo==3?s/w:s/w+u_flN*0.5);
+    if(u_flJit>0.001) flK+=u_flJit*(0.22*sin(flK*1.7+u_seed)+0.10*sin(flK*3.1+u_seed*1.7));
     float idx=floor(flK);
     flC=fract(flK)-0.5;
+    float ci=u_flGeo==2?idx+0.5:(u_flGeo==3?idx:idx+0.5-u_flN*0.5);
     float h=hash21(vec2(idx*1.37+2.0,u_seed+5.0));
-    float o=0.0;
-    if(u_flProf==0) o=-u_flRefr*flC*w*2.0;
-    else if(u_flProf==1) o=-u_flRefr*(flC+0.5)*w*1.5;
-    else o=-u_flRefr*(idx+0.5-u_flN*0.5)*w;
-    float al=u_flShift*(h-0.5)*0.9+u_flStep*(idx-(u_flN-1.0)*0.5)*0.12;
-    off=nrm*o+tng*al;
+    float stp=ci;
+    if(u_flPat==1) stp=abs(ci);
+    else if(u_flPat==2) stp=(mod(idx,2.0)-0.5)*4.0;
+    float al=u_flShift*(h-0.5)*0.9+u_flStep*stp*0.12;
+    if(u_flGeo==2){
+      float oa=0.0;
+      if(u_flProf==0) oa=-u_flRefr*flC*wa*2.0;
+      else if(u_flProf==1) oa=-u_flRefr*(flC+0.5)*wa*1.5;
+      else oa=-u_flRefr*ci*wa;
+      vec2 vr=rot2(-oa)*v;
+      nrm=vec2(-v.y,v.x)/rr;
+      off=vr-v+vr/rr*al;
+    } else {
+      if(u_flGeo==3){ nrm=v/rr; tng=vec2(-nrm.y,nrm.x); }
+      float o=0.0;
+      if(u_flProf==0) o=-u_flRefr*flC*wl*2.0;
+      else if(u_flProf==1) o=-u_flRefr*(flC+0.5)*wl*1.5;
+      else o=-u_flRefr*ci*wl;
+      off=nrm*o+tng*al;
+    }
   }
 
   vec3 col;
@@ -641,6 +737,16 @@ void main(){
       col*=1.0-u_flShade*0.5*shd;
     }
     col+=line*u_flEdge*0.45;
+  }
+
+  /* плитки: циліндричний блік, тінь і відблиск під час перевороту, шви */
+  if(tl){
+    float turn=sin(PI*tlFlip);
+    col*=1.0+u_tlGloss*0.12*(-2.0*tlAcr);
+    col*=mix(1.0,0.5,turn);
+    col+=u_tlGloss*0.6*turn*pow(clamp(tlN+0.5,0.0,1.0),3.0);
+    if(tlHole) col=vec3(0.0);
+    col=mix(col,vec3(0.0),tlLine);
   }
 
   /* насиченість / hue / яскравість */
@@ -744,7 +850,8 @@ void main(){
     return {p,U:Um};
   }
   const progS=mkProgram(FS,["u_res","u_t","u_rt","u_kScale","u_seed","u_bg","u_c0","u_c1","u_c2","u_c3","u_c4",
-    "u_pinchPos","u_off","u_mag","u_colorama","u_pal"].concat(FKEYS.map(k=>"u_"+k),IKEYS.map(k=>"u_"+k)));
+    "u_pinchPos","u_off","u_mag","u_colorama","u_pal",
+    "u_bgB","u_d0","u_d1","u_d2","u_d3","u_d4"].concat(FKEYS.map(k=>"u_"+k),IKEYS.map(k=>"u_"+k)));
   const progB=mkProgram(FS_BLUR,["u_src","u_size","u_step","u_thresh","u_lod"]);
   const progC=mkProgram(FS_COMP,["u_scene","u_soft","u_bloom","u_size","u_blurMix","u_dreamy","u_shineI","u_grain2","u_vig2",
     "u_tt","u_shineC","u_ca","u_kScale","u_dot","u_dotSize","u_dotPaper","u_dotMode","u_paper"]);
@@ -856,6 +963,8 @@ void main(){
     gl.uniform1f(U.u_seed,P.seed);
     set3(U.u_bg,P.bgColor);
     for(let i=0;i<5;i++)set3(U["u_c"+i],P.colors[i]);
+    set3(U.u_bgB,P.bgB);
+    for(let i=0;i<5;i++)set3(U["u_d"+i],P.colorsB[i]);
     FKEYS.forEach(k=>gl.uniform1f(U["u_"+k],P[k]));
     IKEYS.forEach(k=>gl.uniform1i(U["u_"+k],P[k]));
     gl.uniform1i(U.u_colorama,P.colorama?1:0);
@@ -964,6 +1073,7 @@ void main(){
         R("size","Розмір (%)",8,120,1,0,[0,2,3,6,7]),
         R("spread","Розкид (%)",0,60,1,0,[0]),
         R("soft","М'якість (blur)",0,200,2,0,[0,1,7]),
+        R("rows","Ряди пелюсток",0,8,0.1,1,[7]),
         R("offX","Центр X (%)",-60,60,1,0,[6,7]),
         R("offY","Центр Y (%)",-60,60,1,0,[6,7]),
       ]},
@@ -981,15 +1091,33 @@ void main(){
       {h:"Рифлене скло", items:[
         R("flN","Кількість ребер (0 = вимк.)",0,60,1,0),
         SEG("flProf","Профіль",[["Лінза",0],["Призма",1],["Панелі",2]],3),
-        R("flAng","Кут ребер (°)",-90,90,1,0),
+        R("flAng","Кут ребер (°)",-180,180,1,0),
+        SEG("flGeo","Форма ребер",[["Прямі",0],["Талія",1],["Віяло",2],["Кільця",3]],4),
+        R("flBend","Вигин талії",-1.5,1.5,0.05,2),
+        R("flCx","Центр форми X (%)",-140,140,1,0),
+        R("flCy","Центр форми Y (%)",-140,140,1,0),
+        R("flJit","Нерівна ширина",0,1,0.05,2),
         R("flRefr","Рефракція",0,1.5,0.05,2),
         R("flShift","Зсув уздовж (випадковий)",0,1.5,0.05,2),
         R("flStep","Сходинки",-1.5,1.5,0.05,2),
+        SEG("flPat","Малюнок сходинок",[["Сходи",0],["Дзеркало",1],["Через одне",2]],3),
         R("flShade","Обʼєм і тінь",0,1,0.05,2),
         R("flEdge","Блік на ребрі",0,1,0.05,2),
         R("flChroma","Дисперсія (RGB)",0,1,0.05,2),
         R("flWave","Хвиля ребер",0,1,0.05,2),
-      ], note:"Лінза — класичне рифлене скло (Now or Never). Призма — зсув усередині ребра. Панелі — лайтбокс і зрізи (Mosta, Sequence, Shield Swap): кут 90° = горизонтальні смуги, «Сходинки» зсувають кожну наступну."},
+      ], note:"Лінза — класичне рифлене скло (Now or Never). Призма — зсув усередині ребра. Панелі — лайтбокс і зрізи (Mosta, Sequence, Shield Swap): кут 90° = горизонтальні смуги, «Сходинки» зсувають кожну наступну. Форма ребер: «Талія» стискає ребра гіперболою довкола центру форми, «Віяло» розкладає їх променями з центру (100 % = кут кадру, кут ребер = напрям віяла), «Кільця» — концентричні. Малюнок «Дзеркало» зсуває ребра симетрично від середини."},
+      {h:"Плитки-перевертні", items:[
+        R("tlCols","Колонок (0 = вимк.)",0,80,1,0),
+        R("tlRows","Рядів",1,40,1,0),
+        SEG("tlShape","Хвиля перевороту",[["Рамка",0],["Коло",1],["Діагональ",2],["Хаос",3]],4),
+        SEG("tlAxis","Вісь перевороту",[["Вертикальна",0],["Горизонтальна",1]],2),
+        R("tlBand","Ширина фронту",0.02,1,0.01,2),
+        R("tlGap","Шов (px)",0,6,0.25,2),
+        R("tlGloss","Блік плитки",0,1,0.05,2),
+        R("tlX","Центр хвилі X (%)",-50,50,1,0),
+        R("tlY","Центр хвилі Y (%)",-50,50,1,0),
+        CUSTOM("colorsB"),
+      ], note:"Сітка плиток перевертається хвилею від центру й показує той самий градієнт у палітрі B, а за другу половину лупа — назад в A. Тонкі колонки з кількома рядами дають ламелі, як у рефі Flippin' gradients."},
       {h:"Розтяг пікселів", items:[
         R("stAmt","Сила розтягу",0,1,0.01,2),
         R("stAng","Кут розтягу (°)",-90,90,1,0),
@@ -1133,6 +1261,27 @@ void main(){
       });
       w.appendChild(sw);
       CTRL.colors={sync(){fields.forEach(f=>f.sync());hint.textContent=MODE_HINTS[P.mode]||"";}};
+      return w;
+    },
+    colorsB(){
+      const w=document.createElement("div");
+      const sh=document.createElement("div");sh.className="sub-h";sh.textContent="Палітра B (зворотний бік)";w.appendChild(sh);
+      const g=document.createElement("div");g.className="colors c3";
+      const fields=[];
+      for(let i=0;i<5;i++){
+        const cf=colorField("B"+(i+1),()=>P.colorsB[i],v=>{P.colorsB[i]=v;onParam("colorsB");});
+        g.appendChild(cf.el);fields.push(cf);
+      }
+      const bg=colorField("Фон B",()=>P.bgB,v=>{P.bgB=v;onParam("bgB");});
+      g.appendChild(bg.el);fields.push(bg);
+      w.appendChild(g);
+      const bw=document.createElement("div");bw.className="btns-grid";bw.style.marginTop="10px";
+      const sb=document.createElement("button");sb.className="btn full";sb.textContent="Поміняти A ↔ B";
+      sb.addEventListener("click",()=>{
+        const c=P.colors.slice(),b=P.bgColor;P.colors=P.colorsB.slice();P.bgColor=P.bgB;P.colorsB=c;P.bgB=b;
+        clearStyleActive();buildPalTexture();syncUI();});
+      bw.appendChild(sb);w.appendChild(bw);
+      CTRL.colorsB={sync(){fields.forEach(f=>f.sync());}};
       return w;
     },
     colorama(){
@@ -1295,6 +1444,11 @@ void main(){
     else if(o<0.45){p.flN=Math.round(rnd(3,8));p.flProf=2;p.flAng=pick([0,90]);p.flRefr=p.flAng===0?r2(rnd(0.5,0.9)):0;
       p.flShift=p.flAng===90?r2(rnd(0.4,1)):0;p.flStep=Math.random()<0.4?r2(rnd(-1,1)):0;p.flShade=r2(rnd(0.15,0.35));p.flEdge=r2(rnd(0.05,0.2));}
     else if(o<0.55){p.stAmt=r2(rnd(0.75,0.95));p.stJit=Math.round(rnd(30,90));}
+    if(p.flN>0&&Math.random()<0.3){
+      if(Math.random()<0.5){p.flGeo=1;p.flAng=0;p.flBend=r2(rnd(0.5,1.2));p.flCy=Math.round(rnd(-20,20));p.flPat=1;p.flStep=r2(rnd(0.5,1.3));}
+      else{p.flGeo=2;p.flCx=pick([-104,104]);p.flCy=pick([-104,104]);p.flAng=Math.round(Math.atan2(-p.flCy,-p.flCx)*180/Math.PI);
+        p.flN=Math.round(rnd(16,30));p.flProf=2;p.flRefr=1;p.flPat=1;p.flStep=r2(rnd(-1.2,-0.5));p.flShade=r2(rnd(0.3,0.6));}
+    }
     if(Math.random()<0.12){p.dot=r2(rnd(0.5,0.9));p.dotSize=Math.round(rnd(4,7));}
     p.grain=r2(rnd(0.03,0.1));
     Object.assign(P,keepOutput(p));
@@ -1368,6 +1522,7 @@ void main(){
       const s=JSON.parse(localStorage.getItem(LS)||"null");if(!s)return false;
       Object.keys(DEFAULTS).forEach(k=>{if(k in s&&typeof s[k]===typeof DEFAULTS[k])P[k]=s[k];});
       if(!Array.isArray(P.colors)||P.colors.length!==5)P.colors=DEFAULTS.colors.slice();
+      if(!Array.isArray(P.colorsB)||P.colorsB.length!==5)P.colorsB=DEFAULTS.colorsB.slice();
       return true;
     }catch(e){return false;}
   }
@@ -1397,5 +1552,6 @@ void main(){
 </script>
 <script src="postfx.js"></script>
 <script src="i18n.js"></script>
+<script src="ui.js"></script>
 </body>
 </html>

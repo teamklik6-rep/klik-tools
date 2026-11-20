@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Weld Studio — лінії, що сплавляються у вузлах</title>
+<link rel="stylesheet" href="studio.css">
+<style>
+  #out{background:#000;touch-action:none}
+  .presets.thumbs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .preset.tile{padding:4px 4px 6px;display:flex;flex-direction:column;gap:5px;font-size:11px;line-height:1.15;text-align:left}
+  .preset.tile canvas{display:block;width:100%;aspect-ratio:16/10;border-radius:5px;background:#000}
+  .preset.tile span{padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .preset .pal{margin-top:6px}
+  .prm.off{display:none}
+  .seg-lbl{font-size:13px;font-weight:500;margin:12px 0 7px}
+  .stage.dragging{outline:2px dashed hsl(0 0% 98%/.6);outline-offset:-8px}
+</style>
+<link rel="stylesheet" href="ui.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 5h18M3 19h18M6 5l5.5 6.2c.3.3.3.8 0 1.1L6 19M18 5l-5.5 6.2c-.3.3-.3.8 0 1.1L18 19"/></svg>
+      </div>
+      <div><h1>Weld Studio</h1><p>лінійна графіка, де вузли сплавляються</p></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="btnShuffle" title="Інший seed: нове розташування ліній">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        Перемішати
+      </button>
+      <button class="btn primary" id="btnRand" title="Випадкова фігура, стиль і розташування">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+        Згенерувати
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card panel">
+      <div class="group"><h2>Фігури</h2><div class="presets thumbs" id="scenes"></div></div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="shape">Фігура</div>
+        <div class="tab" data-tab="line">Лінія</div>
+        <div class="tab" data-tab="color">Колір</div>
+        <div class="tab" data-tab="export">Експорт</div>
+      </div>
+
+      <div data-pane="shape" class="active"></div>
+      <div data-pane="line"></div>
+      <div data-pane="color"></div>
+      <div data-pane="export"></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="card stage" id="stage">
+        <canvas id="out"></canvas>
+        <div class="stage-bar">
+          <div class="iconbtn" id="playBtn" title="Пауза / відтворення">
+            <svg id="icoPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+            <svg id="icoPlay" class="hide" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="badge"><span class="dot" id="statusDot"></span> <span id="statusTxt">Готово</span></span>
+          <span class="spacer"></span><span class="dims" id="dims"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>один файл, WebGL2 у браузері: відстань до кожної лінії, плавне обʼєднання у вузлах, безшовні лупи</footer>
+</div>
+<script src="mp4-muxer.js"></script>
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const TAU = Math.PI * 2;
+
+  /* ================= params ================= */
+  const OUTPUT = { ratio:"4:5", res:900, exScale:2, fps:30, dur:10, bitrate:16 };
+  const OUT_KEYS = Object.keys(OUTPUT);
+  const STYLE_KEYS = ["thick","weld","rough","roughS","boil","glow","glowR","fg","gl","bg","card","paper","cardR","grain","vig"];
+  const SHAPE_KEYS = ["n1","n2","size","fasp","round","warp","drift","speed","rot"];
+
+  const SCENES = {
+    cells:   { name:"Cells",   p:{ n1:4, n2:2, size:88, fasp:0.8,  round:0.22, warp:0.35, drift:0.6,  speed:1, rot:0 },
+               lab:{ n1:"Хорди", n2:"Дуги й кільця", fasp:"Пропорції рамки", round:"Радіус кутів", drift:"Рух ліній", speed:"Обходів рамки за луп" },
+               hint:"Рамка із заокругленими кутами, хорди між рухомими точками на її периметрі та дуги, обрізані рамкою. Гострі кути зливаються в перетинки." },
+    globe:   { name:"Globe",   p:{ n1:4, n2:3, size:78, fasp:1,    round:0.22, warp:0.35, drift:0.3,  speed:1, rot:0 },
+               lab:{ n1:"Меридіани", n2:"Паралелі", drift:"Хитання осі", speed:"Обертів за луп" },
+               hint:"Коло, меридіани-еліпси, що обертаються, і паралелі. На полюсах усі меридіани сходяться й сплавляються у вузол." },
+    runway:  { name:"Runway",  p:{ n1:4, n2:2, size:86, fasp:1,    round:0.22, warp:0.42, drift:0.5,  speed:1, rot:0 },
+               lab:{ n1:"Горизонталі", n2:"Діагоналі", warp:"Нахил діагоналей", drift:"Хід діагоналей", speed:"Циклів за луп" },
+               hint:"Горизонталі різної довжини та діагоналі, що їздять уздовж них: кожен перетин отримує вушко-філет." },
+    grid:    { name:"Grid",    p:{ n1:4, n2:4, size:60, fasp:1,    round:0.22, warp:0.55, drift:0.55, speed:1, rot:0 },
+               lab:{ n1:"Вертикалі", n2:"Горизонталі", size:"Розмір лінзи (%)", warp:"Сила лінзи", drift:"Орбіта лінзи", speed:"Обертів лінзи за луп" },
+               hint:"Сітка, яку розсуває або стискає рухома лінза. Зі зварюванням 20+ клітинки стають подушечками із заокругленими кутами." },
+    stadium: { name:"Stadium", p:{ n1:2, n2:4, size:82, fasp:1.25, round:0.28, warp:0.4,  drift:0.5,  speed:1, rot:0 },
+               lab:{ n1:"Кільця", n2:"Спиці", fasp:"Пропорції", round:"Квадратність", warp:"Виліт спиць", drift:"Дихання", speed:"Циклів за луп" },
+               hint:"Концентричні супереліпси, спиці крізь них і крапки у вузлах — трибуни стадіону згори." },
+    orbits:  { name:"Orbits",  p:{ n1:3, n2:1, size:84, fasp:1,    round:0.72, warp:0.35, drift:0.4,  speed:1, rot:0 },
+               lab:{ n1:"Орбіти", n2:"Ядро й обід", round:"Сплюснутість", drift:"Хитання", speed:"Обертів за луп" },
+               hint:"Еліптичні орбіти, що повертаються довкола ядра. Перетини орбіт сплавляються у ромби." },
+  };
+  const SCENE_ORDER = ["cells","globe","runway","grid","stadium","orbits"];
+  const GENERIC = { n1:"Лінії A", n2:"Лінії B", size:"Розмір (%)", fasp:"Пропорції", round:"Заокруглення", warp:"Викривлення", drift:"Рух", speed:"Циклів за луп", rot:"Поворот (°)" };
+  const USED = { cells:["n1","n2","size","fasp","round","drift","speed","rot"], globe:["n1","n2","size","drift","speed","rot"],
+                 runway:["n1","n2","size","warp","drift","speed","rot"], grid:["n1","n2","size","warp","drift","speed","rot"],
+                 stadium:["n1","n2","size","fasp","round","warp","drift","speed","rot"], orbits:["n1","n2","size","round","drift","speed","rot"] };
+
+  const STYLES = {
+    "Neon Chalk": { thick:2.2, weld:11, rough:1.3, roughS:1,   boil:10, glow:0.9, glowR:22, fg:"#ffffff", gl:"#ffffff", bg:"#0b0b0b", card:false, paper:"#f3f3f1", cardR:3,   grain:0.14, vig:0.3 },
+    "Clean Ink":  { thick:2,   weld:8, rough:0,   roughS:1,   boil:0,  glow:0,   glowR:20, fg:"#ffffff", gl:"#ffffff", bg:"#000000", card:true,  paper:"#f3f3f1", cardR:3,   grain:0,    vig:0 },
+    "Pillow":     { thick:3,   weld:22, rough:0,   roughS:1,   boil:0,  glow:0,   glowR:20, fg:"#ffffff", gl:"#ffffff", bg:"#000000", card:true,  paper:"#f3f3f1", cardR:3,   grain:0,    vig:0 },
+    "Blueprint":  { thick:1.8, weld:14, rough:0.4, roughS:1.4, boil:6,  glow:0.5, glowR:26, fg:"#e6efff", gl:"#6ea2ff", bg:"#0a2466", card:false, paper:"#f3f3f1", cardR:3,   grain:0.1,  vig:0.25 },
+    "Klik Lime":  { thick:2.2, weld:16, rough:0.6, roughS:1,   boil:8,  glow:1.1, glowR:28, fg:"#eaffb0", gl:"#bbff32", bg:"#060612", card:false, paper:"#f3f3f1", cardR:3,   grain:0.1,  vig:0.3 },
+    "Paper Ink":  { thick:2.4, weld:14, rough:1,   roughS:0.8, boil:0,  glow:0,   glowR:20, fg:"#121212", gl:"#000000", bg:"#f1efe9", card:false, paper:"#f3f3f1", cardR:3,   grain:0.12, vig:0.1 },
+    "Ember":      { thick:2,   weld:22, rough:1.6, roughS:1.2, boil:12, glow:1.3, glowR:30, fg:"#ffe9cf", gl:"#ff5a1f", bg:"#0a0403", card:false, paper:"#f3f3f1", cardR:3,   grain:0.16, vig:0.35 },
+    "Ice":        { thick:1.6, weld:24, rough:0.3, roughS:1,   boil:6,  glow:0.8, glowR:34, fg:"#f2fbff", gl:"#49c8ff", bg:"#020814", card:false, paper:"#f3f3f1", cardR:3,   grain:0.08, vig:0.3 },
+  };
+
+  const DEFAULTS = Object.assign({ scene:"cells", seed:7, period:10, pulse:0, magnet:true }, SCENES.cells.p, STYLES["Neon Chalk"], OUTPUT);
+  const P = JSON.parse(JSON.stringify(DEFAULTS));
+
+  /* ================= WebGL ================= */
+  const out = $("out");
+  const gl = out.getContext("webgl2", { preserveDrawingBuffer:true, antialias:false });
+  if (!gl) { $("statusTxt").textContent = "WebGL2 недоступний"; return; }
+  const NS = 128, NE = 16, NB = 2, ND = 16;
+
+  const VS = `#version 300 es
+void main(){vec2 v[3]=vec2[3](vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));gl_Position=vec4(v[gl_VertexID],0.,1.);}`;
+  const FS = `#version 300 es
+precision highp float;
+#define NS ${NS}
+#define NE ${NE}
+#define NB ${NB}
+#define ND ${ND}
+uniform vec2 u_res;
+uniform float u_k,u_boilT,u_tt;
+uniform int u_nS,u_nE,u_nB,u_nD,u_clip,u_card;
+uniform vec4 u_S[NS];
+uniform vec4 u_E[NE];
+uniform vec4 u_Ep[NE];
+uniform vec4 u_B[NB];
+uniform vec4 u_Bp[NB];
+uniform vec3 u_D[ND];
+uniform float u_th,u_weld,u_rough,u_roughS,u_glow,u_glowR,u_rot,u_grain,u_vig,u_cardR;
+uniform vec3 u_fg,u_bg,u_gl,u_paper;
+out vec4 outColor;
+
+float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+  return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),f.x),mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),f.x),f.y);}
+float sdBox(vec2 p,vec2 h,float r){vec2 q=abs(p)-h+r;return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;}
+/* Зварювання = сума гаусових полів ліній (як blur + threshold), але перехресні члени зважені
+   кутом між напрямками до ліній: F^2 = max(g)^2 + (sum g)^2 - |sum g*n|^2.
+   Лінії, що збігаються або йдуть поруч в один бік (n однакові), не товстішають;
+   у гострому куті n майже протилежні — там виростає перетинка, у прямому — філет. */
+float mxG=0.0,sumG=0.0; vec2 sumV=vec2(0.0);
+void add(float d,vec2 n,float w,float k){ float g=exp(-d*d*k*k)*w; mxG=max(mxG,g); sumG+=g; sumV+=g*n; }
+vec3 segDN(vec2 p,vec2 a,vec2 b){
+  vec2 pa=p-a,ba=b-a; float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-9),0.0,1.0);
+  vec2 v=pa-ba*h; float d=length(v);
+  return vec3(d,d>1e-6?v/d:vec2(0.0));
+}
+vec3 boxDN(vec2 p,vec2 h,float r){
+  vec2 q=abs(p)-h+r, sg=vec2(p.x<0.0?-1.0:1.0,p.y<0.0?-1.0:1.0);
+  float sd=length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;
+  vec2 n;
+  if(q.x>0.0&&q.y>0.0) n=normalize(q)*sg;
+  else if(q.x>q.y) n=vec2(sg.x,0.0);
+  else n=vec2(0.0,sg.y);
+  return vec3(abs(sd),n*(sd<0.0?-1.0:1.0));
+}
+/* контур супереліпса (n=2 — еліпс): відстань |f|/|grad f| і напрямок від контуру */
+vec3 ellDN(vec2 p,vec2 r,float n){
+  vec2 q=abs(p)/r;
+  float g=max(pow(q.x,n)+pow(q.y,n),1e-9);
+  float f=pow(g,1.0/n)-1.0;
+  vec2 gr=vec2(pow(q.x,n-1.0)/r.x,pow(q.y,n-1.0)/r.y)*pow(g,1.0/n-1.0);
+  float gl=max(length(gr),1e-4);
+  vec2 sg=vec2(p.x<0.0?-1.0:1.0,p.y<0.0?-1.0:1.0);
+  return vec3(abs(f)/gl,gr/gl*sg*(f<0.0?-1.0:1.0));
+}
+
+void main(){
+  float m=min(u_res.x,u_res.y);
+  vec2 pc=(gl_FragCoord.xy-0.5*u_res)/m;
+  float cr=cos(u_rot),sr=sin(u_rot);
+  vec2 p=mat2(cr,-sr,sr,cr)*pc;
+  float k=0.74/max(u_weld,1e-4);   /* u_weld = виліт філета на прямому перетині */
+  float dmin=1e9;
+  /* лінії, обрізані рамкою: зовні їхній внесок плавно згасає, тож вузол лишає лише маленьке «вушко» */
+  float cw=1.0; bool inside=true;
+  if(u_clip==1&&u_nB>0){
+    float clipD=sdBox(p-u_B[0].xy,u_B[0].zw,u_Bp[0].x);
+    inside=clipD<=0.0;
+    cw=1.0-smoothstep(0.0,0.9/k,clipD);
+  }
+
+  for(int i=0;i<NB;i++){ if(i>=u_nB)break;
+    vec3 dn=boxDN(p-u_B[i].xy,u_B[i].zw,u_Bp[i].x);
+    add(dn.x,dn.yz,1.0,k); dmin=min(dmin,dn.x); }
+
+  /* відрізки: ланцюжок зі спільними кінцями — одна ламана (min), між собою ламані зварюються */
+  vec3 g=vec3(1e9,0.0,0.0); vec2 prevEnd=vec2(1e9);
+  for(int i=0;i<NS;i++){ if(i>=u_nS)break;
+    vec4 sg=u_S[i];
+    if(i>0&&(sg.x!=prevEnd.x||sg.y!=prevEnd.y)){ add(g.x,g.yz,cw,k); if(inside)dmin=min(dmin,g.x); g=vec3(1e9,0.0,0.0); }
+    vec3 dn=segDN(p,sg.xy,sg.zw); if(dn.x<g.x)g=dn; prevEnd=sg.zw; }
+  if(u_nS>0){ add(g.x,g.yz,cw,k); if(inside)dmin=min(dmin,g.x); }
+
+  for(int i=0;i<NE;i++){ if(i>=u_nE)break;
+    vec2 q=p-u_E[i].xy; float a=u_Ep[i].x; float ca=cos(a),sa=sin(a);
+    q=mat2(ca,-sa,sa,ca)*q;
+    vec3 dn=ellDN(q,u_E[i].zw,u_Ep[i].y); float wt=u_Ep[i].z;   /* wt < 1: лінія тоншає і зникає */
+    add(dn.x,mat2(ca,sa,-sa,ca)*dn.yz,cw*wt,k); if(inside&&wt>0.999)dmin=min(dmin,dn.x); }
+
+  for(int i=0;i<ND;i++){ if(i>=u_nD)break;
+    vec2 v=p-u_D[i].xy; float l=length(v), d=max(l-u_D[i].z,0.0);
+    add(d,l>1e-6?v/l:vec2(0.0),cw,k); if(inside)dmin=min(dmin,d); }
+
+  float F2=mxG*mxG+max(sumG*sumG-dot(sumV,sumV),0.0);
+  float la=0.5*log(max(F2,1e-60));
+  float ds=min((la>=0.0?-sqrt(la):sqrt(-la))/k,dmin);
+  float px=1.0/m;
+  if(u_rough>0.001){
+    vec2 np=gl_FragCoord.xy/(u_k*max(u_roughS,0.2));
+    float n=vn(np*0.42+u_boilT*17.3)*0.6+vn(np*1.35-u_boilT*9.1)*0.4;
+    ds+=(n-0.5)*2.0*u_rough*px*u_k;
+  }
+  float aa=px*0.9;
+  float mk=1.0-smoothstep(u_th-aa,u_th+aa,ds);
+  float e=max(ds-u_th,0.0);
+  float gw=max(u_glowR,1e-4);
+  vec3 col=u_bg;
+  col+=u_gl*u_glow*(0.2*exp(-e/(gw*0.3))+0.13*exp(-e/gw)+0.05*exp(-e/(gw*4.0)))*(1.0-mk);
+  col=mix(col,u_fg,mk);
+
+  vec2 st=gl_FragCoord.xy/u_res;
+  if(u_vig>0.001){ vec2 v=st-0.5; col*=1.0-u_vig*smoothstep(0.25,0.85,length(v)*1.3); }
+  if(u_card==1){
+    vec2 hc=0.5*u_res/m-0.04;
+    float dc=sdBox(pc,hc,min(u_cardR,min(hc.x,hc.y)));
+    col=mix(col,u_paper,smoothstep(-aa,aa,dc));
+  }
+  if(u_grain>0.001){ float gn=hash(gl_FragCoord.xy+fract(u_tt)*311.7)-0.5; col+=gn*u_grain*0.22; }
+  outColor=vec4(clamp(col,0.0,1.0),1.0);
+}`;
+
+  function mkShader(type, src){
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(sh)); return null; }
+    return sh;
+  }
+  const prog = gl.createProgram();
+  { const v = mkShader(gl.VERTEX_SHADER, VS), f = mkShader(gl.FRAGMENT_SHADER, FS);
+    if (!v || !f) { $("statusTxt").textContent = "Помилка шейдера"; return; }
+    gl.attachShader(prog, v); gl.attachShader(prog, f); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); $("statusTxt").textContent = "Помилка шейдера"; return; } }
+  const U = {};
+  ["u_res","u_k","u_boilT","u_tt","u_nS","u_nE","u_nB","u_nD","u_clip","u_card","u_S","u_E","u_Ep","u_B","u_Bp","u_D",
+   "u_th","u_weld","u_rough","u_roughS","u_glow","u_glowR","u_rot","u_grain","u_vig","u_cardR","u_fg","u_bg","u_gl","u_paper"]
+    .forEach(n => U[n] = gl.getUniformLocation(prog, n));
+  function hex3(h){ const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
+  function set3(loc, h){ const c = hex3(h); gl.uniform3f(loc, c[0], c[1], c[2]); }
+
+  let W = 0, H = 0, kScale = 1;
+  let playing = true, t0 = performance.now() / 1000, tPause = 0, busyExport = false;
+  function ratioWH(){ const [a, b] = P.ratio.split(":").map(Number); return a / b; }
+  function sizeFor(base){ const r = ratioWH(); let w, h; if (r >= 1){ w = base; h = Math.round(w / r); } else { h = base; w = Math.round(h * r); } return [w - w % 2, h - h % 2]; }
+  function exportLong(){ return Math.min(4096, P.res * P.exScale); }
+  function setSize(w, h){ W = w; H = h; out.width = W; out.height = H; kScale = Math.max(W, H) / 1000; }
+  function resize(base){
+    const [w, h] = sizeFor(base || P.res); setSize(w, h);
+    const [ew, eh] = sizeFor(exportLong());
+    $("dims").textContent = `${W} × ${H}px · експорт ${ew} × ${eh}`;
+  }
+
+  /* ================= сцени: списки примітивів на кадр ================= */
+  const fr = x => x - Math.floor(x);
+  const rnd = (i, j) => fr(Math.sin(P.seed * 12.9898 + i * 78.233 + j * 37.719) * 43758.5453);
+  let ASP = [1, 1];
+  function fit(S){               /* пів-розміри рамки з пропорціями fasp, вписані у кадр */
+    const fw = P.fasp >= 1 ? 1 : P.fasp, fh = P.fasp >= 1 ? 1 / P.fasp : 1;
+    const sc = Math.min(ASP[0] / fw, ASP[1] / fh) * 0.5 * S;
+    return [fw * sc, fh * sc];
+  }
+  function perim(u, hx, hy, r){  /* точка на периметрі заокругленого прямокутника, u у [0,1) за годинниковою від середини верху */
+    const sx = 2 * (hx - r), sy = 2 * (hy - r), arc = Math.PI * r / 2, L = 2 * sx + 2 * sy + 4 * arc;
+    let d = fr(u) * L;
+    const cx = hx - r, cy = hy - r;
+    const A = (ccx, ccy, a0) => { const a = a0 - d / Math.max(r, 1e-6); return [ccx + r * Math.cos(a), ccy + r * Math.sin(a)]; };
+    if (d < sx / 2) return [d, hy]; d -= sx / 2;
+    if (d < arc) return A(cx, cy, Math.PI / 2); d -= arc;
+    if (d < sy) return [hx, cy - d]; d -= sy;
+    if (d < arc) return A(cx, -cy, 0); d -= arc;
+    if (d < sx) return [cx - d, -hy]; d -= sx;
+    if (d < arc) return A(-cx, -cy, -Math.PI / 2); d -= arc;
+    if (d < sy) return [-hx, -cy + d]; d -= sy;
+    if (d < arc) return A(-cx, cy, Math.PI); d -= arc;
+    return [-cx + d, hy];
+  }
+  function build(t){
+    const S = [], E = [], Ep = [], B = [], Bp = [], D = [];
+    let clip = 0;
+    const sz = P.size / 100, n1 = Math.round(P.n1), n2 = Math.round(P.n2), sp = Math.round(P.speed);
+    const seg = (ax, ay, bx, by) => { if (S.length < NS * 4) S.push(ax, ay, bx, by); };
+    const ell = (cx, cy, rx, ry, rot, n, wt) => { if (E.length < NE * 4){ E.push(cx, cy, Math.max(rx, 1e-3), Math.max(ry, 1e-3)); Ep.push(rot || 0, n || 2, wt == null ? 1 : wt, 0); } };
+    const dot = (x, y, r) => { if (D.length < ND * 3) D.push(x, y, r); };
+    const dotR = P.thick * kScale / Math.min(W, H) * 1.6;
+
+    if (P.scene === "cells"){
+      const [hx, hy] = fit(sz), r = Math.min(P.round, 0.98) * Math.min(hx, hy);
+      B.push(0, 0, hx, hy); Bp.push(r, 0, 0, 0); clip = 1;
+      const wob = P.drift * 0.085;
+      for (let i = 0; i < n1; i++){
+        const u0 = rnd(i, 1), span = 0.2 + 0.6 * rnd(i, 2);
+        const ka = Math.round((rnd(i, 3) - 0.5) * 2 * sp), kb = Math.round((rnd(i, 4) - 0.5) * 2 * sp);
+        const ua = u0 + ka * t + wob * Math.sin(TAU * (t * (1 + Math.floor(rnd(i, 5) * 2)) + rnd(i, 6)));
+        const ub = u0 + span + kb * t + wob * Math.sin(TAU * (t * (1 + Math.floor(rnd(i, 7) * 2)) + rnd(i, 8)));
+        const a = perim(ua, hx, hy, r), b = perim(ub, hx, hy, r);
+        seg(a[0], a[1], b[0], b[1]);
+      }
+      const mn = Math.min(hx, hy);
+      for (let j = 0; j < n2; j++){
+        if (j === 2){             /* вільне кільце всередині */
+          const a = TAU * (t * Math.max(sp, 1) + rnd(j, 20));
+          ell(0.42 * hx * Math.cos(a), 0.42 * hy * Math.sin(a * (1 + Math.round(rnd(j, 21)))) , mn * 0.16, mn * 0.16);
+          continue;
+        }
+        const kc = Math.round((rnd(j, 11) - 0.5) * 2 * sp);
+        const c = perim(rnd(j, 12) + kc * t + wob * Math.sin(TAU * (t + rnd(j, 13))), hx, hy, r);
+        const rad = (0.45 + 0.75 * rnd(j, 14)) * mn * (1 + 0.16 * P.drift * Math.sin(TAU * (t + rnd(j, 15))));
+        ell(c[0], c[1], rad, rad);
+      }
+    } else if (P.scene === "globe"){
+      const R = 0.42 * sz;
+      ell(0, 0, R, R);
+      const wb = P.drift * 0.35 * Math.sin(TAU * t);
+      for (let i = 0; i < n1; i++){
+        const phi = Math.PI * (i + t * sp) / n1 + wb, c = Math.abs(Math.cos(phi));
+        const f = Math.min(Math.max((c - 0.8) / 0.17, 0), 1);       /* біля лімба меридіан зливався б із колом — гасимо його */
+        ell(0, 0, Math.max(R * c, R * 0.004), R, 0, 2, 1 - f * f * (3 - 2 * f));
+      }
+      for (let j = 0; j < n2; j++){
+        const lat = -Math.PI / 2 + Math.PI * (j + 1) / (n2 + 1);
+        const y = R * Math.sin(lat), hw = R * Math.cos(lat);
+        seg(-hw, y, hw, y);
+      }
+    } else if (P.scene === "runway"){
+      const hx = 0.5 * ASP[0] * sz * 0.9, hy = 0.5 * ASP[1] * sz * 0.52;
+      const slope = 0.35 + P.warp * 2.1;
+      const run = slope * 2 * hy;                 /* горизонтальний хід діагоналі між верхом і низом */
+      const gap = Math.max(Math.min(0.42 * hx, (2 * hx - run) * 0.6 / Math.max(n2, 1)), 0.05);
+      const xs = [];
+      for (let j = 0; j < n2; j++){
+        const base = -hx + (2 * hx - run) * 0.3 + j * gap;
+        xs.push(base + P.drift * gap * 0.45 * Math.sin(TAU * (t * Math.max(sp, 1) + j * 0.19 + rnd(j, 31) * 0.3)));
+      }
+      const xr = Math.max.apply(null, xs.concat([-hx]));
+      for (let i = 0; i < n1; i++){
+        const y = n1 > 1 ? hy - 2 * hy * i / (n1 - 1) : 0;
+        const st = [0, 0.02, 0.36, 0.5, 0.18, 0.44, 0.1, 0.3][i % 8] * 2 * hx * 0.55;
+        const xe = xr + slope * (hy - y);
+        seg(Math.min(-hx + st, xe - 0.05), y, xe, y);
+      }
+      xs.forEach(x => seg(x, hy, x + run, -hy));
+    } else if (P.scene === "grid"){
+      const ax = ASP[0] * 0.62, ay = ASP[1] * 0.62;
+      const m = Math.max(5, Math.min(14, Math.floor(NS / Math.max(n1 + n2, 1))));
+      const c = [P.drift * 0.3 * ASP[0] * Math.cos(TAU * t * sp), P.drift * 0.24 * ASP[1] * Math.sin(TAU * t * sp)];
+      const rad = Math.max(0.08, sz * 0.45), amt = (P.warp - 0.5) * 2.6;
+      const wp = (x, y) => { const qx = x - c[0], qy = y - c[1]; const f = 1 + amt * Math.exp(-(qx * qx + qy * qy) / (rad * rad)); return [c[0] + qx * f, c[1] + qy * f]; };
+      const line = (fa, fb) => { let prev = wp.apply(null, fa(0)); for (let s = 1; s <= m; s++){ const cur = wp.apply(null, fa(s / m)); seg(prev[0], prev[1], cur[0], cur[1]); prev = cur; } };
+      for (let i = 0; i < n1; i++){ const x = -ASP[0] * 0.5 + ASP[0] * (i + 1) / (n1 + 1); line(u => [x, -ay + 2 * ay * u]); }
+      for (let j = 0; j < n2; j++){ const y = -ASP[1] * 0.5 + ASP[1] * (j + 1) / (n2 + 1); line(u => [-ax + 2 * ax * u, y]); }
+    } else if (P.scene === "stadium"){
+      const [hx, hy] = fit(sz * 0.86), n = 2 + P.round * 6;
+      const rings = [];
+      for (let k = 0; k < n1; k++){
+        const s = (1 - (k / Math.max(n1, 1)) * 0.6) * (1 + P.drift * 0.05 * Math.sin(TAU * (t * Math.max(sp, 1) + k * 0.22)));
+        rings.push(s); ell(0, 0, hx * s, hy * s, 0, n);
+      }
+      const rho = (cx, cy, s) => s / Math.pow(Math.pow(Math.abs(cx / hx), n) + Math.pow(Math.abs(cy / hy), n), 1 / n);
+      const sIn = rings.length ? rings[rings.length - 1] : 0.4, sOut = rings.length ? rings[0] : 1;
+      for (let q = 0; q < n2; q++){
+        const a = TAU * (q + 0.5) / n2, cx = Math.cos(a), cy = Math.sin(a);
+        const r0 = rho(cx, cy, sIn), r1 = rho(cx, cy, sOut), r2 = r1 * (1 + P.warp * 0.45);
+        seg(cx * r0, cy * r0, cx * r2, cy * r2);
+        dot(cx * r0, cy * r0, dotR); dot(cx * r1, cy * r1, dotR);
+      }
+    } else {                      /* orbits */
+      const R = 0.43 * sz, ecc = 0.2 + (1 - Math.min(P.round, 1)) * 0.7;
+      const wb = P.drift * 0.25 * Math.sin(TAU * t);
+      for (let i = 0; i < n1; i++) ell(0, 0, R, R * ecc, Math.PI * (i + t * sp) / n1 + wb, 2);
+      if (n2 >= 1) dot(0, 0, R * 0.07);
+      if (n2 >= 2) ell(0, 0, R * 1.07, R * 1.07);
+    }
+    return { S, E, Ep, B, Bp, D, clip };
+  }
+
+  /* курсор як ще один вузол (тільки превʼю) */
+  const MG = { x:0, y:0, on:false };
+  out.addEventListener("pointermove", e => {
+    const r = out.getBoundingClientRect(), m = Math.min(r.width, r.height);
+    MG.x = (e.clientX - r.left - r.width / 2) / m; MG.y = -(e.clientY - r.top - r.height / 2) / m; MG.on = true;
+  });
+  out.addEventListener("pointerleave", () => { MG.on = false; });
+
+  const bufS = new Float32Array(NS * 4), bufE = new Float32Array(NE * 4), bufEp = new Float32Array(NE * 4),
+        bufB = new Float32Array(NB * 4), bufBp = new Float32Array(NB * 4), bufD = new Float32Array(ND * 3);
+  function renderFrame(u, live){
+    const mn = Math.min(W, H);
+    ASP = [W / mn, H / mn];
+    const sc = build(u);
+    if (live && P.magnet && MG.on && sc.D.length < ND * 3){
+      const a = -P.rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+      sc.D.push(c * MG.x - s * MG.y, s * MG.x + c * MG.y, P.thick * kScale / mn * 2.2);
+    }
+    bufS.set(sc.S); bufE.set(sc.E); bufEp.set(sc.Ep); bufB.set(sc.B); bufBp.set(sc.Bp); bufD.set(sc.D);
+    gl.useProgram(prog);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.uniform2f(U.u_res, W, H);
+    gl.uniform1f(U.u_k, kScale);
+    gl.uniform1f(U.u_tt, u);
+    gl.uniform1f(U.u_boilT, P.boil > 0 ? Math.floor(u * P.period * P.boil) * 0.618 : 0);
+    gl.uniform1i(U.u_nS, sc.S.length / 4); gl.uniform1i(U.u_nE, sc.E.length / 4);
+    gl.uniform1i(U.u_nB, sc.B.length / 4); gl.uniform1i(U.u_nD, sc.D.length / 3);
+    gl.uniform1i(U.u_clip, sc.clip); gl.uniform1i(U.u_card, P.card ? 1 : 0);
+    gl.uniform4fv(U.u_S, bufS); gl.uniform4fv(U.u_E, bufE); gl.uniform4fv(U.u_Ep, bufEp);
+    gl.uniform4fv(U.u_B, bufB); gl.uniform4fv(U.u_Bp, bufBp); gl.uniform3fv(U.u_D, bufD);
+    const pulse = 1 + P.pulse * 0.6 * Math.sin(TAU * u);
+    gl.uniform1f(U.u_th, P.thick * 0.5 * pulse * kScale / mn);
+    gl.uniform1f(U.u_weld, Math.max(P.weld, 0.2) * kScale / mn);
+    gl.uniform1f(U.u_rough, P.rough);
+    gl.uniform1f(U.u_roughS, P.roughS);
+    gl.uniform1f(U.u_glow, P.glow);
+    gl.uniform1f(U.u_glowR, P.glowR * kScale / mn);
+    gl.uniform1f(U.u_rot, P.rot * Math.PI / 180);
+    gl.uniform1f(U.u_grain, P.grain);
+    gl.uniform1f(U.u_vig, P.vig);
+    gl.uniform1f(U.u_cardR, P.cardR / 100);
+    set3(U.u_fg, P.fg); set3(U.u_bg, P.bg); set3(U.u_gl, P.gl); set3(U.u_paper, P.paper);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  const now = () => performance.now() / 1000;
+  const loopPhase = () => { const t = playing ? (now() - t0) : tPause; return (t / P.period) % 1; };
+  function tick(){ requestAnimationFrame(tick); if (!busyExport) renderFrame(loopPhase(), true); }
+  $("playBtn").addEventListener("click", () => {
+    if (playing) tPause = now() - t0; else t0 = now() - tPause;
+    playing = !playing;
+    $("icoPause").classList.toggle("hide", !playing); $("icoPlay").classList.toggle("hide", playing);
+  });
+
+  /* ================= UI ================= */
+  const CTRL = {};
+  const R = (key, label, min, max, step, dec) => ({ t:"range", key, label, min, max, step, dec:dec || 0 });
+  const SW = (key, label) => ({ t:"switch", key, label });
+  const COL = (keys) => ({ t:"colors", keys });
+  const CUSTOM = id => ({ t:"custom", id });
+  const PANES = {
+    shape:[
+      { h:"Побудова", items:[
+        R("n1", GENERIC.n1, 0, 10, 1, 0), R("n2", GENERIC.n2, 0, 8, 1, 0),
+        R("size", GENERIC.size, 30, 110, 1, 0), R("fasp", GENERIC.fasp, 0.5, 2, 0.05, 2),
+        R("round", GENERIC.round, 0, 1, 0.01, 2), R("warp", GENERIC.warp, 0, 1, 0.01, 2),
+        R("rot", GENERIC.rot, -180, 180, 1, 0), CUSTOM("hint") ] },
+      { h:"Рух", items:[
+        R("period", "Період циклу (с)", 2, 20, 0.5, 1), R("speed", GENERIC.speed, 0, 3, 1, 0),
+        R("drift", GENERIC.drift, 0, 1, 0.01, 2), R("pulse", "Пульс товщини", 0, 1, 0.05, 2),
+        SW("magnet", "Курсор як вузол (превʼю)") ],
+        note:"Усі рухи кратні періоду, тож анімація і MP4 виходять безшовним лупом. Курсор над полотном стає ще одним вузлом, до якого тягнуться лінії; в експорт він не потрапляє." },
+    ],
+    line:[
+      { h:"Стиль лінії", items:[CUSTOM("styles")] },
+      { h:"Лінія і вузли", items:[
+        R("thick", "Товщина (px)", 0.6, 14, 0.1, 1), R("weld", "Зварювання вузлів (px)", 0, 90, 0.5, 1) ],
+        note:"Зварювання — виліт філета на прямому перетині: малий дає тонкі вушка у вузлах, великий — перетинки, краплі та подушечки. Лінії, що просто йдуть поруч, лишаються тонкими." },
+      { h:"Край", items:[
+        R("rough", "Шорсткість краю (px)", 0, 4, 0.1, 1), R("roughS", "Масштаб шорсткості", 0.3, 4, 0.1, 1),
+        R("boil", "Кипіння (кадрів/с)", 0, 24, 1, 0) ] },
+      { h:"Сяйво", items:[ R("glow", "Сила сяйва", 0, 2, 0.05, 2), R("glowR", "Радіус сяйва (px)", 4, 90, 1, 0) ] },
+    ],
+    color:[
+      { h:"Кольори", items:[ COL([["fg","Лінія"],["gl","Сяйво"],["bg","Фон"]]) ] },
+      { h:"Картка", items:[ SW("card", "Картка на папері"), COL([["paper","Папір"]]), R("cardR", "Радіус картки (%)", 0, 12, 0.5, 1) ],
+        note:"Як у рефі з іконками: чорна картка із заокругленими кутами на світлому полі." },
+      { h:"Пост-ефекти", items:[ R("grain", "Зерно", 0, 1, 0.02, 2), R("vig", "Віньєтка", 0, 1, 0.05, 2) ] },
+    ],
+    export:[
+      { h:"Полотно", items:[ CUSTOM("ratios"), R("res", "Роздільність (превʼю)", 500, 1600, 50, 0), R("exScale", "Масштаб експорту", 1, 3, 1, 0) ] },
+      { h:"Статика", items:[ CUSTOM("still") ] },
+      { h:"Відео", items:[ CUSTOM("video") ] },
+      { items:[ CUSTOM("reset") ] },
+    ],
+  };
+
+  function onParam(key){
+    if (key === "res" || key === "exScale") resize();
+    if (STYLE_KEYS.includes(key)) markStyle(null);
+  }
+  function mkRange(it){
+    const w = document.createElement("div"); w.className = "prm"; w.dataset.key = it.key;
+    w.innerHTML = `<div class="row"><label class="lbl">${it.label}</label><span class="val"></span></div><input type="range" min="${it.min}" max="${it.max}" step="${it.step}">`;
+    const inp = w.querySelector("input"), val = w.querySelector(".val"), lbl = w.querySelector(".lbl");
+    const fmt = it.key === "exScale" ? (x => x + "×") : (x => Number(x).toFixed(it.dec));
+    inp.addEventListener("input", () => { P[it.key] = parseFloat(inp.value); val.textContent = fmt(P[it.key]); onParam(it.key); });
+    CTRL[it.key] = { el:w, lbl, sync(){ inp.value = P[it.key]; val.textContent = fmt(P[it.key]); } };
+    return w;
+  }
+  function mkSwitch(it){
+    const w = document.createElement("div"); w.className = "switch-row";
+    w.innerHTML = `<span class="lbl">${it.label}</span><label class="switch"><input type="checkbox"><span class="track"></span></label>`;
+    const cb = w.querySelector("input");
+    cb.addEventListener("change", () => { P[it.key] = cb.checked; onParam(it.key); });
+    CTRL[it.key] = { el:w, sync(){ cb.checked = !!P[it.key]; } };
+    return w;
+  }
+  function mkColors(it){
+    const g = document.createElement("div"); g.className = "colors" + (it.keys.length > 2 ? " c3" : "");
+    if (it.keys.length < 2) g.style.marginTop = "6px";
+    it.keys.forEach(([key, label]) => {
+      const f = document.createElement("div"); f.className = "color-field";
+      f.innerHTML = `<span>${label}</span><div class="color-wrap"><input type="color"><span class="hex"></span></div>`;
+      const inp = f.querySelector("input"), hx = f.querySelector(".hex");
+      inp.addEventListener("input", () => { P[key] = inp.value; hx.textContent = inp.value.toUpperCase(); onParam(key); });
+      CTRL[key] = { el:f, sync(){ inp.value = P[key]; hx.textContent = P[key].toUpperCase(); } };
+      g.appendChild(f);
+    });
+    return g;
+  }
+  const CUSTOMS = {
+    hint(){ const n = document.createElement("div"); n.className = "note"; n.id = "sceneHint"; return n; },
+    styles(){
+      const box = document.createElement("div"); box.className = "presets c2"; box.id = "styles";
+      Object.entries(STYLES).forEach(([name, s]) => {
+        const b = document.createElement("div"); b.className = "preset"; b.dataset.style = name;
+        b.innerHTML = `${name}<div class="pal" style="background:linear-gradient(90deg,${s.bg} 0 34%,${s.gl} 34% 52%,${s.fg} 52% 100%)"></div>`;
+        b.addEventListener("click", () => applyStyle(name));
+        box.appendChild(b);
+      });
+      return box;
+    },
+    ratios(){
+      const box = document.createElement("div"); box.className = "presets c4";
+      ["4:5","1:1","16:9","9:16","3:4","3:2","2:3","21:9"].forEach(r => {
+        const b = document.createElement("div"); b.className = "preset"; b.textContent = r; b.dataset.r = r;
+        b.addEventListener("click", () => { P.ratio = r; resize(); CTRL.ratio.sync(); });
+        box.appendChild(b);
+      });
+      CTRL.ratio = { sync(){ box.querySelectorAll(".preset").forEach(b => b.classList.toggle("active", b.dataset.r === P.ratio)); } };
+      return box;
+    },
+    still(){
+      const w = document.createElement("div"); w.className = "btns-grid c3";
+      w.innerHTML = `<button class="btn primary" id="exPng">PNG</button><button class="btn" id="exJpg">JPG</button><button class="btn" id="exWebp">WEBP</button>`;
+      return w;
+    },
+    video(){
+      const w = document.createElement("div");
+      w.innerHTML = `<div class="row"><label class="lbl">FPS</label></div><select id="fps"><option>24</option><option>30</option><option>60</option></select>`;
+      [R("dur", "Тривалість (с)", 2, 30, 1, 0), R("bitrate", "Бітрейт (Мбіт/с)", 2, 40, 1, 0)].forEach(it => w.appendChild(mkRange(it)));
+      const b = document.createElement("div"); b.className = "btns-grid"; b.style.marginTop = "12px";
+      b.innerHTML = `<button class="btn rec" id="exMp4"><span id="mp4Label">MP4 (луп)</span></button><button class="btn" id="exWebm"><span id="webmLabel">WebM</span></button>`;
+      w.appendChild(b);
+      const n = document.createElement("div"); n.className = "note";
+      n.textContent = "MP4 рендериться покадрово локально (WebCodecs) — детермінований безшовний луп, нічого не вивантажується.";
+      w.appendChild(n);
+      const fps = w.querySelector("#fps");
+      fps.addEventListener("change", () => { P.fps = parseInt(fps.value, 10); });
+      CTRL.fps = { sync(){ fps.value = String(P.fps); } };
+      return w;
+    },
+    reset(){
+      const w = document.createElement("div"); w.className = "btns-grid";
+      w.innerHTML = `<button class="btn full" id="reset">Скинути всі налаштування</button>`;
+      return w;
+    },
+  };
+  function buildPanes(){
+    Object.entries(PANES).forEach(([pane, groups]) => {
+      const host = document.querySelector(`[data-pane="${pane}"]`);
+      groups.forEach(g => {
+        const grp = document.createElement("div"); grp.className = "group";
+        if (g.h){ const h = document.createElement("h2"); h.textContent = g.h; grp.appendChild(h); }
+        g.items.forEach(it => grp.appendChild(it.t === "range" ? mkRange(it) : it.t === "switch" ? mkSwitch(it) : it.t === "colors" ? mkColors(it) : CUSTOMS[it.id]()));
+        if (g.note){ const n = document.createElement("div"); n.className = "note"; n.textContent = g.note; grp.appendChild(n); }
+        host.appendChild(grp);
+      });
+    });
+  }
+  function syncScene(){
+    const sc = SCENES[P.scene], used = USED[P.scene];
+    SHAPE_KEYS.forEach(k => {
+      const c = CTRL[k]; if (!c) return;
+      c.el.classList.toggle("off", !used.includes(k));
+      const t = (sc.lab && sc.lab[k]) || GENERIC[k];
+      if (c.lbl.textContent !== t) c.lbl.textContent = t;
+    });
+    const h = $("sceneHint"); if (h && h.textContent !== sc.hint) h.textContent = sc.hint;
+    TILES.forEach(t => t.el.classList.toggle("active", t.id === P.scene));
+  }
+  function syncUI(){ Object.values(CTRL).forEach(c => c.sync()); syncScene(); }
+  function markStyle(name){ document.querySelectorAll("#styles .preset").forEach(b => b.classList.toggle("active", b.dataset.style === name)); }
+  function applyStyle(name){ Object.assign(P, JSON.parse(JSON.stringify(STYLES[name]))); syncUI(); markStyle(name); }
+  function applyScene(id, keepShape){
+    if (!SCENES[id]) return;
+    P.scene = id;
+    if (!keepShape) Object.assign(P, SCENES[id].p);
+    syncUI();
+    try { history.replaceState(null, "", "#" + id); } catch (e) {}
+  }
+
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll("[data-pane]").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); document.querySelector(`[data-pane="${t.dataset.tab}"]`).classList.add("active");
+  }));
+
+  /* ================= фігури з живими мініатюрами ================= */
+  const TILES = [];
+  function buildTiles(){
+    const host = $("scenes");
+    SCENE_ORDER.forEach(id => {
+      const d = document.createElement("div"); d.className = "preset tile"; d.dataset.scene = id; d.title = SCENES[id].name;
+      const cv = document.createElement("canvas"); cv.width = 192; cv.height = 120;
+      const sp = document.createElement("span"); sp.textContent = SCENES[id].name;
+      d.appendChild(cv); d.appendChild(sp);
+      d.addEventListener("click", () => applyScene(id));
+      host.appendChild(d); TILES.push({ id, cv, el:d });
+    });
+  }
+  function renderThumbs(){
+    const keep = JSON.stringify(P);
+    busyExport = true;
+    setSize(192, 120);
+    TILES.forEach(t => {
+      Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)), SCENES[t.id].p, STYLES["Clean Ink"], { scene:t.id, card:false, thick:7, weld:12, seed:7 });
+      renderFrame(0.18, false);
+      t.cv.getContext("2d").drawImage(out, 0, 0, 192, 120);
+    });
+    Object.assign(P, JSON.parse(keep));
+    resize(); busyExport = false;
+  }
+
+  /* ================= генератор ================= */
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  function generate(){
+    const id = pick(SCENE_ORDER), sc = SCENES[id];
+    Object.assign(P, sc.p, JSON.parse(JSON.stringify(STYLES[pick(Object.keys(STYLES))])));
+    P.scene = id;
+    P.seed = Math.floor(Math.random() * 997) + 1;
+    P.n1 = Math.max(2, Math.round(sc.p.n1 + (Math.random() - 0.4) * 3));
+    P.n2 = Math.max(0, Math.round(sc.p.n2 + (Math.random() - 0.5) * 2));
+    P.weld = Math.round(6 + Math.random() * 30);
+    P.drift = Math.round((0.3 + Math.random() * 0.6) * 100) / 100;
+    syncUI(); markStyle(null);
+    try { history.replaceState(null, "", "#" + id); } catch (e) {}
+  }
+  $("btnRand").addEventListener("click", generate);
+  $("btnShuffle").addEventListener("click", () => { P.seed = (P.seed * 7 + 3) % 997 + 1; });
+
+  /* ================= exports ================= */
+  function status(m, r){ $("statusTxt").textContent = m || "Готово"; $("statusDot").classList.toggle("rec", !!r); }
+  function downloadBlob(b, n){ const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = n; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); }
+  async function withExportSize(fn){ busyExport = true; resize(exportLong()); try { await fn(); } finally { resize(); busyExport = false; status(""); } }
+  function exportStill(t, e, q){
+    withExportSize(async () => {
+      status("Рендер…"); await new Promise(r => setTimeout(r, 20));
+      renderFrame(loopPhase(), false);
+      await new Promise(res => out.toBlob(b => { if (b) downloadBlob(b, "weld." + e); res(); }, t, q));
+    });
+  }
+  function bindExports(){
+    $("exPng").addEventListener("click", () => exportStill("image/png", "png"));
+    $("exJpg").addEventListener("click", () => exportStill("image/jpeg", "jpg", 0.92));
+    $("exWebp").addEventListener("click", () => exportStill("image/webp", "webp", 0.95));
+    let mp4Busy = false;
+    $("exMp4").addEventListener("click", async () => {
+      if (mp4Busy){ mp4Busy = false; return; }
+      if (!("VideoEncoder" in window) || typeof Mp4Muxer === "undefined"){ alert("Цей браузер не підтримує локальне H.264-кодування (WebCodecs)."); return; }
+      mp4Busy = true; $("mp4Label").textContent = "■ Скасувати";
+      await withExportSize(async () => {
+        const fps = P.fps, total = Math.round(P.dur * fps); let encErr = null;
+        const muxer = new Mp4Muxer.Muxer({ target:new Mp4Muxer.ArrayBufferTarget(), video:{ codec:"avc", width:W, height:H }, fastStart:"in-memory" });
+        const enc = new VideoEncoder({ output:(c, m) => muxer.addVideoChunk(c, m), error:e => { encErr = e; } });
+        enc.configure({ codec:W * H > 1500000 ? "avc1.640033" : "avc1.640028", width:W, height:H, bitrate:P.bitrate * 1e6, framerate:fps });
+        const loops = Math.max(1, Math.round(P.dur / P.period));
+        for (let f = 0; f < total; f++){
+          if (!mp4Busy || encErr) break;
+          renderFrame(((f / fps) / (P.dur / loops)) % 1, false);
+          const frm = new VideoFrame(out, { timestamp:f * 1e6 / fps, duration:1e6 / fps });
+          enc.encode(frm, { keyFrame:f % (fps * 2) === 0 }); frm.close();
+          if (enc.encodeQueueSize > 4) await new Promise(r => setTimeout(r, 12));
+          if (f % 3 === 0){ status(`Рендер ${Math.round((f + 1) / total * 100)}%`, true); await new Promise(r => setTimeout(r, 0)); }
+        }
+        if (mp4Busy && !encErr){
+          status("Кодування…", true);
+          await Promise.race([enc.flush(), new Promise(r => setTimeout(r, 20000))]); muxer.finalize();
+          downloadBlob(new Blob([muxer.target.buffer], { type:"video/mp4" }), "weld.mp4");
+        }
+        try { enc.close(); } catch (e) {}
+        if (encErr) alert("Помилка кодування MP4: " + (encErr.message || encErr));
+      });
+      mp4Busy = false; $("mp4Label").textContent = "MP4 (луп)";
+    });
+    let webmRec = null;
+    $("exWebm").addEventListener("click", () => {
+      if (webmRec){ webmRec.stop(); return; }
+      if (!out.captureStream || !window.MediaRecorder){ alert("Запис недоступний у цьому браузері."); return; }
+      const chunks = []; const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+      try { webmRec = new MediaRecorder(out.captureStream(P.fps), { mimeType:mime, videoBitsPerSecond:P.bitrate * 1e6 }); }
+      catch (e){ alert("Запис недоступний у цьому браузері."); webmRec = null; return; }
+      webmRec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      webmRec.onstop = () => { if (chunks.length) downloadBlob(new Blob(chunks, { type:"video/webm" }), "weld.webm"); webmRec = null; $("webmLabel").textContent = "WebM"; status(""); };
+      webmRec.start(200); $("webmLabel").textContent = "■ Стоп"; status("REC", true);
+      setTimeout(() => { if (webmRec) webmRec.stop(); }, P.dur * 1000);
+    });
+    $("reset").addEventListener("click", () => {
+      Object.assign(P, JSON.parse(JSON.stringify(DEFAULTS)));
+      syncUI(); resize(); markStyle("Neon Chalk");
+    });
+  }
+
+  /* ================= стан: автозбереження ================= */
+  const LS = "weldStudioV1";
+  function restore(){
+    try {
+      const s = JSON.parse(localStorage.getItem(LS) || "null"); if (!s) return false;
+      Object.keys(DEFAULTS).forEach(k => { if (k in s && typeof s[k] === typeof DEFAULTS[k]) P[k] = s[k]; });
+      if (!SCENES[P.scene]) P.scene = "cells";
+      return true;
+    } catch (e) { return false; }
+  }
+  let lastSaved = "";
+  setInterval(() => { const s = JSON.stringify(P); if (s !== lastSaved){ lastSaved = s; try { localStorage.setItem(LS, s); } catch (e) {} } }, 1200);
+
+  /* ================= boot ================= */
+  buildTiles();
+  buildPanes();
+  bindExports();
+  const fromHash = (location.hash || "").slice(1);
+  const restored = !SCENES[fromHash] && restore();
+  resize();
+  renderThumbs();
+  if (SCENES[fromHash]) applyScene(fromHash);
+  syncUI();
+  if (!restored) markStyle("Neon Chalk");
+  lastSaved = JSON.stringify(P);
+  window.addEventListener("hashchange", () => { const h = (location.hash || "").slice(1); if (SCENES[h]) applyScene(h); });
+  window.WELD = { P, renderFrame, resize, applyScene, applyStyle, syncUI, setSize, build, get W(){ return W; }, get H(){ return H; } }; /* для тестів */
+  tick();
+})();
+</script>
+<script src="postfx.js"></script>
+<script src="i18n.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
